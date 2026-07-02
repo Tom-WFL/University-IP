@@ -5,102 +5,143 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Container, ConfirmedHint, RoleHero, RecommendedTier, GapCallout,
 } from "@/components/Shell";
-import { SEED_IDEAS, UNIVERSITY, type IpIdea } from "@/data";
+import { OTHER_UNI_MATCH_IDEAS, FOUNDER_NAME, type IpIdea, type InterestNotification } from "@/data";
 import {
   Building2, Rocket, Users, GraduationCap, HeartHandshake, Landmark, Phone,
-  LogIn, Search, CheckCircle2, Hand, Sparkle,
+  LogIn, Search, CheckCircle2, Hand, Sparkle, Filter, Bell,
 } from "lucide-react";
 
 /* Founder / Co-founder (via Founder Match) — an EXISTING Founder role.
-   Gate-2 (2026-07-02): make the matching genuinely better — founders can have
-   an account, log in, and see ALL the IP ideas that have been submitted for
-   other people to pick up: a browsable list of the PUBLISHED Founder-Match
-   ideas. Private / held / other-route ideas never appear here. */
+   Gate-2 (2026-07-02): founders can have an account, log in, and see ALL the
+   published Founder-Match ideas submitted for other people to pick up.
+   Gate-3 (2026-07-02): the list SPANS UNIVERSITIES — university isolation
+   applies to IP Managers, not to this list — with a per-university FILTER;
+   and expressing interest NOTIFIES the idea's IP Manager, who starts making
+   connections and gets the founder connected to the professor. */
 
-export default function CofounderView() {
-  const [interested, setInterested] = useState<number[]>([]);
+const ALL = "__all__";
+
+export default function CofounderView({
+  ideas, interests, onInterest,
+}: {
+  ideas: IpIdea[];
+  interests: InterestNotification[];
+  onInterest: (idea: IpIdea) => void;
+}) {
   const [query, setQuery] = useState("");
+  const [uniFilter, setUniFilter] = useState<string>(ALL);
 
-  // Only PUBLISHED Founder-Match ideas are browsable — held/private/other-route ideas never appear.
+  // Cross-university list (gate-3): the logged-in university's live client
+  // state merged with other universities' published Founder-Match ideas.
+  // Only PUBLISHED Founder-Match ideas appear — held/private/other-route never do.
   const marketplace = useMemo(
-    () => SEED_IDEAS.filter((i) => i.route === "founder_match" && i.state === "published"),
-    []
+    () =>
+      [...ideas, ...OTHER_UNI_MATCH_IDEAS].filter(
+        (i) => i.route === "founder_match" && i.state === "published"
+      ),
+    [ideas]
+  );
+  const universities = useMemo(
+    () => [...new Set(marketplace.map((i) => i.university))],
+    [marketplace]
   );
   const visible = marketplace.filter(
     (i) =>
-      i.title.toLowerCase().includes(query.toLowerCase()) ||
-      i.summary.toLowerCase().includes(query.toLowerCase())
+      (uniFilter === ALL || i.university === uniFilter) &&
+      (i.title.toLowerCase().includes(query.toLowerCase()) ||
+        i.summary.toLowerCase().includes(query.toLowerCase()))
   );
 
-  const expressInterest = (id: number) =>
-    setInterested((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  const interestedIds = interests.filter((n) => n.founder === FOUNDER_NAME).map((n) => n.ideaId);
 
   return (
     <Container>
       <RoleHero
         role="Founder (via Founder Match) — existing Founder role"
-        name="Marcus Webb"
-        tagline="A Wildfire Network member with a founder account. Gate-2: logs in and browses ALL the published Founder-Match IP ideas — the ideas submitted for other people to pick up — and picks one up. When matched, he becomes the second founder in the company (two founders, as set up today)."
+        name={FOUNDER_NAME}
+        tagline="A Wildfire Network member with a founder account. Gate-2: logs in and browses ALL the published Founder-Match IP ideas — the ideas submitted for other people to pick up. Gate-3: the list spans universities, filterable per university; expressing interest notifies that idea's IP Manager, who starts making connections and gets him connected to the professor. When matched, he becomes the second founder in the company (two founders, as set up today)."
         meta={[
           { icon: <LogIn className="w-4 h-4 text-gray-400" />, label: "Logged in — founder account (existing app login)" },
           { icon: <HeartHandshake className="w-4 h-4 text-gray-400" />, label: "Browsing Founder Match ideas" },
-          { icon: <GraduationCap className="w-4 h-4 text-gray-400" />, label: "Wildfire Network member" },
+          { icon: <Building2 className="w-4 h-4 text-gray-400" />, label: `${universities.length} universities publishing ideas` },
         ]}
       />
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Badge className="bg-orange-500 hover:bg-orange-500 text-white">Founder</Badge>
-        <Badge variant="outline">Existing role — gate-2 adds the browsable idea list</Badge>
+        <Badge variant="outline">Existing role — gate-2 adds the browsable idea list; gate-3 makes it cross-university</Badge>
       </div>
       <ConfirmedHint>
-        Gate-2 decision: founders can have an account, log in, and see ALL the IP ideas that have been submitted for other people to pick up — the published Founder-Match ideas below.
+        Gate-3 (confirmed): founders see the published Founder-Match ideas ACROSS universities and can filter per university — the confirmed university isolation applies to IP Managers, not to this list.
       </ConfirmedHint>
 
-      {/* ── The browsable Founder-Match IP-idea list (gate-2) ─────────────── */}
+      {/* ── The browsable Founder-Match IP-idea list (gate-2 + gate-3) ────── */}
       <Card className="mt-6">
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <HeartHandshake className="h-4 w-4 text-emerald-600" /> Founder Match — university IP ideas ({marketplace.length})
+                <HeartHandshake className="h-4 w-4 text-emerald-600" /> Founder Match — university IP ideas ({visible.length}{uniFilter !== ALL || query ? ` of ${marketplace.length}` : ""})
               </CardTitle>
               <CardDescription>
-                Every PUBLISHED Founder-Match idea, submitted for other people to pick up. Private, held, and other-route ideas never appear here.
+                Every PUBLISHED Founder-Match idea, across all universities, submitted for other people to pick up. Private, held, and other-route ideas never appear here.
               </CardDescription>
             </div>
-            <div className="relative">
-              <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search ideas…"
-                className="pl-8 w-56"
-                aria-label="Search ideas"
-              />
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Gate-3: per-university filter */}
+              <div className="flex items-center gap-1.5">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={uniFilter} onValueChange={setUniFilter}>
+                  <SelectTrigger className="w-64" aria-label="Filter by university">
+                    <SelectValue placeholder="All universities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL}>All universities</SelectItem>
+                    {universities.map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search ideas…"
+                  className="pl-8 w-56"
+                  aria-label="Search ideas"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <GapCallout>
-            Whether this list spans universities or is scoped per university was not resolved — the PO said founders see "all the IP ideas that have been submitted for other people to pick up"; the confirmed isolation covers IP Managers seeing each other's IP, not founders. Shown here with one university's published ideas only.
-          </GapCallout>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {visible.map((idea) => (
               <MarketplaceCard
                 key={idea.id}
                 idea={idea}
-                interested={interested.includes(idea.id)}
-                onInterest={() => expressInterest(idea.id)}
+                interested={interestedIds.includes(idea.id)}
+                onInterest={() => onInterest(idea)}
               />
             ))}
             {visible.length === 0 && (
-              <p className="text-sm text-muted-foreground py-4 col-span-full">No published Founder-Match ideas match "{query}".</p>
+              <p className="text-sm text-muted-foreground py-4 col-span-full">
+                No published Founder-Match ideas match{query ? ` "${query}"` : ""}{uniFilter !== ALL ? ` at ${uniFilter}` : ""}.
+              </p>
             )}
           </div>
+          <ConfirmedHint>
+            Gate-3 (confirmed): expressing interest notifies the idea's IP Manager, who starts making connections — getting you connected to the professor.
+          </ConfirmedHint>
           <GapCallout>
-            Expressing interest is rendered as the obvious first step of "picking up" an idea — but the match-completion mechanics (who approves, how the intro happens, how the two-founder company forms) were not specified. Open dependency — nothing beyond the interest step is invented here.
+            What happens after the IP Manager connects you with the professor — how the pickup becomes a formal completed match and how the two-founder company forms — was still not specified. Open dependency; nothing beyond the interest → notification → connect step is invented here.
           </GapCallout>
         </CardContent>
       </Card>
@@ -142,6 +183,9 @@ export default function CofounderView() {
               <Building2 className="h-3.5 w-3.5" /> The university owns the IP; the professor owns the knowledge of the idea.
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Bell className="h-3.5 w-3.5" /> Your interest notifies the idea's IP Manager, who connects you with the professor (gate-3).
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Phone className="h-3.5 w-3.5" /> Contact-only professors: whoever takes the idea can reach out directly.
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -180,7 +224,7 @@ function MarketplaceCard({
       </div>
       <p className="text-xs text-muted-foreground leading-relaxed flex-1">{idea.summary}</p>
       <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-        <Building2 className="h-3 w-3" /> {UNIVERSITY}
+        <Building2 className="h-3 w-3" /> {idea.university}
       </p>
       {alreadyMatched ? (
         <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
@@ -188,7 +232,7 @@ function MarketplaceCard({
         </p>
       ) : interested ? (
         <div className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] text-emerald-800 flex items-center gap-1.5">
-          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> Interest registered — first step of the match (what happens next is TBD).
+          <Bell className="h-3.5 w-3.5 shrink-0" /> Interest sent — the IP Manager at {idea.university} has been notified and will start making connections to get you connected with the professor.
         </div>
       ) : (
         <Button size="sm" variant="outline" className="w-full" onClick={onInterest}>

@@ -15,13 +15,14 @@ import {
   RoleHero, NavCardGrid, CardTierBadge, BackToHome, type NavCard,
 } from "@/components/Shell";
 import {
-  SEED_IDEAS, UNIVERSITY, IP_MANAGER, ROUTE_LABEL,
-  type IpIdea, type Route, type Involvement,
+  UNIVERSITY, IP_MANAGER, ROUTE_LABEL,
+  type IpIdea, type Route, type Involvement, type InterestNotification,
 } from "@/data";
 import {
   Building2, FolderKanban, Upload, ListPlus, Activity, Rocket, Trophy, HeartHandshake,
   Lock, Globe2, UserRound, Phone, Users, CheckCircle2, FileSpreadsheet, Plus,
   GraduationCap, Hammer, ArrowRight, Eye, ClipboardList, PauseCircle, UserPlus, Tag, Send,
+  Bell, Link2, Info, Home,
 } from "lucide-react";
 
 /* ── Small shared chips ────────────────────────────────────────────────────── */
@@ -86,12 +87,23 @@ function MetricTile({ label, value, icon: Icon }: { label: string; value: string
 
 /* ── View ──────────────────────────────────────────────────────────────────── */
 
-type Screen = "home" | "portfolio" | "import" | "tracking" | "detail";
+type Screen = "home" | "portfolio" | "import" | "tracking" | "detail" | "inbox";
 
-export default function IPManagerView() {
+export default function IPManagerView({
+  ideas, setIdeas, interests, onConnect,
+}: {
+  ideas: IpIdea[];
+  setIdeas: React.Dispatch<React.SetStateAction<IpIdea[]>>;
+  interests: InterestNotification[];
+  onConnect: (id: number) => void;
+}) {
   const [screen, setScreen] = useState<Screen>("home");
-  const [ideas, setIdeas] = useState<IpIdea[]>(SEED_IDEAS);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // Tenancy: Kirby sees only interest in HER university's ideas — interest in
+  // another university's idea notifies THAT university's IP Manager instead.
+  const myInterests = interests.filter((n) => n.university === UNIVERSITY);
+  const newInterestCount = myInterests.filter((n) => n.status === "new").length;
 
   const update = (id: number, patch: Partial<IpIdea>) =>
     setIdeas((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
@@ -111,6 +123,9 @@ export default function IPManagerView() {
       icon: <Upload className="h-5 w-5" />, iconColor: "text-sky-600", iconBg: "bg-sky-50", badge: <CardTierBadge kind="gap" /> },
     { key: "tracking", title: "Tracking dashboard", subtitle: "Track every idea across its route — founder progress, hackathon builds, founder-match status.",
       icon: <Activity className="h-5 w-5" />, iconColor: "text-emerald-600", iconBg: "bg-emerald-50", badge: <CardTierBadge kind="new" /> },
+    { key: "inbox", title: `Founder interest inbox${newInterestCount > 0 ? ` (${newInterestCount} new)` : ""}`,
+      subtitle: "Gate-3: when a founder expresses interest in one of your Founder-Match ideas you're notified here — start making connections and get them connected to the professor.",
+      icon: <Bell className="h-5 w-5" />, iconColor: "text-violet-700", iconBg: "bg-violet-50", badge: <CardTierBadge kind="new" /> },
   ];
 
   if (screen === "home") {
@@ -133,9 +148,12 @@ export default function IPManagerView() {
             <span className="font-medium">{UNIVERSITY}</span>'s IP — other universities, and their IP, are invisible to you. Each university is its own fully isolated organization.
           </span>
         </div>
-        <GapCallout>
-          Exact placement/section of University IP inside the app was not stated — PO to confirm. All entry happens in-app, logged in (no external data entry).
-        </GapCallout>
+        <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-center gap-2">
+          <Home className="h-4 w-4 shrink-0" />
+          <span>
+            <span className="font-semibold">Confirmed at gate 3:</span> this role home IS the home page an IP Manager sees when they log in. All entry happens in-app, logged in (no external data entry).
+          </span>
+        </div>
         <div className="mt-5">
           <NavCardGrid cards={cards} onOpen={(k) => setScreen(k as Screen)} />
         </div>
@@ -163,6 +181,7 @@ export default function IPManagerView() {
       )}
       {screen === "import" && <ImportScreen onAdd={addIdea} onImport={(rows) => rows.forEach(addIdea)} />}
       {screen === "tracking" && <TrackingScreen ideas={ideas} onOpen={openDetail} />}
+      {screen === "inbox" && <InboxScreen interests={myInterests} onConnect={onConnect} onOpenIdea={openDetail} ideas={ideas} />}
       {screen === "detail" && selectedId != null && (
         <DetailScreen
           idea={ideas.find((i) => i.id === selectedId)!}
@@ -203,7 +222,7 @@ function PortfolioScreen({
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
             <CardTitle className="flex items-center gap-2"><FolderKanban className="h-4 w-4 text-orange-500" /> {ideas.length} IP ideas</CardTitle>
-            <CardDescription>Private by default → select & publish. Click a row to route it.</CardDescription>
+            <CardDescription>Private by default → select & publish. Click a company/idea to open its detail — a description of the company and what it does (gate-3), the professor, and routing.</CardDescription>
           </div>
           <Button
             disabled={checked.length === 0}
@@ -284,18 +303,24 @@ const IMPORT_ROWS: Omit<IpIdea, "id">[] = [
   {
     title: "Wind-farm blade-icing predictor",
     summary: "Imported from spreadsheet row 1 — predictive model for turbine blade icing events.",
+    about: "Would forecast turbine blade-icing events from weather + vibration data so wind-farm operators can pre-heat or feather blades before ice throws them off balance.",
+    university: UNIVERSITY,
     professor: "Dr. Owen Pruitt", professorDept: "Electrical Engineering",
     involvement: "contact", state: "private", route: null, addedVia: "spreadsheet",
   },
   {
     title: "Bio-derived road de-icer",
     summary: "Imported from spreadsheet row 2 — sugar-beet-byproduct de-icing compound.",
+    about: "Would turn sugar-beet processing byproduct into a road de-icer that is cheaper per lane-mile than brine additives and far less corrosive to bridges and vehicles.",
+    university: UNIVERSITY,
     professor: "Dr. Anna Voss", professorDept: "Materials Science",
     involvement: "contact", state: "private", route: null, addedVia: "spreadsheet",
   },
   {
     title: "Rural telehealth triage protocol",
     summary: "Imported from spreadsheet row 3 — validated triage decision protocol for rural clinics.",
+    about: "Would license a validated triage decision protocol to rural telehealth providers so nurse-line staff can route patients to the right level of care consistently.",
+    university: UNIVERSITY,
     professor: "Dr. Sam Littlefeather", professorDept: "Earth Sciences",
     involvement: "cofounder", state: "private", route: null, addedVia: "spreadsheet",
   },
@@ -413,6 +438,8 @@ function ImportScreen({
               onClick={() => {
                 onAdd({
                   title: title.trim(), summary: summary.trim() || "(no description yet)",
+                  about: summary.trim() || "(no description yet)",
+                  university: UNIVERSITY,
                   professor: professor.trim(), professorDept: "—",
                   involvement, state: "private", route: holdAtImport ? "hold" : null, addedVia: "individual",
                 });
@@ -462,6 +489,27 @@ function DetailScreen({
         <InvolvementChip involvement={idea.involvement} />
         <Badge variant="outline" className="text-xs">Added via {idea.addedVia === "spreadsheet" ? "spreadsheet import" : "individual add"}</Badge>
       </div>
+
+      {/* Gate-3: clicking a company/idea in the IP Portfolio shows a spot with
+          a description of the company and what it does. */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-orange-500" /> About this company — what it does
+          </CardTitle>
+          <CardDescription>
+            Gate-3 (confirmed): every portfolio entry's detail shows a description of the company and what it does.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {idea.founderTracking?.companyName && (
+            <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Rocket className="h-4 w-4 text-orange-500" /> {idea.founderTracking.companyName}
+            </p>
+          )}
+          <p className="text-sm text-muted-foreground leading-relaxed">{idea.about}</p>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Professor association + involvement flag */}
@@ -860,6 +908,127 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
         <MetricTile label="On Hold (explicit)" value={String(ideas.filter((i) => i.route === "hold").length)} icon={PauseCircle} />
         <MetricTile label="Professors involved" value={String(new Set(ideas.map((i) => i.professor)).size)} icon={ClipboardList} />
       </div>
+    </>
+  );
+}
+
+/* ── Screen: Founder interest inbox (gate-3) ──────────────────────────────────
+   When a founder expresses interest in a Founder-Match idea, the idea's IP
+   Manager is NOTIFIED — so they can start making connections with that founder
+   and get them connected to the professor. */
+
+function InboxScreen({
+  interests, onConnect, onOpenIdea, ideas,
+}: {
+  interests: InterestNotification[];
+  onConnect: (id: number) => void;
+  onOpenIdea: (ideaId: number) => void;
+  ideas: IpIdea[];
+}) {
+  const [justConnected, setJustConnected] = useState<InterestNotification | null>(null);
+  const newOnes = interests.filter((n) => n.status === "new");
+  const connected = interests.filter((n) => n.status === "connected");
+
+  const NotificationRow = ({ n }: { n: InterestNotification }) => {
+    const ideaExists = ideas.some((i) => i.id === n.ideaId);
+    return (
+      <div className="rounded-xl border border-border bg-white p-4 flex flex-col gap-2 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Bell className={`h-4 w-4 ${n.status === "new" ? "text-violet-700" : "text-muted-foreground"}`} />
+              {n.founder} wants to pick up “{n.ideaTitle}”
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {n.founderContext} · {n.when} · professor on the idea: {n.professor}
+            </p>
+          </div>
+          {n.status === "new" ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 border border-violet-200 px-2.5 py-0.5 text-xs font-medium text-violet-700 shrink-0">
+              New interest
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-medium text-emerald-700 shrink-0">
+              <CheckCircle2 className="h-3 w-3" /> Connected
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {n.status === "new" ? (
+            <Button
+              size="sm"
+              onClick={() => {
+                onConnect(n.id);
+                setJustConnected(n);
+                setTimeout(() => setJustConnected(null), 4000);
+              }}
+            >
+              <Link2 className="h-3.5 w-3.5 mr-1" /> Start making connections — connect {n.founder.split(" ")[0]} ↔ {n.professor}
+            </Button>
+          ) : (
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Link2 className="h-3.5 w-3.5" /> You connected {n.founder} with {n.professor}.
+            </p>
+          )}
+          {ideaExists && (
+            <Button size="sm" variant="outline" onClick={() => onOpenIdea(n.ideaId)}>
+              <FolderKanban className="h-3.5 w-3.5 mr-1" /> Open idea
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <PageHeader
+        icon={<Bell className="h-5 w-5" />}
+        title={`Founder interest inbox — ${UNIVERSITY}`}
+        subtitle="Gate-3 (confirmed): when a founder expresses interest in one of your published Founder-Match ideas, you're notified here — so you can start making connections with that founder and get them connected to the professor."
+      />
+      <div className="mb-4 rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-800 flex items-center gap-2">
+        <Building2 className="h-4 w-4 shrink-0" />
+        <span>Interest in another university's ideas notifies <span className="font-semibold">that</span> university's IP Manager — you only see interest in {UNIVERSITY}'s ideas.</span>
+      </div>
+      {justConnected && (
+        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>
+            Connection started — you're connecting <span className="font-semibold">{justConnected.founder}</span> with{" "}
+            <span className="font-semibold">{justConnected.professor}</span> on “{justConnected.ideaTitle}”.
+          </span>
+        </div>
+      )}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-4 w-4 text-violet-700" /> New interest ({newOnes.length})
+          </CardTitle>
+          <CardDescription>
+            Founders who expressed interest in a {UNIVERSITY} Founder-Match idea — the human-in-the-loop next step is yours: start making connections.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {newOnes.length === 0 && <p className="text-sm text-muted-foreground py-2">No new interest right now.</p>}
+          {newOnes.map((n) => <NotificationRow key={n.id} n={n} />)}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-emerald-600" /> Connections started ({connected.length})
+          </CardTitle>
+          <CardDescription>Interest items where you've already connected the founder with the professor.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {connected.length === 0 && <p className="text-sm text-muted-foreground py-2">None yet.</p>}
+          {connected.map((n) => <NotificationRow key={n.id} n={n} />)}
+        </CardContent>
+      </Card>
+      <GapCallout>
+        Everything beyond the IP-Manager-connects step is still open — how a connection becomes a formal completed match and how the two-founder company forms were not specified. Nothing past "start making connections" is invented here.
+      </GapCallout>
     </>
   );
 }
