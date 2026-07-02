@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import {
-  Container, PageHeader, GapCallout, ParkedCallout, ConfirmedHint, RoleHero, RecommendedTier,
+  Container, ParkedCallout, ConfirmedHint, RoleHero,
 } from "@/components/Shell";
 import { UNIVERSITY } from "@/data";
 import {
@@ -41,9 +41,12 @@ export default function ProfessorView() {
         <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
           <Tag className="h-3 w-3" /> Analytics tag: originated from a university IP idea (confirmed)
         </span>
+        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+          <GraduationCap className="h-3 w-3" /> Professor tag + linked IP idea — applied at account creation (gate-2)
+        </span>
       </div>
       <ConfirmedHint>
-        Confirmed at the gate: the professor becomes the existing Founder role, PLUS a special analytics tag marking that this founder originated from a university IP idea.
+        Confirmed at the gate: the professor becomes the existing Founder role, PLUS a special analytics tag marking that this founder originated from a university IP idea. Gate-2: her account was created by the IP Manager, who sent the invite — the Professor + linked-IP-idea tag was applied at account creation, and she came through the app the regular way.
       </ConfirmedHint>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
@@ -100,9 +103,12 @@ export default function ProfessorView() {
                 <span className="font-medium text-foreground">Founder Match brings the co-founder</span> — a student or Wildfire Network member joins as the second founder: two founders in one company, as set up today.
               </p>
             </div>
-            <GapCallout>
-              How an imported professor first gets an account (and becomes a Founder who can log in) is unspecified — parked dependency, see REC-1 on the IP Manager's import screen.
-            </GapCallout>
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>
+                <span className="font-semibold">Getting in (confirmed at gate 2 — was REC-1):</span> the IP Manager creates the professor's profile/account and sends the invite; a tag attaches them as a Professor with the IP idea they're working on. From there they come through the app the regular way.
+              </span>
+            </div>
             <ParkedCallout>
               Whether professors could also be Mentors was mentioned as unlikely — nothing built.
             </ParkedCallout>
@@ -110,9 +116,6 @@ export default function ProfessorView() {
         </Card>
       </div>
 
-      <RecommendedTier id="REC-1" title="Professor invite / account-provisioning flow">
-        This view assumes the professor already has an account. The invite-to-Founder flow that would get them here is not confirmed — needs PO sign-off.
-      </RecommendedTier>
     </Container>
   );
 }

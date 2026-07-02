@@ -1,8 +1,9 @@
 /* Mock data for the University IP validation prototype.
-   Client-state only — nothing persists. Scoped to ONE university (tenancy:
-   the IP Manager sees only their own university's IP). */
+   Client-state only — nothing persists. IP Manager view is scoped to ONE
+   university (tenancy: the IP Manager sees only their own university's IP);
+   the Wildfire Admin view sees all universities. */
 
-export type Route = "founder" | "hackathon" | "founder_match";
+export type Route = "founder" | "hackathon" | "founder_match" | "hold";
 export type Involvement = "cofounder" | "contact";
 export type PublishState = "private" | "published";
 
@@ -43,8 +44,9 @@ export interface IpIdea {
   professorDept: string;
   involvement: Involvement;
   state: PublishState;
-  route: Route | null; // null = not routed yet (still private / on hold)
+  route: Route | null; // null = not routed yet (default private/unrouted); "hold" = explicit Hold disposition (gate-2)
   addedVia: "spreadsheet" | "individual";
+  inviteSent?: boolean; // gate-2: IP Manager created the professor's profile/account + sent the invite (Professor + linked-IP-idea tag)
   founderTracking?: FounderTracking;
   hackathonTracking?: HackathonTracking;
   matchTracking?: MatchTracking;
@@ -57,6 +59,7 @@ export const ROUTE_LABEL: Record<Route, string> = {
   founder: "Founder",
   hackathon: "Hackathon",
   founder_match: "Founder Match",
+  hold: "Hold (private)",
 };
 
 export const SEED_IDEAS: IpIdea[] = [
@@ -71,6 +74,7 @@ export const SEED_IDEAS: IpIdea[] = [
     state: "published",
     route: "founder",
     addedVia: "spreadsheet",
+    inviteSent: true,
     founderTracking: {
       currentPhase: "Build",
       lessonsCompleted: 14,
@@ -150,17 +154,86 @@ export const SEED_IDEAS: IpIdea[] = [
     id: 6,
     title: "Cold-chain vaccine stability indicator",
     summary:
-      "Color-change label indicating cumulative cold-chain excursions for vaccine vials.",
+      "Color-change label indicating cumulative cold-chain excursions for vaccine vials. Licensing questions still open with the tech-transfer office.",
     professor: "Dr. Anna Voss",
     professorDept: "Materials Science",
     involvement: "cofounder",
     state: "private",
+    route: "hold",
+    addedVia: "spreadsheet",
+  },
+  {
+    id: 7,
+    title: "Snow-load roof-failure early-warning sensor",
+    summary:
+      "Cheap strain-gauge network warning of dangerous snow loads on flat commercial roofs; validated on two campus buildings.",
+    professor: "Dr. Owen Pruitt",
+    professorDept: "Electrical Engineering",
+    involvement: "contact",
+    state: "published",
     route: "founder_match",
     addedVia: "spreadsheet",
     matchTracking: {
       matchedFounder: null,
       matchStatus: "Searching",
-      note: "Not yet published to Founder Match — private (on hold).",
+      note: "Published to Founder Match — waiting for a founder to pick it up.",
     },
+  },
+  {
+    id: 8,
+    title: "Microbial seed-coating biofertilizer",
+    summary:
+      "Nitrogen-fixing microbial seed coating reducing fertilizer input on wheat; greenhouse trials complete.",
+    professor: "Dr. Sam Littlefeather",
+    professorDept: "Earth Sciences",
+    involvement: "contact",
+    state: "published",
+    route: "founder_match",
+    addedVia: "individual",
+    matchTracking: {
+      matchedFounder: null,
+      matchStatus: "Intro made",
+      note: "Two interested founders; intro call held with one.",
+    },
+  },
+];
+
+/* ── Wildfire Admin mock data (gate-2, promoted from REC-2) ─────────────────
+   The admin manages what universities are in the system, what's going through
+   them (pipeline/volume), and who's attached to them (IP Managers, professors). */
+
+export interface UniversityOrg {
+  id: number;
+  name: string;
+  ipManagers: string[];
+  professors: number; // professor-founders with the university-IP-origin tag
+  ideas: { total: number; founder: number; hackathon: number; founderMatch: number; hold: number; unrouted: number; published: number };
+  provisioned: string; // when the org was set up
+}
+
+export const UNIVERSITIES: UniversityOrg[] = [
+  {
+    id: 1,
+    name: "University of South Dakota",
+    ipManagers: ["Kirby Nelson", "Peter Ames"],
+    professors: 4,
+    ideas: { total: 8, founder: 1, hackathon: 2, founderMatch: 3, hold: 1, unrouted: 1, published: 5 },
+    provisioned: "May 2026",
+  },
+  {
+    id: 2,
+    name: "Dakota State University",
+    ipManagers: ["Lena Ortiz"],
+    professors: 2,
+    ideas: { total: 5, founder: 1, hackathon: 1, founderMatch: 1, hold: 1, unrouted: 1, published: 2 },
+    provisioned: "June 2026",
+  },
+  {
+    id: 3,
+    name: "University of Wisconsin–Madison",
+    ipManagers: ["Ashley Grant"],
+    professors: 6,
+    ideas: { total: 12, founder: 2, hackathon: 3, founderMatch: 4, hold: 2, unrouted: 1, published: 8 },
+    provisioned: "June 2026",
   },
 ];

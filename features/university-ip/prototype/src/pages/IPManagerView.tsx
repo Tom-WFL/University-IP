@@ -21,7 +21,7 @@ import {
 import {
   Building2, FolderKanban, Upload, ListPlus, Activity, Rocket, Trophy, HeartHandshake,
   Lock, Globe2, UserRound, Phone, Users, CheckCircle2, FileSpreadsheet, Plus,
-  GraduationCap, Hammer, ArrowRight, Eye, ClipboardList,
+  GraduationCap, Hammer, ArrowRight, Eye, ClipboardList, PauseCircle, UserPlus, Tag, Send,
 } from "lucide-react";
 
 /* ── Small shared chips ────────────────────────────────────────────────────── */
@@ -33,7 +33,7 @@ function StateChip({ state }: { state: IpIdea["state"] }) {
     </span>
   ) : (
     <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-      <Lock className="h-3 w-3" /> Private (hold)
+      <Lock className="h-3 w-3" /> Private
     </span>
   );
 }
@@ -44,11 +44,13 @@ function RouteChip({ route }: { route: Route | null }) {
     founder: "bg-orange-50 border-orange-200 text-orange-700",
     hackathon: "bg-sky-50 border-sky-200 text-sky-700",
     founder_match: "bg-emerald-50 border-emerald-200 text-emerald-700",
+    hold: "bg-slate-100 border-slate-300 text-slate-700",
   };
   const icons: Record<Route, JSX.Element> = {
     founder: <Rocket className="h-3 w-3" />,
     hackathon: <Trophy className="h-3 w-3" />,
     founder_match: <HeartHandshake className="h-3 w-3" />,
+    hold: <PauseCircle className="h-3 w-3" />,
   };
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${styles[route]}`}>
@@ -117,11 +119,11 @@ export default function IPManagerView() {
         <RoleHero
           role="IP Manager (one merged role — VPR folds in)"
           name={IP_MANAGER}
-          tagline={`Bring ${UNIVERSITY}'s IP into the app as ideas, associate each with its professor, flag professor involvement, route each piece down one of three paths after talking to the professor, publish it, and track how every idea is doing on its route.`}
+          tagline={`Bring ${UNIVERSITY}'s IP into the app as ideas, associate each with its professor, create the professor's profile and send the invite, flag professor involvement, give each piece one of four dispositions after talking to the professor (Founder / Hackathon / Founder Match / Hold), publish it, and track how every idea is doing on its route.`}
           meta={[
             { icon: <Building2 className="w-4 h-4 text-gray-400" />, label: `${UNIVERSITY} · your organization` },
             { icon: <FolderKanban className="w-4 h-4 text-gray-400" />, label: `${ideas.length} IP ideas` },
-            { icon: <Activity className="w-4 h-4 text-gray-400" />, label: `${ideas.filter((i) => i.route).length} routed` },
+            { icon: <Activity className="w-4 h-4 text-gray-400" />, label: `${ideas.filter((i) => i.route && i.route !== "hold").length} routed · ${ideas.filter((i) => i.route === "hold").length} on hold` },
           ]}
         />
         <div className="mt-4 rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-800 flex items-center gap-2">
@@ -137,9 +139,9 @@ export default function IPManagerView() {
         <div className="mt-5">
           <NavCardGrid cards={cards} onOpen={(k) => setScreen(k as Screen)} />
         </div>
-        <RecommendedTier id="REC-2" title="Super Admin provisioning of universities + assigning IP Managers">
-          Someone WFL-side must create each university organization and assign its IP Manager before any IP can be entered. Not confirmed — needs PO sign-off; not built here.
-        </RecommendedTier>
+        <ConfirmedHint>
+          Confirmed at gate 2 (was REC-2): a Wildfire Admin provisions each university organization and assigns its IP Manager — see the Wildfire Admin view in the role switcher.
+        </ConfirmedHint>
       </Container>
     );
   }
@@ -148,7 +150,16 @@ export default function IPManagerView() {
     <Container>
       <BackToHome onBack={() => setScreen("home")} label="IP Manager home" />
       {screen === "portfolio" && (
-        <PortfolioScreen ideas={ideas} onOpen={openDetail} onPublish={(sel) => sel.forEach((id) => update(id, { state: "published" }))} />
+        <PortfolioScreen
+          ideas={ideas}
+          onOpen={openDetail}
+          onPublish={(sel) =>
+            sel.forEach((id) => {
+              const idea = ideas.find((i) => i.id === id);
+              if (idea && idea.route !== "hold") update(id, { state: "published" });
+            })
+          }
+        />
       )}
       {screen === "import" && <ImportScreen onAdd={addIdea} onImport={(rows) => rows.forEach(addIdea)} />}
       {screen === "tracking" && <TrackingScreen ideas={ideas} onOpen={openDetail} />}
@@ -182,7 +193,7 @@ function PortfolioScreen({
       <PageHeader
         icon={<FolderKanban className="h-5 w-5" />}
         title={`IP portfolio — ${UNIVERSITY}`}
-        subtitle="University IP lives here as ideas ('the research is just an idea in our world'). Everything lands PRIVATE by default — private is the hold state. Select some or all and publish."
+        subtitle="University IP lives here as ideas ('the research is just an idea in our world'). Everything lands PRIVATE (unrouted) by default; marking an idea Hold is the explicit 'keep it in the app until I figure out what to do with it' disposition (gate-2). Select some or all and publish."
       />
       <div className="mb-4 rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-800 flex items-center gap-2">
         <Building2 className="h-4 w-4 shrink-0" />
@@ -212,6 +223,10 @@ function PortfolioScreen({
               <CheckCircle2 className="h-4 w-4 shrink-0" /> Published. Publishing sends IP out (e.g. to Founder Match), with a separate publish path to a hackathon.
             </div>
           )}
+          <p className="mb-3 text-[11px] text-muted-foreground flex items-center gap-1.5">
+            <PauseCircle className="h-3.5 w-3.5 shrink-0" />
+            Ideas on <span className="font-semibold">Hold</span> are skipped by bulk publish — take them off Hold (pick an outward route) first.
+          </p>
           <Table>
             <TableHeader>
               <TableRow>
@@ -250,7 +265,7 @@ function PortfolioScreen({
               ))}
             </TableBody>
           </Table>
-          <ConfirmedHint>Confirmed: private by default, then publish — private doubles as the "hold and decide later" state.</ConfirmedHint>
+          <ConfirmedHint>Confirmed: private (unrouted) by default, then publish. Gate-2: "Hold (private)" is the explicit fourth disposition for "keep it in the app until I figure out what to do with it."</ConfirmedHint>
         </CardContent>
       </Card>
       <RecommendedTier id="REC-6" title="Private-vs-published state + empty state for this list">
@@ -298,13 +313,14 @@ function ImportScreen({
   const [summary, setSummary] = useState("");
   const [professor, setProfessor] = useState("");
   const [involvement, setInvolvement] = useState<Involvement>("contact");
+  const [holdAtImport, setHoldAtImport] = useState(false);
 
   return (
     <>
       <PageHeader
         icon={<Upload className="h-5 w-5" />}
         title="Bring IP into the app"
-        subtitle="Two confirmed entry paths: import a spreadsheet of IP, or add a piece of IP individually with a button. Everything lands private by default, associated with its professor."
+        subtitle="Two confirmed entry paths: import a spreadsheet of IP, or add a piece of IP individually with a button. Everything lands private by default, associated with its professor — and an idea can be explicitly marked Hold at import (gate-2)."
       />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Spreadsheet import */}
@@ -375,6 +391,22 @@ function ImportScreen({
                 </div>
               </RadioGroup>
             </div>
+            <div className="flex items-start space-x-2 rounded-md border border-slate-200 bg-slate-50 p-3">
+              <Checkbox
+                id="hold-at-import"
+                checked={holdAtImport}
+                onCheckedChange={(v) => setHoldAtImport(v === true)}
+                className="mt-0.5"
+              />
+              <div>
+                <Label htmlFor="hold-at-import" className="font-normal leading-snug flex items-center gap-1.5">
+                  <PauseCircle className="h-3.5 w-3.5 text-slate-500" /> Mark as Hold (private)
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Gate-2: explicitly HOLD this idea in the app until you figure out what to do with it — the fourth disposition, also available later on the routing view.
+                </p>
+              </div>
+            </div>
             <Button
               className="w-full"
               disabled={!title.trim() || !professor.trim()}
@@ -382,10 +414,10 @@ function ImportScreen({
                 onAdd({
                   title: title.trim(), summary: summary.trim() || "(no description yet)",
                   professor: professor.trim(), professorDept: "—",
-                  involvement, state: "private", route: null, addedVia: "individual",
+                  involvement, state: "private", route: holdAtImport ? "hold" : null, addedVia: "individual",
                 });
                 setAdded(title.trim());
-                setTitle(""); setSummary(""); setProfessor("");
+                setTitle(""); setSummary(""); setProfessor(""); setHoldAtImport(false);
               }}
             >
               <Plus className="h-4 w-4 mr-1" /> Add IP (lands private)
@@ -393,12 +425,12 @@ function ImportScreen({
           </CardContent>
         </Card>
       </div>
-      <GapCallout>
-        Imported professors have no account yet — the "send account information" mechanism was explicitly unspecified ("I don't know"). Parked dependency; nothing is built for it here.
-      </GapCallout>
-      <RecommendedTier id="REC-1" title="Professor invite / account-provisioning flow">
-        Without a concrete invite-to-Founder flow, a professor on the Founder route cannot log in or run the Wildfire process. Needs PO sign-off — surfaced only, not built.
-      </RecommendedTier>
+      <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-start gap-2">
+        <UserPlus className="h-4 w-4 shrink-0 mt-0.5" />
+        <span>
+          <span className="font-semibold">Professor invite (confirmed at gate 2 — was REC-1).</span> Imported professors don't have an account yet: from each idea's routing view you <span className="font-medium">create the professor's profile/account and send the invite</span> — a tag attaches them as a <span className="font-medium">Professor</span> with the IP idea they're working on, applied at account creation. They then come through the app the regular way.
+        </span>
+      </div>
     </>
   );
 }
@@ -464,35 +496,79 @@ function DetailScreen({
                 </div>
               </RadioGroup>
             </div>
-            <GapCallout>Professor has no account yet — provisioning mechanism unspecified (parked; see REC-1).</GapCallout>
+            <Separator />
+            {/* Gate-2 (was REC-1): create the professor's profile/account + send the invite,
+                with the Professor + linked-IP-idea tag applied at account creation. */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <UserPlus className="h-3.5 w-3.5 text-orange-500" /> Professor account (confirmed at gate 2)
+              </Label>
+              {idea.inviteSent ? (
+                <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 space-y-1.5">
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" /> Profile created & invite sent to {idea.professor}
+                  </p>
+                  <p>Tag applied at account creation:</p>
+                  <p className="flex flex-wrap gap-1.5">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-white px-2 py-0.5 font-medium">
+                      <GraduationCap className="h-3 w-3" /> Professor
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-white px-2 py-0.5 font-medium">
+                      <Tag className="h-3 w-3" /> IP idea: {idea.title}
+                    </span>
+                  </p>
+                  <p className="text-emerald-800/80">They come through the app the regular way from here.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    {idea.professor} has no account yet. Create their profile/account and send the invite — a tag attaches them as a <span className="font-medium">Professor</span> with this IP idea, applied at account creation.
+                  </p>
+                  <Button size="sm" className="w-full" onClick={() => onChange({ inviteSent: true })}>
+                    <Send className="h-3.5 w-3.5 mr-1" /> Create profile & send invite
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground flex flex-wrap items-center gap-1">
+                    Applies:
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5">
+                      <GraduationCap className="h-3 w-3" /> Professor
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5">
+                      <Tag className="h-3 w-3" /> Linked IP idea
+                    </span>
+                  </p>
+                </>
+              )}
+            </div>
           </CardContent>
         </Card>
 
         {/* Route selection */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><ArrowRight className="h-4 w-4 text-orange-500" /> Choose the route</CardTitle>
+            <CardTitle className="flex items-center gap-2"><ArrowRight className="h-4 w-4 text-orange-500" /> Choose the disposition</CardTitle>
             <CardDescription>
-              Chosen by the IP Manager AFTER talking to the professor. Each piece of IP takes exactly ONE of the three routes.
+              Chosen by the IP Manager AFTER talking to the professor. Each piece of IP takes exactly ONE of the four options — three outward routes, or Hold (gate-2).
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
               {(
                 [
-                  { r: "founder" as Route, icon: <Rocket className="h-5 w-5" />, color: "orange",
+                  { r: "founder" as Route, icon: <Rocket className="h-5 w-5" />,
                     blurb: "Professor becomes a Founder and runs the normal Wildfire process — Founder Match brings a co-founder (two founders, as today)." },
-                  { r: "hackathon" as Route, icon: <Trophy className="h-5 w-5" />, color: "sky",
+                  { r: "hackathon" as Route, icon: <Trophy className="h-5 w-5" />,
                     blurb: "Good hackathon topic — mark it a pickable hackathon idea. Participants can bring their own idea OR pick this one." },
-                  { r: "founder_match" as Route, icon: <HeartHandshake className="h-5 w-5" />, color: "emerald",
-                    blurb: "Professor won't build it and it isn't a hackathon fit — send to Founder Match to find a founder to run with it." },
+                  { r: "founder_match" as Route, icon: <HeartHandshake className="h-5 w-5" />,
+                    blurb: "Professor won't build it and it isn't a hackathon fit — publish it to the founder-facing list for a founder to pick up." },
+                  { r: "hold" as Route, icon: <PauseCircle className="h-5 w-5" />,
+                    blurb: "Gate-2: mark it private and HOLD it in the app until you figure out what to do with it — a deliberate disposition, not just 'not routed yet'." },
                 ]
               ).map(({ r, icon, blurb }) => {
                 const active = idea.route === r;
                 return (
                   <button
                     key={r}
-                    onClick={() => onChange({ route: r })}
+                    onClick={() => onChange(r === "hold" ? { route: r, state: "private" } : { route: r })}
                     className={`text-left rounded-lg border p-4 transition-all ${
                       active ? "border-primary ring-2 ring-primary/30 bg-primary/5" : "border-border hover:border-primary/40 bg-background"
                     }`}
@@ -501,7 +577,7 @@ function DetailScreen({
                       <span className={active ? "text-primary" : "text-muted-foreground"}>{icon}</span>
                       {active && <CheckCircle2 className="h-4 w-4 text-primary" />}
                     </div>
-                    <p className="font-semibold text-sm">{ROUTE_LABEL[r]} route</p>
+                    <p className="font-semibold text-sm">{r === "hold" ? ROUTE_LABEL[r] : `${ROUTE_LABEL[r]} route`}</p>
                     <p className="text-xs text-muted-foreground mt-1 leading-snug">{blurb}</p>
                   </button>
                 );
@@ -514,16 +590,26 @@ function DetailScreen({
               </ParkedCallout>
             )}
 
+            {idea.route === "hold" && (
+              <div className="mt-3 rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700 flex items-start gap-2">
+                <PauseCircle className="h-4 w-4 shrink-0 mt-0.5 text-slate-500" />
+                <span>
+                  <span className="font-semibold">On Hold (gate-2).</span> This idea is held privately in the app until you decide what to do with it — it is not visible downstream and cannot be published while held. Pick an outward route to move it on.
+                </span>
+              </div>
+            )}
+
             <Separator className="my-4" />
             <div className="flex flex-wrap items-center gap-3">
               <Button
-                disabled={idea.state === "published" || !idea.route}
+                disabled={idea.state === "published" || !idea.route || idea.route === "hold"}
                 onClick={() => { onChange({ state: "published" }); setPublished(true); setTimeout(() => setPublished(false), 3000); }}
               >
                 <Globe2 className="h-4 w-4 mr-1" />
                 {idea.state === "published" ? "Published" : "Publish this idea"}
               </Button>
-              {!idea.route && <span className="text-xs text-muted-foreground">Pick a route first — or leave it private (the hold state) and decide later.</span>}
+              {!idea.route && <span className="text-xs text-muted-foreground">Pick a disposition first — it stays private (unrouted) by default until you do.</span>}
+              {idea.route === "hold" && <span className="text-xs text-muted-foreground">Held ideas stay private — publishing is disabled while on Hold.</span>}
               {published && (
                 <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
                   <CheckCircle2 className="h-4 w-4" /> Published to the {idea.route ? ROUTE_LABEL[idea.route] : ""} destination.
@@ -558,6 +644,7 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
       founder: ideas.filter((i) => i.route === "founder"),
       hackathon: ideas.filter((i) => i.route === "hackathon"),
       founder_match: ideas.filter((i) => i.route === "founder_match"),
+      hold: ideas.filter((i) => i.route === "hold"),
       unrouted: ideas.filter((i) => !i.route),
     }),
     [ideas]
@@ -568,7 +655,7 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
       <PageHeader
         icon={<Activity className="h-5 w-5" />}
         title={`Tracking dashboard — ${UNIVERSITY}`}
-        subtitle="Confirmed at the gate: the IP Manager tracks all data associated with each IP idea across all three routes — founder-route progress through the Wildfire program, what was built at the hackathon, and how each founder match is doing."
+        subtitle="Confirmed at the gate: the IP Manager tracks all data associated with each IP idea across the three outward routes — founder-route progress through the Wildfire program, what was built at the hackathon, and how each founder match is doing — plus what's explicitly on Hold (gate-2)."
       />
       <ConfirmedHint>
         Framework (PO-named): the app's existing founder-tracking system — the Founders analytics card (phase · lessons · engagement) reused per route.
@@ -731,27 +818,46 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
         </CardContent>
       </Card>
 
-      {/* Unrouted / on hold */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Lock className="h-4 w-4 text-slate-500" /> Private / not routed yet ({byRoute.unrouted.length})</CardTitle>
-          <CardDescription>Private is the hold state — "put it on hold and decide later."</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {byRoute.unrouted.map((i) => (
-              <button key={i.id} onClick={() => onOpen(i.id)} className="rounded-full border border-border px-3 py-1 text-xs hover:border-primary/50">
-                {i.title}
-              </button>
-            ))}
-            {byRoute.unrouted.length === 0 && <p className="text-sm text-muted-foreground">Every idea has a route.</p>}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Hold (explicit, gate-2) vs default private/unrouted */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><PauseCircle className="h-4 w-4 text-slate-500" /> On Hold — explicit (gate-2) ({byRoute.hold.length})</CardTitle>
+            <CardDescription>Deliberately held privately in the app until the IP Manager figures out what to do with it — the fourth disposition.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {byRoute.hold.map((i) => (
+                <button key={i.id} onClick={() => onOpen(i.id)} className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs hover:border-primary/50">
+                  {i.title}
+                </button>
+              ))}
+              {byRoute.hold.length === 0 && <p className="text-sm text-muted-foreground">Nothing is on Hold.</p>}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Lock className="h-4 w-4 text-slate-500" /> Not routed yet — default private ({byRoute.unrouted.length})</CardTitle>
+            <CardDescription>Everything lands private/unrouted by default — distinct from an explicit Hold.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {byRoute.unrouted.map((i) => (
+                <button key={i.id} onClick={() => onOpen(i.id)} className="rounded-full border border-border px-3 py-1 text-xs hover:border-primary/50">
+                  {i.title}
+                </button>
+              ))}
+              {byRoute.unrouted.length === 0 && <p className="text-sm text-muted-foreground">Every idea has a disposition.</p>}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
         <MetricTile label="Published" value={String(ideas.filter((i) => i.state === "published").length)} icon={Eye} />
-        <MetricTile label="Private (hold)" value={String(ideas.filter((i) => i.state === "private").length)} icon={Lock} />
+        <MetricTile label="Private" value={String(ideas.filter((i) => i.state === "private").length)} icon={Lock} />
+        <MetricTile label="On Hold (explicit)" value={String(ideas.filter((i) => i.route === "hold").length)} icon={PauseCircle} />
         <MetricTile label="Professors involved" value={String(new Set(ideas.map((i) => i.professor)).size)} icon={ClipboardList} />
       </div>
     </>

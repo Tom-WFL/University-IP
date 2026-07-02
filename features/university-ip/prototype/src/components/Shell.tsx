@@ -79,7 +79,8 @@ export function TenancyLegend() {
           <span className="font-medium">organization</span> with its own IP Managers, fully isolated — an{" "}
           <span className="font-medium">IP Manager</span> cannot see other universities' IP, or the other
           universities at all. There is ONE university-side role: the VP of Research is merged into the{" "}
-          <span className="font-medium">IP Manager</span>.
+          <span className="font-medium">IP Manager</span>. Only the <span className="font-medium">Wildfire Admin</span>{" "}
+          (WFL staff) sees all universities (gate-2).
         </span>
       </div>
     </div>
