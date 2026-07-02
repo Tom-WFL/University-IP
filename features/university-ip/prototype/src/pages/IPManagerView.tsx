@@ -15,14 +15,14 @@ import {
   RoleHero, NavCardGrid, CardTierBadge, BackToHome, type NavCard,
 } from "@/components/Shell";
 import {
-  UNIVERSITY, IP_MANAGER, ROUTE_LABEL,
-  type IpIdea, type Route, type Involvement, type InterestNotification,
+  UNIVERSITY, IP_MANAGER, ROUTE_LABEL, MATCH_STAGES,
+  type IpIdea, type Route, type Involvement, type InterestNotification, type MatchStatus,
 } from "@/data";
 import {
   Building2, FolderKanban, Upload, ListPlus, Activity, Rocket, Trophy, HeartHandshake,
   Lock, Globe2, UserRound, Phone, Users, CheckCircle2, FileSpreadsheet, Plus,
   GraduationCap, Hammer, ArrowRight, Eye, ClipboardList, PauseCircle, UserPlus, Tag, Send,
-  Bell, Link2, Info, Home,
+  Bell, Link2, Info, Home, NotebookPen, Flag, ChevronRight,
 } from "lucide-react";
 
 /* ── Small shared chips ────────────────────────────────────────────────────── */
@@ -184,6 +184,7 @@ export default function IPManagerView({
       {screen === "inbox" && <InboxScreen interests={myInterests} onConnect={onConnect} onOpenIdea={openDetail} ideas={ideas} />}
       {screen === "detail" && selectedId != null && (
         <DetailScreen
+          key={selectedId}
           idea={ideas.find((i) => i.id === selectedId)!}
           onChange={(patch) => update(selectedId, patch)}
           onBackToList={() => setScreen("portfolio")}
@@ -511,6 +512,12 @@ function DetailScreen({
         </CardContent>
       </Card>
 
+      {/* Gate-4 (2026-07-02): the IP profile is WHERE the IP Manager writes the
+          tracking notes, records the outcome, and moves the Founder-Match
+          status through its stages — the tracking dashboard reflects these
+          same fields (shared client state, not duplicated mock data). */}
+      <TrackingManagementCard idea={idea} onChange={onChange} />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Professor association + involvement flag */}
         <Card>
@@ -679,12 +686,210 @@ function DetailScreen({
   );
 }
 
+/* ── IP-profile tracking management (gate-4) ─────────────────────────────────
+   PO gate-4 (2026-07-02): the tracking dashboard SHOWS notes / outcome / match
+   status, but there was nowhere to WRITE them. The idea's IP profile (this
+   detail view, alongside "About this company") is where the IP Manager
+   writes/edits the notes, records/updates the outcome, and moves the match
+   status through its stages. Stage vocabulary is the prototype's existing
+   match-status set — reused, not invented. */
+
+const MATCH_ADVANCE_PATH: MatchStatus[] = ["Searching", "Intro made", "Matched — running"];
+
+function TrackingManagementCard({
+  idea, onChange,
+}: {
+  idea: IpIdea;
+  onChange: (patch: Partial<IpIdea>) => void;
+}) {
+  const [notesDraft, setNotesDraft] = useState(idea.notes ?? "");
+  const [outcomeDraft, setOutcomeDraft] = useState(idea.outcome ?? "");
+  const [matchedFounderDraft, setMatchedFounderDraft] = useState(idea.matchTracking?.matchedFounder ?? "");
+  const [flash, setFlash] = useState<string | null>(null);
+
+  const saved = (msg: string) => {
+    setFlash(msg);
+    setTimeout(() => setFlash(null), 3500);
+  };
+
+  const status: MatchStatus = idea.matchTracking?.matchStatus ?? "Searching";
+  const setStatus = (s: MatchStatus) => {
+    onChange({
+      matchTracking: { matchedFounder: idea.matchTracking?.matchedFounder ?? null, matchStatus: s },
+    });
+    saved(`Match status moved to "${s}" — reflected on the tracking dashboard.`);
+  };
+  const nextStage =
+    status === "Matched — stalled"
+      ? "Matched — running"
+      : MATCH_ADVANCE_PATH[MATCH_ADVANCE_PATH.indexOf(status) + 1];
+
+  const stagePillStyle = (s: MatchStatus, active: boolean) => {
+    if (!active) return "border-border bg-background text-muted-foreground hover:border-primary/40";
+    if (s === "Matched — running") return "border-emerald-300 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-200";
+    if (s === "Matched — stalled") return "border-red-300 bg-red-50 text-red-700 ring-2 ring-red-200";
+    if (s === "Intro made") return "border-blue-300 bg-blue-50 text-blue-700 ring-2 ring-blue-200";
+    return "border-slate-300 bg-slate-100 text-slate-700 ring-2 ring-slate-200";
+  };
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <NotebookPen className="h-4 w-4 text-orange-500" /> Tracking — notes, outcome{idea.route === "founder_match" ? " & match status" : ""}
+        </CardTitle>
+        <CardDescription>
+          Gate-4 (confirmed): the IP profile is where you WRITE what the tracking dashboard shows — write/edit your notes, record the outcome{idea.route === "founder_match" ? ", and move the Founder-Match status through its stages" : ""}. The tracking dashboard reflects what you enter here.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {flash && (
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" /> {flash}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Write / edit notes */}
+          <div className="space-y-1.5">
+            <Label htmlFor="track-notes" className="flex items-center gap-1.5">
+              <NotebookPen className="h-3.5 w-3.5 text-muted-foreground" /> IP Manager notes
+            </Label>
+            <Textarea
+              id="track-notes"
+              rows={3}
+              value={notesDraft}
+              onChange={(e) => setNotesDraft(e.target.value)}
+              placeholder="How this idea is doing on its route — write your tracking notes here"
+            />
+            <Button
+              size="sm"
+              disabled={notesDraft === (idea.notes ?? "")}
+              onClick={() => { onChange({ notes: notesDraft }); saved("Notes saved — reflected on the tracking dashboard."); }}
+            >
+              <NotebookPen className="h-3.5 w-3.5 mr-1" /> {idea.notes ? "Update notes" : "Save notes"}
+            </Button>
+          </div>
+
+          {/* Record / update the outcome */}
+          <div className="space-y-1.5">
+            <Label htmlFor="track-outcome" className="flex items-center gap-1.5">
+              <Flag className="h-3.5 w-3.5 text-muted-foreground" /> Outcome
+            </Label>
+            <Textarea
+              id="track-outcome"
+              rows={3}
+              value={outcomeDraft}
+              onChange={(e) => setOutcomeDraft(e.target.value)}
+              placeholder={
+                idea.route === "hackathon"
+                  ? "e.g. what came out of the event for this idea"
+                  : idea.route === "founder_match"
+                    ? "e.g. where the match landed"
+                    : "The idea's outcome on its route"
+              }
+            />
+            <Button
+              size="sm"
+              disabled={outcomeDraft === (idea.outcome ?? "")}
+              onClick={() => { onChange({ outcome: outcomeDraft }); saved("Outcome recorded — reflected on the tracking dashboard."); }}
+            >
+              <Flag className="h-3.5 w-3.5 mr-1" /> {idea.outcome ? "Update outcome" : "Record outcome"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Move the Founder-Match status through its stages (gate-4) */}
+        {idea.route === "founder_match" && (
+          <>
+            <Separator />
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <HeartHandshake className="h-3.5 w-3.5 text-emerald-600" /> Match status — move this idea through the stages
+              </Label>
+              <div className="flex flex-wrap items-center gap-2">
+                {MATCH_STAGES.map((s, idx) => (
+                  <span key={s} className="flex items-center gap-2">
+                    {idx > 0 && idx < 3 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                    {idx === 3 && <span className="text-[11px] text-muted-foreground">or</span>}
+                    <button
+                      onClick={() => setStatus(s)}
+                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${stagePillStyle(s, status === s)}`}
+                    >
+                      {s}
+                    </button>
+                  </span>
+                ))}
+                {nextStage && (
+                  <Button size="sm" variant="outline" onClick={() => setStatus(nextStage)}>
+                    Advance to "{nextStage}" <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-wrap items-end gap-2 pt-1">
+                <div className="space-y-1 flex-1 min-w-[220px] max-w-sm">
+                  <Label htmlFor="matched-founder" className="text-xs">Matched founder (existing tracking field)</Label>
+                  <Input
+                    id="matched-founder"
+                    value={matchedFounderDraft}
+                    onChange={(e) => setMatchedFounderDraft(e.target.value)}
+                    placeholder="e.g. Leo Tran (Wildfire Network)"
+                    className="h-8"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={matchedFounderDraft === (idea.matchTracking?.matchedFounder ?? "")}
+                  onClick={() => {
+                    onChange({ matchTracking: { matchedFounder: matchedFounderDraft.trim() || null, matchStatus: status } });
+                    saved("Matched founder recorded — reflected on the tracking dashboard.");
+                  }}
+                >
+                  <Users className="h-3.5 w-3.5 mr-1" /> Save
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Stages reuse this prototype's existing match-status vocabulary. Moving a match to "Matched" here only updates the tracking status — formal match completion / how the two-founder company forms stays an open dependency (see the GAP on the interest flow).
+              </p>
+            </div>
+          </>
+        )}
+
+        <GapCallout>
+          Who else can see these notes and the recorded outcome (the professor? the Wildfire Admin?) was not specified — rendered here as the IP Manager's own tracking record. PO to confirm visibility.
+        </GapCallout>
+        <ConfirmedHint>
+          Gate-4 (confirmed): the tracking dashboard reflects the notes, outcome, and match status entered here — one shared record per idea, not duplicated data.
+        </ConfirmedHint>
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ── Screen: Cross-route tracking dashboard ───────────────────────────────────
    Modeled on the live app's founder-tracking system:
    - src/services/founderAnalyticsService.ts (FounderProgress: currentPhase,
      lessonsCompleted/totalLessons, aiFeedbackCount, documentsRevised)
    - src/pages/AdminAnalyticsDashboard.tsx (Founders card: metric tiles +
      per-founder table with phase badge) — the framework the PO named. */
+
+/* Gate-4: notes + outcome are the SAME fields the IP Manager writes on the
+   idea's IP profile — this dashboard reads the shared client state. */
+function NotesOutcomeCell({ idea }: { idea: IpIdea }) {
+  if (!idea.outcome && !idea.notes)
+    return <span className="text-xs text-muted-foreground">— write it on the IP profile</span>;
+  return (
+    <div className="max-w-[30ch] space-y-0.5">
+      {idea.outcome && (
+        <p className="text-sm font-medium text-foreground flex items-start gap-1">
+          <Flag className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground" /> {idea.outcome}
+        </p>
+      )}
+      {idea.notes && <p className="text-xs text-muted-foreground">{idea.notes}</p>}
+    </div>
+  );
+}
 
 function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: number) => void }) {
   const byRoute = useMemo(
@@ -708,6 +913,12 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
       <ConfirmedHint>
         Framework (PO-named): the app's existing founder-tracking system — the Founders analytics card (phase · lessons · engagement) reused per route.
       </ConfirmedHint>
+      <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-center gap-2">
+        <NotebookPen className="h-4 w-4 shrink-0" />
+        <span>
+          <span className="font-semibold">Gate-4 (confirmed):</span> the notes, outcome, and match status below are <span className="font-medium">written on each idea's IP profile</span> (click any row) — this dashboard reflects what's entered there, live.
+        </span>
+      </div>
 
       {/* Summary tiles — mirrors the app's analytics MetricTile row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-5">
@@ -737,6 +948,7 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
                   <TableHead>Lessons</TableHead>
                   <TableHead className="text-right">AI feedback</TableHead>
                   <TableHead className="text-right">Revisions</TableHead>
+                  <TableHead>Outcome & notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -769,6 +981,7 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
                       </TableCell>
                       <TableCell className="text-right">{t?.aiFeedbackCount ?? "—"}</TableCell>
                       <TableCell className="text-right">{t?.documentsRevised ?? "—"}</TableCell>
+                      <TableCell><NotesOutcomeCell idea={i} /></TableCell>
                     </TableRow>
                   );
                 })}
@@ -795,7 +1008,7 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
                   <TableHead>Event</TableHead>
                   <TableHead>Picked by</TableHead>
                   <TableHead>What was built</TableHead>
-                  <TableHead>Outcome</TableHead>
+                  <TableHead>Outcome & notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -808,7 +1021,7 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
                       <TableCell className="text-sm">{t?.event ?? "—"}</TableCell>
                       <TableCell className="text-sm">{t?.pickedBy ?? <span className="text-muted-foreground text-xs">Not picked yet</span>}</TableCell>
                       <TableCell className="text-sm max-w-[26ch]">{t?.built ?? <span className="text-muted-foreground text-xs">—</span>}</TableCell>
-                      <TableCell className="text-sm max-w-[24ch]">{t?.outcome ?? <span className="text-muted-foreground text-xs">—</span>}</TableCell>
+                      <TableCell><NotesOutcomeCell idea={i} /></TableCell>
                     </TableRow>
                   );
                 })}
@@ -837,7 +1050,7 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
                   <TableHead>State</TableHead>
                   <TableHead>Matched founder</TableHead>
                   <TableHead>Match status</TableHead>
-                  <TableHead>Notes</TableHead>
+                  <TableHead>Outcome & notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -856,7 +1069,7 @@ function TrackingScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
                       <TableCell>
                         {t && <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyle}`}>{t.matchStatus}</span>}
                       </TableCell>
-                      <TableCell className="text-sm max-w-[32ch]">{t?.note}</TableCell>
+                      <TableCell><NotesOutcomeCell idea={i} /></TableCell>
                     </TableRow>
                   );
                 })}

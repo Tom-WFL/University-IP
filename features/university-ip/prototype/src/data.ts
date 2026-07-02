@@ -30,13 +30,17 @@ export interface HackathonTracking {
   event: string;
   pickedBy: string | null; // team that picked the idea
   built: string | null; // what was built at the hackathon
-  outcome: string | null;
 }
+
+/* Gate-4 (2026-07-02): the Founder-Match status is MOVED THROUGH ITS STAGES by
+   the IP Manager from the idea's IP profile. The stage vocabulary is the one
+   this prototype already modeled — reused, not invented. */
+export const MATCH_STAGES = ["Searching", "Intro made", "Matched — running", "Matched — stalled"] as const;
+export type MatchStatus = (typeof MATCH_STAGES)[number];
 
 export interface MatchTracking {
   matchedFounder: string | null;
-  matchStatus: "Searching" | "Intro made" | "Matched — running" | "Matched — stalled";
-  note: string;
+  matchStatus: MatchStatus;
 }
 
 export interface IpIdea {
@@ -55,6 +59,12 @@ export interface IpIdea {
   route: Route | null; // null = not routed yet (default private/unrouted); "hold" = explicit Hold disposition (gate-2)
   addedVia: "spreadsheet" | "individual";
   inviteSent?: boolean; // gate-2: IP Manager created the professor's profile/account + sent the invite (Professor + linked-IP-idea tag)
+  /* Gate-4 (2026-07-02): the IP Manager WRITES tracking notes and RECORDS the
+     outcome from the idea's IP profile (the detail view, alongside "About this
+     company"); the tracking dashboard reflects these same fields — one shared
+     record, not duplicated mock data. Client-state only. */
+  notes?: string; // IP Manager's tracking notes, written/edited on the IP profile
+  outcome?: string; // outcome recorded/updated on the IP profile
   founderTracking?: FounderTracking;
   hackathonTracking?: HackathonTracking;
   matchTracking?: MatchTracking;
@@ -87,6 +97,7 @@ export const SEED_IDEAS: IpIdea[] = [
     route: "founder",
     addedVia: "spreadsheet",
     inviteSent: true,
+    notes: "Dr. Hale and Jess pairing well — Build phase on pace after a slow start.",
     founderTracking: {
       currentPhase: "Build",
       lessonsCompleted: 14,
@@ -111,11 +122,11 @@ export const SEED_IDEAS: IpIdea[] = [
     state: "published",
     route: "hackathon",
     addedVia: "spreadsheet",
+    outcome: "2nd place — team applying to Wildfire Labs",
     hackathonTracking: {
       event: "Fall Builders Jam 2026",
       pickedBy: "Team AgriSense",
       built: "Working sensor + field-map dashboard prototype",
-      outcome: "2nd place — team applying to Wildfire Labs",
     },
   },
   {
@@ -132,10 +143,11 @@ export const SEED_IDEAS: IpIdea[] = [
     state: "published",
     route: "founder_match",
     addedVia: "individual",
+    notes: "Company formed; Dr. Voss advising as contact-only. Customer Discovery underway.",
+    outcome: "Matched — two-founder company formed with Priya Raman.",
     matchTracking: {
       matchedFounder: "Priya Raman (Wildfire Network)",
       matchStatus: "Matched — running",
-      note: "Company formed; Dr. Voss advising as contact-only. Customer Discovery underway.",
     },
   },
   {
@@ -171,7 +183,6 @@ export const SEED_IDEAS: IpIdea[] = [
       event: "— (not yet published to an event)",
       pickedBy: null,
       built: null,
-      outcome: null,
     },
   },
   {
@@ -203,10 +214,10 @@ export const SEED_IDEAS: IpIdea[] = [
     state: "published",
     route: "founder_match",
     addedVia: "spreadsheet",
+    notes: "Published to Founder Match — waiting for a founder to pick it up.",
     matchTracking: {
       matchedFounder: null,
       matchStatus: "Searching",
-      note: "Published to Founder Match — waiting for a founder to pick it up.",
     },
   },
   {
@@ -223,10 +234,10 @@ export const SEED_IDEAS: IpIdea[] = [
     state: "published",
     route: "founder_match",
     addedVia: "individual",
+    notes: "Two interested founders; intro call held with one.",
     matchTracking: {
       matchedFounder: null,
       matchStatus: "Intro made",
-      note: "Two interested founders; intro call held with one.",
     },
   },
 ];
@@ -252,7 +263,8 @@ export const OTHER_UNI_MATCH_IDEAS: IpIdea[] = [
     state: "published",
     route: "founder_match",
     addedVia: "spreadsheet",
-    matchTracking: { matchedFounder: null, matchStatus: "Searching", note: "Published to Founder Match." },
+    notes: "Published to Founder Match.",
+    matchTracking: { matchedFounder: null, matchStatus: "Searching" },
   },
   {
     id: 102,
@@ -268,7 +280,8 @@ export const OTHER_UNI_MATCH_IDEAS: IpIdea[] = [
     state: "published",
     route: "founder_match",
     addedVia: "individual",
-    matchTracking: { matchedFounder: null, matchStatus: "Searching", note: "Published to Founder Match." },
+    notes: "Published to Founder Match.",
+    matchTracking: { matchedFounder: null, matchStatus: "Searching" },
   },
   {
     id: 103,
@@ -284,7 +297,8 @@ export const OTHER_UNI_MATCH_IDEAS: IpIdea[] = [
     state: "published",
     route: "founder_match",
     addedVia: "spreadsheet",
-    matchTracking: { matchedFounder: null, matchStatus: "Searching", note: "Published to Founder Match." },
+    notes: "Published to Founder Match.",
+    matchTracking: { matchedFounder: null, matchStatus: "Searching" },
   },
   {
     id: 104,
@@ -300,7 +314,8 @@ export const OTHER_UNI_MATCH_IDEAS: IpIdea[] = [
     state: "published",
     route: "founder_match",
     addedVia: "spreadsheet",
-    matchTracking: { matchedFounder: null, matchStatus: "Searching", note: "Published to Founder Match." },
+    notes: "Published to Founder Match.",
+    matchTracking: { matchedFounder: null, matchStatus: "Searching" },
   },
 ];
 

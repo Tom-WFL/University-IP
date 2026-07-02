@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Container, ConfirmedHint, RoleHero, PageHeader, BackToHome,
+  Container, ConfirmedHint, RoleHero, PageHeader, BackToHome, GapCallout,
 } from "@/components/Shell";
 import { UNIVERSITIES, type UniversityOrg, type UniPerson } from "@/data";
 import {
@@ -111,7 +111,7 @@ export default function AdminView() {
       <RoleHero
         role="Wildfire Admin / Super Admin — WFL staff"
         name="Alex Rivera"
-        tagline="Confirmed at gate 2 (promoted from REC-2): manages what universities are in the system, what's going through them (IP pipeline and volume per university), and who's attached to them (IP Managers, professors). Gate-3: also edits a university, removes a university, reassigns an IP Manager, and deactivates a university and/or people — click any university row for its full detail page."
+        tagline="Confirmed at gate 2 (promoted from REC-2): manages what universities are in the system, what's going through them (IP pipeline and volume per university), and who's attached to them (IP Managers, professors). Gate-3 + gate-4: click INTO a university to manage it — its detail page carries the management itself: edit the university's fields in place, deactivate/reactivate or remove it, reassign/assign IP Managers, and manage the attached professors."
         meta={[
           { icon: <ShieldCheck className="w-4 h-4 text-gray-400" />, label: "All universities (WFL staff)" },
           { icon: <Building2 className="w-4 h-4 text-gray-400" />, label: `${universities.length} university organizations` },
@@ -138,7 +138,7 @@ export default function AdminView() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Activity className="h-4 w-4 text-orange-500" /> Universities — what's going through them & who's attached</CardTitle>
           <CardDescription>
-            Per university: IP volume and disposition breakdown (Founder / Hackathon / Founder Match / Hold), publish state, and the attached IP Managers and professors. Gate-3: click a university to drill into its detail page — its people, pipeline, status, and management actions.
+            Per university: IP volume and disposition breakdown (Founder / Hackathon / Founder Match / Hold), publish state, and the attached IP Managers and professors. Gate-3 + gate-4: click a university to drill into its detail page and MANAGE the entity there — in-place edit, deactivate/remove, reassign IP Manager, manage attached professors.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -156,7 +156,7 @@ export default function AdminView() {
             </TableHeader>
             <TableBody>
               {universities.map((u) => (
-                <TableRow key={u.id} className="cursor-pointer" onClick={() => setOpenId(u.id)}>
+                <TableRow key={u.id} className="cursor-pointer hover:bg-orange-50/40" onClick={() => setOpenId(u.id)}>
                   <TableCell>
                     <p className="font-medium text-foreground">{u.name}</p>
                     <p className="text-xs text-muted-foreground">Provisioned {u.provisioned}{!u.active && " · DEACTIVATED"}</p>
@@ -200,7 +200,7 @@ export default function AdminView() {
             </TableBody>
           </Table>
           <ConfirmedHint>
-            Gate-2 (was REC-2): the Wildfire Admin manages what universities are in the system, what's going through them, and who's attached to them. Gate-3: each row drills into a full university detail page with edit / remove / reassign / deactivate.
+            Gate-2 (was REC-2): the Wildfire Admin manages what universities are in the system, what's going through them, and who's attached to them. Gate-4: each row clicks INTO the entity, and the entity is managed inside its own page — edit in place / remove / reassign / deactivate / manage attached people.
           </ConfirmedHint>
         </CardContent>
       </Card>
@@ -260,10 +260,17 @@ export default function AdminView() {
 /* ── Gate-3: per-university drill-down detail page ─────────────────────────
    "Click University of South Dakota — it takes you deeper": the university's
    IP Managers, professors, ideas/pipeline, status, and the management
-   actions (edit / remove / reassign IP Manager / deactivate). */
+   actions (edit / remove / reassign IP Manager / deactivate).
+
+   Gate-4 (2026-07-02): clicking INTO the university/organization IS the
+   management surface — the entity is managed from inside this detail page:
+   the university's fields edit IN PLACE with a working form (not a dialog
+   that bounces elsewhere), deactivate/reactivate and remove live here, the
+   IP Manager is reassigned or an additional one assigned here, and the
+   attached professors are managed here. Only destructive actions still
+   confirm via dialog (obvious rendering). */
 
 type PendingAction =
-  | { kind: "edit" }
   | { kind: "remove" }
   | { kind: "deactivate-uni" }
   | { kind: "reactivate-uni" }
@@ -278,8 +285,12 @@ function UniversityDetail({
   onRemove: () => void;
 }) {
   const [pending, setPending] = useState<PendingAction | null>(null);
+  const [editing, setEditing] = useState(false); // gate-4: in-place edit mode
   const [editName, setEditName] = useState(u.name);
   const [reassignTo, setReassignTo] = useState("");
+  const [newManagerName, setNewManagerName] = useState(""); // gate-4: assign an additional IP Manager inline
+  const [newProfName, setNewProfName] = useState(""); // gate-4: attach a professor inline
+  const [newProfDept, setNewProfDept] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
 
   const flash = (msg: string) => {
@@ -300,7 +311,7 @@ function UniversityDetail({
       <PageHeader
         icon={<Building2 className="h-5 w-5" />}
         title={u.name}
-        subtitle="Gate-3: the deeper, more robust university page — this organization's IP Managers, professors, ideas/pipeline, status, and the management actions (edit, remove, reassign IP Manager, deactivate)."
+        subtitle="Gate-3: the deeper, more robust university page. Gate-4 (confirmed): this page IS where the organization is managed — edit its fields in place, deactivate/reactivate or remove it, reassign or assign IP Managers, and manage the attached professors, all right here."
       />
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <StatusChip active={u.active} activeLabel="Active organization" inactiveLabel="Deactivated organization" />
@@ -319,28 +330,90 @@ function UniversityDetail({
         </div>
       )}
 
-      {/* Management actions (gate-3) */}
+      {/* Manage this university — IN PLACE on the entity page (gate-4) */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><UserCog className="h-4 w-4 text-orange-500" /> Manage this university</CardTitle>
-          <CardDescription>Gate-3 (confirmed): edit the university, remove it, reassign its IP Manager, deactivate it and/or its people — destructive actions ask for confirmation.</CardDescription>
+          <CardDescription>
+            Gate-4 (confirmed): you manage the entity from inside its page — edit the university's fields in place with a working form, deactivate/reactivate it, remove it, and manage its IP Managers and professors in the cards below. Destructive actions ask for confirmation.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => { setEditName(u.name); setPending({ kind: "edit" }); }}>
-            <Pencil className="h-3.5 w-3.5 mr-1" /> Edit university
-          </Button>
-          {u.active ? (
-            <Button variant="outline" size="sm" onClick={() => setPending({ kind: "deactivate-uni" })}>
-              <Ban className="h-3.5 w-3.5 mr-1" /> Deactivate university
-            </Button>
+        <CardContent className="space-y-3">
+          {editing ? (
+            /* Gate-4: the in-place edit form — saves right here, no dialog, no bounce back to the list. */
+            <form
+              className="rounded-lg border border-primary/40 bg-primary/5 p-4 space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!editName.trim()) return;
+                onPatch({ name: editName.trim() });
+                setEditing(false);
+                flash("University details saved — updated here and on the universities list.");
+              }}
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-uni-name">Organization name</Label>
+                <Input id="edit-uni-name" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  <StatusChip active={u.active} activeLabel="Active organization" inactiveLabel="Deactivated organization" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Provisioned</p>
+                  <p>{u.provisioned}</p>
+                </div>
+              </div>
+              <GapCallout>
+                The PO confirmed the admin edits a university from inside its page, but WHICH fields a university carries beyond its name was not specified — only the organization name is rendered editable here. PO to confirm the field set.
+              </GapCallout>
+              <div className="flex flex-wrap gap-2">
+                <Button type="submit" size="sm" disabled={!editName.trim()}>
+                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Save changes
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => { setEditing(false); setEditName(u.name); }}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
           ) : (
-            <Button variant="outline" size="sm" onClick={() => setPending({ kind: "reactivate-uni" })}>
-              <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reactivate university
-            </Button>
+            <div className="rounded-lg border border-border p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Organization name</p>
+                  <p className="font-medium text-foreground">{u.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  <StatusChip active={u.active} activeLabel="Active organization" inactiveLabel="Deactivated organization" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Provisioned</p>
+                  <p>{u.provisioned}</p>
+                </div>
+              </div>
+            </div>
           )}
-          <Button variant="destructive" size="sm" onClick={() => setPending({ kind: "remove" })}>
-            <Trash2 className="h-3.5 w-3.5 mr-1" /> Remove university
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {!editing && (
+              <Button variant="outline" size="sm" onClick={() => { setEditName(u.name); setEditing(true); }}>
+                <Pencil className="h-3.5 w-3.5 mr-1" /> Edit university
+              </Button>
+            )}
+            {u.active ? (
+              <Button variant="outline" size="sm" onClick={() => setPending({ kind: "deactivate-uni" })}>
+                <Ban className="h-3.5 w-3.5 mr-1" /> Deactivate university
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setPending({ kind: "reactivate-uni" })}>
+                <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reactivate university
+              </Button>
+            )}
+            <Button variant="destructive" size="sm" onClick={() => setPending({ kind: "remove" })}>
+              <Trash2 className="h-3.5 w-3.5 mr-1" /> Remove university
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -366,7 +439,7 @@ function UniversityDetail({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><UserCog className="h-4 w-4 text-orange-500" /> IP Managers ({u.ipManagers.length})</CardTitle>
-            <CardDescription>This university's assigned IP Manager(s) — reassign or deactivate (gate-3).</CardDescription>
+            <CardDescription>This university's assigned IP Manager(s) — reassign, deactivate, or assign another, right here (gate-3 + gate-4).</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -399,6 +472,26 @@ function UniversityDetail({
                 )}
               </TableBody>
             </Table>
+            {/* Gate-4: assign an (additional) IP Manager from inside the entity page */}
+            <form
+              className="mt-3 flex flex-wrap items-end gap-2 rounded-lg border border-border bg-muted/30 p-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const name = newManagerName.trim();
+                if (!name) return;
+                onPatch((cur) => ({ ipManagers: [...cur.ipManagers, { name, active: true }] }));
+                setNewManagerName("");
+                flash(`${name} assigned as an IP Manager of ${u.name}.`);
+              }}
+            >
+              <div className="space-y-1 flex-1 min-w-[180px]">
+                <Label htmlFor="assign-mgr" className="text-xs">Assign an IP Manager</Label>
+                <Input id="assign-mgr" value={newManagerName} onChange={(e) => setNewManagerName(e.target.value)} placeholder="e.g. Dana Wolfe" className="h-8" />
+              </div>
+              <Button type="submit" size="sm" variant="outline" disabled={!newManagerName.trim()}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Assign
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
@@ -406,7 +499,7 @@ function UniversityDetail({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><GraduationCap className="h-4 w-4 text-orange-500" /> Professors tied to {u.name} ({u.professors.length})</CardTitle>
-            <CardDescription>Gate-3: which professors are tied to this university — professor-founders carrying the university-IP-origin tag.</CardDescription>
+            <CardDescription>Gate-3: which professors are tied to this university — professor-founders carrying the university-IP-origin tag. Gate-4: managed right here — deactivate/reactivate, or attach one.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -436,37 +529,44 @@ function UniversityDetail({
                 )}
               </TableBody>
             </Table>
+            {/* Gate-4: manage who's attached from inside the entity page. (Professors
+                also become attached when an IP Manager associates them with an idea.) */}
+            <form
+              className="mt-3 flex flex-wrap items-end gap-2 rounded-lg border border-border bg-muted/30 p-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const name = newProfName.trim();
+                if (!name) return;
+                onPatch((cur) => ({
+                  professors: [...cur.professors, { name, dept: newProfDept.trim() || undefined, active: true }],
+                }));
+                setNewProfName("");
+                setNewProfDept("");
+                flash(`${name} attached to ${u.name}.`);
+              }}
+            >
+              <div className="space-y-1 flex-1 min-w-[150px]">
+                <Label htmlFor="attach-prof" className="text-xs">Attach a professor</Label>
+                <Input id="attach-prof" value={newProfName} onChange={(e) => setNewProfName(e.target.value)} placeholder="e.g. Dr. Lee Chen" className="h-8" />
+              </div>
+              <div className="space-y-1 flex-1 min-w-[130px]">
+                <Label htmlFor="attach-prof-dept" className="text-xs">Department</Label>
+                <Input id="attach-prof-dept" value={newProfDept} onChange={(e) => setNewProfDept(e.target.value)} placeholder="optional" className="h-8" />
+              </div>
+              <Button type="submit" size="sm" variant="outline" disabled={!newProfName.trim()}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Attach
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>
       <ConfirmedHint>
-        Gate-3 (confirmed): edit / remove / reassign / deactivate mechanics and this per-university drill-down. Confirmation dialogs on destructive actions are the obvious rendering.
+        Gate-3 (confirmed): edit / remove / reassign / deactivate mechanics and this per-university drill-down. Gate-4 (confirmed): the entity is managed from INSIDE this page — in-place edit form, people managed in their cards — with confirmation dialogs only on destructive actions (obvious rendering).
       </ConfirmedHint>
 
-      {/* ── Dialogs ─────────────────────────────────────────────────────────── */}
-
-      {/* Edit university */}
-      <Dialog open={pending?.kind === "edit"} onOpenChange={(o) => !o && close()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Pencil className="h-4 w-4" /> Edit university</DialogTitle>
-            <DialogDescription>Gate-3: the Wildfire Admin can edit a university's details.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-uni-name">University name</Label>
-            <Input id="edit-uni-name" value={editName} onChange={(e) => setEditName(e.target.value)} />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={close}>Cancel</Button>
-            <Button
-              disabled={!editName.trim()}
-              onClick={() => { onPatch({ name: editName.trim() }); flash("University details updated."); close(); }}
-            >
-              Save changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* ── Dialogs: confirmations on destructive actions (gate-3 obvious
+             rendering) + the reassign prompt. Editing manages IN PLACE on the
+             page (gate-4) — there is no edit dialog anymore. ─────────────── */}
 
       {/* Remove university (destructive → confirm) */}
       <Dialog open={pending?.kind === "remove"} onOpenChange={(o) => !o && close()}>

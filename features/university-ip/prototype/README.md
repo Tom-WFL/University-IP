@@ -1,4 +1,4 @@
-# University IP — Validation Prototype (v3, gate-3 feedback applied)
+# University IP — Validation Prototype (v4, gate-4 feedback applied)
 
 A **clickable validation prototype** for the University IP feature, built on the
 real Wildfire app's stack (React 18 + Vite + Tailwind + shadcn/ui) with the app's
@@ -6,7 +6,29 @@ design tokens and UI components vendored from `WF-App-6-30`. It is a **throwaway
 mockup** — no backend, nothing persists — for the PO to click through and
 validate the reviewed intake before the DoD is written.
 
-**v3 (2026-07-02)** folds in the PO's five gate-3 (round-3) changes:
+**v4 (2026-07-02)** folds in the PO's two gate-4 (round-4) changes:
+
+1. **Admin manages entities INSIDE the drill-down** — "click into the
+   universities or the organizations to manage those entities": the
+   university detail page now carries the management itself — the
+   university's fields edit **in place with a working form** (no more edit
+   dialog; saved changes reflect on the detail and the list), deactivate /
+   reactivate / remove live on the page, IP Managers are reassigned or
+   **assigned** there, and attached professors are managed there
+   (deactivate/reactivate, **attach**). Confirmation dialogs remain only on
+   destructive actions. GAP callout: the editable university field set
+   beyond the organization name was not specified.
+2. **The IP profile writes the tracking** — the idea detail (same place as
+   "About this company") gains a working "Tracking — notes, outcome & match
+   status" section: write/edit the IP Manager's notes, record/update the
+   outcome, move the Founder-Match status through the framework's
+   **existing** stages (Searching → Intro made → Matched — running, with
+   Matched — stalled as the off-track variant) and record the matched
+   founder (existing field). The tracking dashboard reads the **same shared
+   client state** — what's entered on the profile shows up there live. GAP
+   callout: who else can see the notes/outcome was not specified.
+
+**v3 (2026-07-02)** folded in the PO's five gate-3 (round-3) changes:
 
 1. **IP Portfolio company description** — clicking a company/idea in the IP
    Manager's portfolio opens its detail with an "About this company — what it
@@ -64,7 +86,12 @@ npm run dev     # http://localhost:8754
     ideas stay private and can't be published.
   - **Tracking dashboard** — cross-route tracking of every idea, modeled on the
     app's existing founder-tracking system, plus explicit **On Hold** vs
-    default private/unrouted buckets.
+    default private/unrouted buckets. Gate-4: the notes / outcome / match
+    status columns reflect what's written on each idea's IP profile (shared
+    state).
+  - **IP profile tracking section (gate-4)** — write/edit notes, record the
+    outcome, and move the Founder-Match status through its existing stages,
+    from the idea detail.
 - **Professor (Founder)** — the idea owner carried as the existing Founder role
   plus the confirmed university-IP-origin analytics tag; invited via the
   IP-Manager-created account with the Professor + linked-IP-idea tag (gate-2);
@@ -83,7 +110,9 @@ npm run dev     # http://localhost:8754
   edit/remove a university, reassign an IP Manager, deactivate a university
   and/or people (confirmation dialogs on destructive actions), and a
   clickable per-university drill-down detail page showing which professors
-  are tied to which university.
+  are tied to which university. Gate-4: the drill-down IS the management
+  surface — in-place edit form, assign/reassign IP Managers, attach and
+  deactivate professors, all inside the entity page.
 
 ## Tiers
 
@@ -94,7 +123,9 @@ npm run dev     # http://localhost:8754
   as confirmed scope; REC-4 was confirmed earlier.)
 - **GAP / PARKED** items render as amber/grey callouts (import mechanics,
   formal match completion / company formation after the IP-Manager-connects
-  step, hackathon-management integration, planning-phase hackathon selection)
+  step, hackathon-management integration, planning-phase hackathon selection;
+  gate-4 adds: who else can see the IP Manager's notes/outcome, and the
+  editable university field set beyond the organization name)
   — surfaced honestly, never invented. (Gate-3 resolved the former GAPs on
   cross-university list breadth and on the app placement of the IP Manager
   home.)
