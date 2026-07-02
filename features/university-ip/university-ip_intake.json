@@ -1,0 +1,184 @@
+{
+  "source_type": "transcript",
+  "project": "University IP (MVP)",
+  "subtitle": "Bringing university-owned IP into the Wildfire app",
+  "spine": {
+    "roles": [
+      {"name": "IP Manager", "scope": "Own university / organization — all of that university's IP", "status": "confirmed"},
+      {"name": "VP of Research (VPR)", "scope": "Own university / organization — governance / oversight", "status": "[UNCONFIRMED]"},
+      {"name": "Professor (idea owner) = Founder", "scope": "Own idea / company — carries the existing Founder role/tag", "status": "confirmed"},
+      {"name": "Co-founder (via Founder Match)", "scope": "Own company — existing Founder role; a student or Wildfire Network member matched to the idea", "status": "confirmed"},
+      {"name": "Wildfire Admin / Super Admin", "scope": "All universities/orgs (WFL staff) — provisions university orgs and IP Managers", "status": "[UNCONFIRMED]"}
+    ],
+    "auth_model": "[UNCONFIRMED] IP Managers and VPRs need accounts and a way to log in; the existing app is magic-link. Professors are IMPORTED by the IP Manager and do NOT have an account yet — the PO floated a 'send account information' button but explicitly did not specify the mechanism ('I don't know'). Whether these accounts carry across products is unstated. Confirm before build.",
+    "entities": [
+      {"name": "University Organization", "relates_to": ""},
+      {"name": "University IP = Idea", "relates_to": "University Organization"},
+      {"name": "Professor (Founder / idea owner)", "relates_to": "University IP = Idea"},
+      {"name": "Route / disposition (Founder | Hackathon | Founder Match)", "relates_to": "University IP = Idea"},
+      {"name": "Publish state (private by default -> published)", "relates_to": "University IP = Idea"},
+      {"name": "Professor-involvement flag (co-founder vs contact-only)", "relates_to": "University IP = Idea"},
+      {"name": "Company (founder route: professor + matched co-founder = two founders)", "relates_to": "Professor (Founder / idea owner)"}
+    ],
+    "authority": [
+      {"action": "Decide to put a university's IP into the Wildfire app", "who": "VP of Research", "final_say": "VP of Research"},
+      {"action": "Insert / import IP, write the idea description, associate a professor", "who": "IP Manager", "final_say": "IP Manager"},
+      {"action": "Choose the route for a piece of IP (Founder / Hackathon / Founder Match)", "who": "IP Manager (after talking to the professor)", "final_say": "IP Manager"},
+      {"action": "Flag whether the professor is a day-to-day co-founder or just a contact", "who": "IP Manager", "final_say": "IP Manager"},
+      {"action": "Publish IP (to Founder Match and/or a Hackathon) and select IP to include in a hackathon", "who": "IP Manager", "final_say": "IP Manager"},
+      {"action": "Confirm/override the roles & requirements captured here", "who": "The actual role-holders (Kirby, Peter)", "final_say": "Role-holder wins over the PO's secondhand account — must be validated"}
+    ],
+    "status": "[UNCONFIRMED]"
+  },
+  "overview": "A net-new capability that brings university-owned IP into the existing Wildfire app. Universities hold valuable IP created by professors, but professors often don't want to (or, at some schools like DSU, are career-disincentivized from) building a company around it — while the university wants companies spun out so the IP gets monetized. An IP Manager (e.g. Kirby or Peter at USD) imports/enters the university's IP into the app as ideas, associates each with the professor who created it, and — after talking to that professor — routes each piece of IP down one of THREE paths. University IP is represented in the app simply as an 'idea' ('the research is just an idea in our world'), not a separate object type. [GAP: exact placement/section in the app not stated — PO to confirm.]",
+  "problem": "[PARTIAL FROM TRANSCRIPT] Universities own strong IP that mostly sits idle: the professor who created it usually won't build a company around it (no time, and at some schools it hurts their career path), yet the university wants that IP monetized via spun-out companies. There is no way today to get university IP into the Wildfire app, associate it with its professor, and route it toward a founder, a hackathon, or a founder match. [GAP: crisp one-line problem statement not stated verbatim — PO to confirm wording.]",
+  "solution": "Give a new IP Manager role a way to bring a university's IP into the Wildfire app (import a spreadsheet of IP or add individually), keep it private by default, associate each idea with its professor, flag whether that professor wants to be a day-to-day co-founder or just a contact, and then route/publish each piece of IP down one of three paths: (1) Founder route — the professor becomes a Founder and runs the normal Wildfire process (with a co-founder found via Founder Match); (2) Hackathon route — the IP becomes a pickable hackathon idea; (3) Founder Match route — find a founder to run with an idea the professor doesn't want to build and that isn't a good hackathon fit.",
+  "roles": [
+    {"name": "IP Manager", "what": "New role. The person who knows and manages the university's IP (e.g. Kirby or Peter at USD). Imports/enters IP into the app, writes the idea summary, associates the professor, flags professor involvement (co-founder vs contact), chooses each idea's route after talking to the professor, and publishes / selects IP for hackathons. Role title in the app is 'IP Manager' regardless of the person's university title.", "access": "Edit (own university's IP)", "context": ""},
+    {"name": "VP of Research (VPR)", "what": "New role (e.g. Dan; Ashley at Madison). Makes the decision to put the university's IP into the Wildfire app. Governance/oversight — can see the hackathon and all teams; largely a passive consumer. [GAP: no in-app action distinct from IP Manager was identified — whether VPR is a separate role or the same as IP Manager is UNRESOLVED.]", "access": "Read-only / governance", "context": ""},
+    {"name": "Professor (idea owner) = Founder", "what": "The professor who created the IP. Even though the university owns the IP, the professor owns all the knowledge of the idea. In the app they carry the existing Founder tag (no separate 'professor' role). Two profiles: (a) wants to be a hands-on co-founder, (b) wants to hand it off with minimal involvement and just be a contact. Could also be a Mentor, but that's unlikely.", "access": "Edit (own idea/company)", "context": ""},
+    {"name": "Co-founder (via Founder Match)", "what": "A student or a Wildfire Network member matched to a professor's idea through the existing Founder Match. Becomes the second founder in the company (two founders, as set up today).", "access": "Edit (own company)", "context": ""},
+    {"name": "Wildfire Admin / Super Admin", "what": "Existing WFL staff role. [GAP: not discussed in this meeting] — grounding implies WFL staff must provision each university as an organization and assign its IP Manager/VPR. Surfaced as a recommendation, not a confirmed decision.", "access": "Full (read/write)", "context": ""}
+  ],
+  "decisions": [
+    {"title": "Three routes for each piece of IP", "detail": "After the IP Manager talks to the professor, each piece of IP goes down ONE of three paths: (1) Founder — professor becomes a Founder and runs the normal Wildfire process; (2) Hackathon — becomes a pickable hackathon idea; (3) Founder Match — find a founder for an idea the professor won't build and that isn't a good hackathon fit.", "highlight": true},
+    {"title": "University IP is just an 'idea'", "detail": "IP is represented in the app as an idea, not a new object type. 'The research is just an idea in our world. It's not a separate thing. It's just an idea.'"},
+    {"title": "Professor = Founder tag", "detail": "The professor (idea owner) carries the existing Founder role/tag — there is no separate 'professor' role. Even though the university owns the IP, the professor owns the idea and leads it."},
+    {"title": "New IP Manager role", "detail": "The person who manages the university's IP gets a new role. Their role title in the app is 'IP Manager' regardless of their university title (VP of research, IP office lead, etc.)."},
+    {"title": "VP of Research decides; IP Manager inserts", "detail": "The VP of Research makes the decision to put the university's IP into the Wildfire app. The IP Manager is the one who actually inserts/imports the IP."},
+    {"title": "Not hackathon-only", "detail": "This is NOT solely for hackathons. Not all university IP is hackathon-appropriate (e.g. a device that makes a heart last longer wouldn't be built at a hackathon). Only a subset of ideas would go to a hackathon."},
+    {"title": "Private by default, then publish", "detail": "Imported IP goes in privately by default. The IP Manager selects some or all and hits publish; publishing sends it out (e.g. to Founder Match), with a separate publish path to a hackathon. This also covers the 'put it on hold and decide later' case — private is the hold state."},
+    {"title": "Import spreadsheet or add individually", "detail": "The IP Manager can import a spreadsheet of IP, or add IP individually with a button. [GAP: exact import/add mechanics not specified — 'however they want to do it'.]"},
+    {"title": "Flag professor involvement per idea", "detail": "For each idea the IP Manager flags whether the professor wants to be a day-to-day co-founder OR is just a contact whom whoever takes the idea can reach out to directly. This reflects the two professor profiles."},
+    {"title": "Founder route reuses the existing process", "detail": "On the Founder route the professor is a Founder and runs through the Wildfire process exactly as founders do today; Founder Match brings a co-founder, resulting in two founders in one company, as currently set up."},
+    {"title": "Hackathon route = pickable idea", "detail": "On the Hackathon route the IP becomes a hackathon idea. Hackathon applicants can bring their own idea OR select a university IP idea to work on ('I like that one, I want to work on that one')."},
+    {"title": "Do NOT rethink founder role-gating now", "detail": "Today the only gated role is Founder (a user can be gated to Founder-only). The PO decided this is not the right time to rethink that gating model — leave it as is for this feature."}
+  ],
+  "dependencies": [
+    {"title": "VALIDATE the whole sub-requirement with Kirby & Peter", "detail": "Everything about the routing, the professor co-founder-vs-contact flag, and IP Manager responsibilities is secondhand from the PO and Dan. Kirby has NOT been consulted; more discovery was done with Peter than Kirby. Must be validated with the actual role-holders before build — 'whoever's in the role wins, not me.'", "status": "Pending", "owner": "PO"},
+    {"title": "Is University IP in v1 / fall hackathons?", "detail": "Undecided whether university IP is part of the fall hackathons / a version-one feature. No school has confirmed fall hackathons will include university IP. PO to ask Ashley (Madison VPR); possibly IP in fall, possibly spring macros.", "status": "Pending", "owner": "PO"},
+    {"title": "Is VPR a distinct role from IP Manager in the app?", "detail": "Unresolved. No in-app action was identified that the VPR does differently from the IP Manager ('maybe it's the same, I gotta think that through'). Both Dan (VPR) and Kirby (IP Manager) could technically enter IP. Default lean: may be one role in-app; can be broken into sub-roles later.", "status": "Pending", "owner": "PO"},
+    {"title": "Professor account provisioning", "detail": "Imported professors have no account yet. The PO floated a 'send account information' button but did not specify the mechanism ('I don't know'). Confirm how a professor gets an account and becomes a Founder who can run the process.", "status": "Pending", "owner": "PO"},
+    {"title": "Exact import / add / publish mechanics", "detail": "Spreadsheet import vs individual add, and the publish flow (private -> publish to Founder Match and/or hackathon), are directional only. 'Click a button to put it in or however they want... we have to talk to.' Exact mechanics TBD.", "status": "Pending", "owner": "PO"},
+    {"title": "Push a list of IP into a hackathon — now or later?", "detail": "A planning-phase flow where the IP Manager is notified/emailed to 'select IP to include in hackathon' (none, some, or all) was described, but the PO wasn't sure it ships immediately ('I don't know if we do this right away or not').", "status": "Pending", "owner": "PO"},
+    {"title": "Kirby's roles & responsibilities in the app", "detail": "The PO has not interviewed Kirby about what her roles and responsibilities in the app will be — only talked to the VP and to Peter. Needs discovery.", "status": "Pending", "owner": "PO"}
+  ],
+  "recommendations": [
+    {"id": "REC-1", "title": "Professor invite / account-provisioning flow", "rationale": "The transcript imports professors with no account and only floats a 'send account information' button ('I don't know'). Without a concrete invite-to-Founder flow, a professor on the Founder route literally cannot log in or run the Wildfire process, so the MVP would miss its own goal.", "category": "role-connection", "status": "Recommended — needs PO sign-off"},
+    {"id": "REC-2", "title": "Super Admin provisioning of universities + assigning IP Managers/VPRs", "rationale": "The master matrix has no IP Manager/VPR role and no university-org setup. Someone WFL-side must create each university organization and assign its IP Manager/VPR before any IP can be entered — the smallest thing that makes day-one usable.", "category": "wildfire-management", "status": "Recommended — needs PO sign-off"},
+    {"id": "REC-3", "title": "Wire the university-IP idea into the existing Idea/Application + Founder Match machinery", "rationale": "The PO says IP 'is just an idea' and that the Founder and Founder-Match routes reuse today's process. To FULLY serve the goal, the imported IP idea must actually connect to the existing idea/company entities and Founder Match rather than be a parallel silo.", "category": "role-connection", "status": "Recommended — needs PO sign-off"},
+    {"id": "REC-4", "title": "Multi-university tenancy — each university its own org, IP Manager scoped to it", "rationale": "The transcript names several schools (USD, DSU, Madison). Locking whether each university is its own tenant/organization and scoping each IP Manager to their own university's IP is exactly the kind of role+tenancy structure whose late reversal is most expensive — force it out at the gate.", "category": "other", "status": "Recommended — needs PO sign-off"},
+    {"id": "REC-5", "title": "University-IP provenance label + professor contact on the idea", "rationale": "Downstream founder-match users and hackathon participants need to know an idea is university-owned IP and who the professor contact is (especially for contact-only professors). Without provenance the 'reach out directly' path can't work.", "category": "ux-gap", "status": "Recommended — needs PO sign-off"},
+    {"id": "REC-6", "title": "Private-vs-published state + empty state for the IP Manager's list", "rationale": "The private-by-default/publish model needs a clear visible state per idea and a first-run empty state, or an IP Manager opening a fresh, empty list can't tell what's live vs held — the smallest thing that makes the publish model legible.", "category": "ux-gap", "status": "Recommended — needs PO sign-off"},
+    {"id": "REC-7", "title": "Attribution / audit on import, routing, and publish", "rationale": "Since both a VPR and an IP Manager may act, recording who imported, routed, and published each piece of IP protects the university relationship and is a cheap addition that a hand-built DoD would likely miss.", "category": "wildfire-management", "status": "Recommended — needs PO sign-off"}
+  ],
+  "tab_index": [
+    {"name": "IP Manager", "covers": "Import/add IP, idea summary, associate professor, involvement flag, choose route, private/publish, select IP for hackathon."},
+    {"name": "VP of Research", "covers": "Decision to put university IP in the app; governance/oversight view of hackathon and teams.", "notes": "May be the same as IP Manager in-app — UNRESOLVED"},
+    {"name": "Professor (Founder)", "covers": "Idea owner carried as a Founder; co-founder-vs-contact profiles; runs the normal Wildfire process."},
+    {"name": "Three IP Routes", "covers": "The Founder / Hackathon / Founder Match routing of each piece of IP, and the private-by-default -> publish model."},
+    {"name": "Backend & Data", "covers": "University org, IP-as-idea, route/publish state, professor-involvement flag, links to existing idea/company + Founder Match.", "notes": "FOUNDATIONAL — build first"},
+    {"name": "Out of Scope (MVP)", "covers": "Features explicitly excluded / deferred from this release.", "status": "Deferred", "notes": "Do not build or test"},
+    {"name": "Acceptance Criteria", "covers": "Master sign-off checklist organised by area."}
+  ],
+  "feature_details": {
+    "Project": "University IP — MVP",
+    "Placement": "Inside the existing Wildfire app (must be logged in — PO does not want data entered outside the app). [GAP: exact section/route not stated.]",
+    "Roles": "IP Manager, VP of Research (VPR), Professor (=Founder), Co-founder (via Founder Match), Wildfire Admin / Super Admin",
+    "AI in scope": "[GAP: not discussed in this meeting.]",
+    "Email notifications": "Only one mentioned: a planning-phase notification/email prompting the IP Manager to 'select IP to include in hackathon'. Parked (may not ship immediately). No other notifications discussed.",
+    "Product Owner": "Tom",
+    "Assigned to": "Enter dev / reviewer",
+    "Target Release": "Enter version / sprint / date"
+  },
+  "role_tabs": [
+    {
+      "sheet_name": "IP Manager",
+      "title": "IP Manager — Bring IP In & Route It",
+      "subtitle": "The IP Manager (e.g. Kirby or Peter at USD) is the primary actor: they bring the university's IP into the app, associate each idea with its professor, flag professor involvement, and route each piece of IP down one of three paths. [GAP: row-level UI detail was not specified in the meeting — the PO adds that at his review gate.]",
+      "color": "blue",
+      "sections": [
+        {"heading": "Bring IP into the app",
+         "tbd": "TBD with Product Owner & role-holders (Kirby/Peter): exact import/add mechanics and idea-description fields were not specified — 'however they want to do it.'",
+         "items": [
+          {"area": "Import", "what": "Import a spreadsheet of IP, or add IP individually with a button.", "notes": "GAP: spreadsheet columns / required fields not specified"},
+          {"area": "Idea summary", "what": "The IP is summarized (done outside the app) and entered as an idea description.", "notes": "GAP: exact fields of the idea description not specified"},
+          {"area": "Associate professor", "what": "Each idea is associated with the professor who created it (the idea owner, carried as a Founder)."},
+          {"area": "Professor account", "what": "Imported professors have no account yet.", "notes": "GAP: 'send account information' button floated but mechanism unspecified — see dependency"}
+        ]},
+        {"heading": "Private by default & publish",
+         "items": [
+          {"area": "Private default", "what": "Imported IP is private by default (this is also the 'hold and decide later' state)."},
+          {"area": "Publish", "what": "IP Manager selects some or all and publishes; publish sends IP out (e.g. to Founder Match), with a separate publish path to a hackathon."}
+        ]},
+        {"heading": "Flag professor involvement",
+         "items": [
+          {"area": "Co-founder vs contact", "what": "Per idea, flag whether the professor wants to be a day-to-day co-founder OR is just a contact for whoever takes the idea to reach out to directly."}
+        ]},
+        {"heading": "Choose the route (after talking to the professor)",
+         "constraint": "The route is chosen by the IP Manager AFTER talking to the professor. Each piece of IP takes exactly one of the three routes below.",
+         "items": [
+          {"area": "Founder route", "what": "Professor wants to start/run the company (hands-on to hands-off) — mark it a Founder IP idea; professor runs the normal Wildfire process."},
+          {"area": "Hackathon route", "what": "Good hackathon topic / professor doesn't want to build it — mark it a hackathon idea participants can pick."},
+          {"area": "Founder Match route", "what": "Professor won't build it and it isn't a good hackathon fit — send it to Founder Match to find a founder."}
+        ]},
+        {"heading": "Select IP for a hackathon (planning phase)",
+         "tbd": "May not ship immediately — parked. Validate whether this is in v1.",
+         "items": [
+          {"area": "Hackathon selection", "what": "During hackathon planning the IP Manager is notified/emailed to select which IP to include in a hackathon — none, some, or all."}
+        ]}
+      ]
+    },
+    {
+      "sheet_name": "VP of Research",
+      "title": "VP of Research (VPR) — Decision & Oversight",
+      "subtitle": "Governance role (e.g. Dan; Ashley at Madison). [GAP: no in-app action distinct from the IP Manager was identified — whether VPR is a separate role or the same as IP Manager is UNRESOLVED and must be decided at the gate.]",
+      "color": "ink",
+      "sections": [
+        {"heading": "Decision & governance",
+         "tbd": "UNRESOLVED with Product Owner: is VPR a separate role from IP Manager in the app, or the same? No distinct in-app action was found.",
+         "items": [
+          {"area": "Put IP in the app", "what": "Makes the decision to put the university's IP into the Wildfire app (the IP Manager does the actual inserting)."},
+          {"area": "Oversight", "what": "Can see the hackathon and all teams; largely a passive consumer of what's going on.", "notes": "GAP: exact oversight surfaces not specified"}
+        ]}
+      ]
+    },
+    {
+      "sheet_name": "Professor (Founder)",
+      "title": "Professor (Idea Owner) — carried as a Founder",
+      "subtitle": "The professor who created the IP owns the idea's knowledge and is carried in the app as a Founder (no separate 'professor' role).",
+      "color": "orange",
+      "sections": [
+        {"heading": "Two professor profiles",
+         "items": [
+          {"area": "Hands-on co-founder", "what": "Professor wants to be involved day-to-day as a co-founder and turn the IP into a startup."},
+          {"area": "Contact-only", "what": "Professor hands the idea off with minimal involvement (one meeting / limited) and is just a contact whoever takes it can reach out to."}
+        ]},
+        {"heading": "On the Founder route",
+         "items": [
+          {"area": "Runs the process", "what": "Professor (as Founder) runs the normal Wildfire process exactly as founders do today."},
+          {"area": "Founder Match co-founder", "what": "Founder Match brings a student or Wildfire Network member as a co-founder — two founders in one company, as set up today."}
+        ]}
+      ]
+    }
+  ],
+  "out_of_scope": [
+    {"item": "Features not in the prototype", "why": "If a feature is not present in the prototype, it is not part of this MVP. (Template default.)"},
+    {"item": "Rethinking the founder role-gating model", "why": "The PO explicitly decided now is not the right time to rethink how the Founder-only gating works."},
+    {"item": "Breaking VPR and IP Manager into separate sub-roles", "why": "Can be broken out later; not resolved this pass. Treated as one until decided at the gate."},
+    {"item": "No regressions on the existing app", "why": "Cross-cutting: the feature must not break existing behavior. (Template default.)"}
+  ],
+  "acceptance_criteria": [
+    {"area": "IP Manager", "color": "blue", "criteria": [
+      {"area": "Import/add", "criterion": "An IP Manager can bring IP into the app (spreadsheet import or individual add) and it lands private by default."},
+      {"area": "Association", "criterion": "Each imported idea is associated with a professor and carries the professor-involvement flag (co-founder vs contact)."},
+      {"area": "Routing", "criterion": "An IP Manager can route each piece of IP down exactly one of the three paths (Founder / Hackathon / Founder Match)."},
+      {"area": "Publish", "criterion": "Publishing an idea moves it from private to the selected destination(s); unpublished IP is not visible downstream."}
+    ]},
+    {"area": "Cross-cutting", "color": "ink", "criteria": [
+      {"area": "In-app / logged in", "criterion": "All IP data entry happens inside the Wildfire app by a logged-in user — no external data entry."},
+      {"area": "No regressions", "criterion": "Existing app behavior (founders, mentors, hackathon roles) is unaffected."},
+      {"area": "Responsive", "criterion": "Responsive web, mobile portrait supported. (Template default.)"}
+    ]}
+  ]
+}
