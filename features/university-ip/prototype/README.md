@@ -1,59 +1,49 @@
-# University IP — Validation Prototype (v4, gate-4 feedback applied)
+# University IP — Validation Prototype (v5 redesign)
 
 A **clickable validation prototype** for the University IP feature, built on the
-real Wildfire app's stack (React 18 + Vite + Tailwind + shadcn/ui) with the app's
-design tokens and UI components vendored from `WF-App-6-30`. It is a **throwaway
-mockup** — no backend, nothing persists — for the PO to click through and
-validate the reviewed intake before the DoD is written.
+real Wildfire app's stack (React 18 + Vite + Tailwind + shadcn/ui). It is a
+**throwaway mockup** — no backend, nothing persists — for clicking through the
+flows with universities.
 
-**v4 (2026-07-02)** folds in the PO's two gate-4 (round-4) changes:
+**v5 (2026-07-22)** is a management-model redesign, implementing the flow
+critique's recommendation (Model A "one pipeline" + a thin attention strip):
 
-1. **Admin manages entities INSIDE the drill-down** — "click into the
-   universities or the organizations to manage those entities": the
-   university detail page now carries the management itself — the
-   university's fields edit **in place with a working form** (no more edit
-   dialog; saved changes reflect on the detail and the list), deactivate /
-   reactivate / remove live on the page, IP Managers are reassigned or
-   **assigned** there, and attached professors are managed there
-   (deactivate/reactivate, **attach**). Confirmation dialogs remain only on
-   destructive actions. GAP callout: the editable university field set
-   beyond the organization name was not specified.
-2. **The IP profile writes the tracking** — the idea detail (same place as
-   "About this company") gains a working "Tracking — notes, outcome & match
-   status" section: write/edit the IP Manager's notes, record/update the
-   outcome, move the Founder-Match status through the framework's
-   **existing** stages (Searching → Intro made → Matched — running, with
-   Matched — stalled as the off-track variant) and record the matched
-   founder (existing field). The tracking dashboard reads the **same shared
-   client state** — what's entered on the profile shows up there live. GAP
-   callout: who else can see the notes/outcome was not specified.
-
-**v3 (2026-07-02)** folded in the PO's five gate-3 (round-3) changes:
-
-1. **IP Portfolio company description** — clicking a company/idea in the IP
-   Manager's portfolio opens its detail with an "About this company — what it
-   does" description section.
-2. **Wildfire Admin mechanics + drill-down** — edit a university, remove a
-   university, reassign an IP Manager, deactivate a university and/or people
-   (confirmation dialogs on destructive actions); each university row is
-   clickable (e.g. University of South Dakota) into a deeper detail page
-   showing its IP Managers, professors (which professors are tied to which
-   university), ideas/pipeline, status, and actions.
-3. **Founder Match university filter** — the founder-facing browse list spans
-   universities (the cross-university GAP is RESOLVED: isolation applies to
-   IP Managers, not founders) with a per-university filter and
-   multi-university mock data.
-4. **Interest notifies the IP Manager** — expressing interest sends a
-   notification to the idea's IP Manager (new "Founder interest inbox"
-   screen), who starts making connections — connecting the founder with the
-   professor. Formal match completion / company formation stays a GAP callout.
-5. **IP Manager home confirmed** — the role home IS the home page an IP
-   Manager sees when they log in (the app-placement GAP is resolved).
-
-**v2 (2026-07-02)** folded in the PO's four gate-2 changes:
-professor invite with tag (REC-1 confirmed), a genuinely browsable Founder-Match
-idea list, a Wildfire Admin tab (REC-2 confirmed), and an explicit fourth
-"Hold (private)" disposition.
+1. **One lifecycle per idea.** The four scattered status fields
+   (private/published × route × match status × free-text outcome) collapse into
+   a single visible pipeline: **New → Reviewing → Routed → In motion → Done**,
+   with **Hold as a pause flag** (not a route), **route** set when the idea is
+   routed (Founder / Hackathon / Founder Match), and a real **outcome**
+   (Company formed / Founder matched / Built at hackathon / Passed) with a
+   short note when the idea is done. For Founder-Match ideas, routing **is**
+   publishing — a "Listed for founders" toggle withdraws/restores the listing.
+2. **Six IP-Manager screens become three.**
+   - **Pipeline** (home): a quiet attention strip ("3 new ideas to review",
+     "1 founder interest waiting", "1 on hold" — each chip filters the list)
+     over one table of all ideas with stage tabs and a hold filter. It replaces
+     the old portfolio, the read-only tracking dashboard, and the founder
+     interest inbox.
+   - **Idea detail** (slide-over from the pipeline): everything actionable in
+     one place — advance the stage, pick the route, pause/resume hold, record
+     the outcome, edit hackathon tracking (event / picked up by / what was
+     built — previously had no write UI), respond to founder interest
+     (connect / decline), flag professor involvement, send the professor
+     invite, keep notes.
+   - **Bring IP in**: six fields, each consumed downstream — title, one
+     plain-language summary, professor **picked from the university directory**
+     (department auto-fills), involvement, patent status, and an optional
+     disclosure reference #. New ideas land in the pipeline as New.
+3. **Founder interest lives on the idea.** Expressing interest on the
+   marketplace attaches an interest record to the idea itself; it surfaces in
+   the IP Manager's attention strip, on the pipeline row, and in the idea
+   detail — and **Connect advances the idea** (routed → in motion) instead of
+   flipping a parallel notification.
+4. **Marketplace cards answer a founder's first two questions** — professor
+   involvement (hands-on co-founder vs contact only) and patent status now
+   render on each Founder-Match card.
+5. **Calmer shell.** A left sidebar (wordmark, per-role nav, role switcher as a
+   labeled demo control) replaces the black prototype banner, the tenancy
+   legend, the gradient hero cards, and the nav-card home. All in-UI tier
+   boxes (REC / GAP / PARKED) moved into this README — see below.
 
 ## Run it
 
@@ -62,73 +52,100 @@ npm install
 npm run dev     # http://localhost:8754
 ```
 
-## What it demonstrates (confirmed scope, from the intake)
+## The four roles (switcher in the sidebar footer)
 
-- **IP Manager** — the single university-side role (VP of Research merged in at
-  the PO gate), scoped to their own university (multi-university tenancy,
-  confirmed). Gate-3: the role home IS the home page an IP Manager sees when
-  they log in (confirmed):
-  - **IP portfolio** — the university's IP as ideas, private by default;
-    select & publish (bulk publish skips ideas on Hold). Gate-3: clicking a
-    company/idea opens its detail with an "About this company — what it does"
-    description section.
-  - **Founder interest inbox** — gate-3: notifications when a founder
-    expresses interest in one of this university's Founder-Match ideas, with
-    the "start making connections — connect founder ↔ professor" step.
-  - **Bring IP in** — spreadsheet import + individual add (both land private,
-    associated with a professor); an idea can be marked **Hold** at import
-    (gate-2).
-  - **Idea routing view** — professor association, the per-idea
-    professor-involvement flag, **create the professor's profile & send the
-    invite** with the Professor + linked-IP-idea tag applied at account
-    creation (gate-2, was REC-1), and the **four dispositions**:
-    Founder / Hackathon / Founder Match / **Hold (private)** (gate-2). Held
-    ideas stay private and can't be published.
-  - **Tracking dashboard** — cross-route tracking of every idea, modeled on the
-    app's existing founder-tracking system, plus explicit **On Hold** vs
-    default private/unrouted buckets. Gate-4: the notes / outcome / match
-    status columns reflect what's written on each idea's IP profile (shared
-    state).
-  - **IP profile tracking section (gate-4)** — write/edit notes, record the
-    outcome, and move the Founder-Match status through its existing stages,
-    from the idea detail.
-- **Professor (Founder)** — the idea owner carried as the existing Founder role
-  plus the confirmed university-IP-origin analytics tag; invited via the
-  IP-Manager-created account with the Professor + linked-IP-idea tag (gate-2);
-  runs the normal Wildfire process.
-- **Founder (Match)** — gate-2: a founder has an account, logs in, and browses
-  ALL the published Founder-Match IP ideas submitted for other people to pick
-  up. Gate-3: the list spans universities with a per-university filter
-  (cross-university breadth RESOLVED — isolation applies to IP Managers, not
-  founders), and the "I want to pick this up" interest step notifies the
-  idea's IP Manager. Formal match completion / company formation remains a
-  GAP callout.
-- **Wildfire Admin** — gate-2 (was REC-2): what universities are in the
-  system, what's going through them (pipeline/volume per university by
-  disposition and publish state), who's attached (IP Managers, professors),
-  and provisioning a university org + assigning its IP Manager. Gate-3:
-  edit/remove a university, reassign an IP Manager, deactivate a university
-  and/or people (confirmation dialogs on destructive actions), and a
-  clickable per-university drill-down detail page showing which professors
-  are tied to which university. Gate-4: the drill-down IS the management
-  surface — in-place edit form, assign/reassign IP Managers, attach and
-  deactivate professors, all inside the entity page.
+- **IP Manager** (Kirby Nelson, University of South Dakota) — the single
+  university-side role (VP of Research merged in), scoped to their own
+  university. Screens: Pipeline, idea detail, Bring IP in.
+- **Professor** (Dr. Miriam Hale) — the idea owner, carried as the existing
+  Founder role. One screen: their ideas, involvement per idea, and program
+  progress for the founder route.
+- **Founder (Match)** (Marcus Webb) — browses published Founder-Match ideas
+  across universities (isolation applies to IP Managers, not this list),
+  filters by university, and expresses interest.
+- **Wildfire Admin** (Alex Rivera, WFL staff) — provisions university
+  organizations, sees volume, and manages who's attached (assign/reassign
+  IP Managers, attach/deactivate professors, deactivate/remove a university,
+  destructive actions confirm).
 
-## Tiers
+## Tier notes (moved out of the UI)
 
-- **Confirmed scope** renders as normal app UI.
-- **RECOMMENDED (not yet confirmed)** items (REC-3/5/6/7) render in a
-  visually distinct dashed violet tier — needs PO sign-off, never blended into
-  confirmed scope. (REC-1, REC-2 were confirmed at gate 2 and are now rendered
-  as confirmed scope; REC-4 was confirmed earlier.)
-- **GAP / PARKED** items render as amber/grey callouts (import mechanics,
-  formal match completion / company formation after the IP-Manager-connects
-  step, hackathon-management integration, planning-phase hackathon selection;
-  gate-4 adds: who else can see the IP Manager's notes/outcome, and the
-  editable university field set beyond the organization name)
-  — surfaced honestly, never invented. (Gate-3 resolved the former GAPs on
-  cross-university list breadth and on the app placement of the IP Manager
-  home.)
+Earlier versions rendered RECOMMENDED / GAP / PARKED tiers as in-app callouts.
+v5 removes them from the UI; their content is preserved here, organized by
+screen. (REC-1, REC-2, REC-4 were confirmed at earlier gates and are rendered
+as normal scope.)
 
-Out-of-scope items (separate VPR role, founder role-gating rethink,
-hackathon-management integration) are **not rendered as features**.
+### Global
+
+- **Prototype disclaimer** (was the black top banner): not functional, for
+  validation only; no backend, nothing persists; not production code. Now a
+  one-line note under the sidebar's demo control.
+- **Multi-university tenancy (confirmed)** (was the legend bar): each
+  university is its own organization with its own IP Managers, fully
+  isolated — an IP Manager cannot see other universities' IP or the other
+  universities at all. One university-side role (VPR merged into IP Manager).
+  Only the Wildfire Admin sees all universities. Founder-facing Founder Match
+  spans universities (isolation applies to IP Managers, not founders).
+
+### IP Manager — Pipeline (was Portfolio + Tracking dashboard + Interest inbox)
+
+- **REC-6 (needs sign-off):** a clearly legible per-idea state and a first-run
+  empty state. v5's stage chips + outcome column are the proposed treatment.
+- **REC-7 (needs sign-off):** attribution/audit — record who imported, routed,
+  and published each piece of IP (protects the university relationship). Not
+  built.
+- **PARKED:** hackathon build/outcome data would come from the separate
+  hackathon-management system being built elsewhere; it gets updated later
+  with these learnings. The tracking fields here (event / picked up by / what
+  was built) are manual entry for validation.
+- **GAP:** who else can see the IP Manager's notes and recorded outcomes (the
+  professor? the Wildfire Admin?) was not specified — rendered as the IP
+  Manager's own record.
+
+### IP Manager — Idea detail
+
+- **REC-3 (needs sign-off):** wire imported IP ideas into the existing
+  Idea/Application + Founder Match machinery rather than a parallel silo.
+  Wiring specifics unresolved.
+- **REC-5 (partially adopted in v5):** university-IP provenance label +
+  professor contact on the published idea. v5 shows the owning university,
+  professor involvement, and patent status on marketplace cards; a provenance
+  label and direct professor contact details remain open.
+- **PARKED:** publishing a hackathon-routed idea to an actual event — the
+  hackathon-management integration and the planning-phase "select IP to
+  include in a hackathon" notification are parked.
+- **GAP:** everything past "connect the founder with the professor" — how a
+  connection becomes a formal completed match and how the two-founder company
+  forms — was not specified. v5 stops at Connect → idea moves in motion; the
+  outcome is recorded manually.
+
+### IP Manager — Bring IP in
+
+- **GAP (superseded in v5):** spreadsheet import — columns/required fields
+  were never specified ("however they want to do it"), so the mock import
+  button is removed. v5 keeps individual add only, now with six concrete
+  fields; bulk import returns when the office's spreadsheet format is
+  confirmed (the disclosure reference # makes future imports de-duplicable).
+- **Professor invite (confirmed):** the IP Manager creates the professor's
+  profile/account and sends the invite; a tag attaches them as a Professor
+  with the linked IP idea, applied at account creation.
+
+### Founder Match (founder view)
+
+- **GAP:** formal match completion / company formation after the
+  IP-Manager-connects step — see Idea detail above.
+
+### Professor view
+
+- **PARKED:** whether professors could also be Mentors was mentioned as
+  unlikely — nothing built.
+
+### Wildfire Admin
+
+- **GAP:** which fields a university carries beyond its organization name was
+  not specified — only the name is editable in the drill-down.
+
+## Out of scope (not rendered as features)
+
+Separate VPR role, founder role-gating rethink, hackathon-management
+integration.
