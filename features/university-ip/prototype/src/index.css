@@ -45,49 +45,51 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Calm, warm-neutral system. Brand orange is reserved for primary
+       actions, active nav state, and key accents. */
+    --background: 40 27% 98%;
+    --foreground: 24 12% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 24 12% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 24 12% 12%;
 
     --primary: 18 89% 54%;
-    --primary-foreground: 210 40% 98%;
+    --primary-foreground: 40 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 40 16% 94%;
+    --secondary-foreground: 24 12% 18%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 40 16% 94.5%;
+    --muted-foreground: 25 7% 44%;
 
     --accent: 18 89% 54%;
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 40 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 40 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 32 14% 89%;
+    --input: 32 14% 86%;
     --ring: 18 89% 54%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 40 22% 96%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-foreground: 25 8% 28%;
 
     --sidebar-primary: 18 89% 54%;
 
     --sidebar-primary-foreground: 0 0% 98%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent: 36 14% 91%;
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-accent-foreground: 24 12% 12%;
 
-    --sidebar-border: 220 13% 91%;
+    --sidebar-border: 32 13% 88%;
 
     --sidebar-ring: 18 89% 54%;
   }
