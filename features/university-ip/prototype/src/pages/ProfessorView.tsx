@@ -1,6 +1,9 @@
 import { PageHeader } from "@/components/Shell";
 import { StageChip, HoldChip, RouteBadge, OutcomeChip, MilestoneChip, InvolvementChip } from "@/components/chips";
-import { PROFESSOR_PERSONA, PHASE_ORDER, UNIVERSITY, IP_MANAGER, INVENTION_STAGE_LABEL, type IpIdea } from "@/data";
+import {
+  PROFESSOR_PERSONA, PHASE_ORDER, UNIVERSITY, IP_MANAGER, INVENTION_STAGE_LABEL, kindOf,
+  type IpIdea, type PipelineStage,
+} from "@/data";
 import { CheckCircle2 } from "lucide-react";
 
 /* Professor view — the idea owner, carried as the existing Founder role.
@@ -11,7 +14,7 @@ import { CheckCircle2 } from "lucide-react";
    the public summary, invention stage, involvement, and route/outcome. The
    confidential disclosure record never renders here. */
 
-export default function ProfessorView({ ideas }: { ideas: IpIdea[] }) {
+export default function ProfessorView({ ideas, stages }: { ideas: IpIdea[]; stages: PipelineStage[] }) {
   const mine = ideas.filter((i) => i.disclosure.inventors.some((inv) => inv.name === PROFESSOR_PERSONA));
 
   return (
@@ -24,11 +27,11 @@ export default function ProfessorView({ ideas }: { ideas: IpIdea[] }) {
         {mine.map((idea) => (
           <div key={idea.id} className="rounded-lg border border-border bg-card p-5">
             <div className="flex flex-wrap items-center gap-1.5">
-              <StageChip stage={idea.stage} />
-              {idea.onHold && idea.stage !== "finalize" && <HoldChip />}
+              <StageChip stageId={idea.stage} stages={stages} />
+              {idea.onHold && kindOf(idea.stage, stages) !== "terminal" && <HoldChip />}
               {idea.route && <RouteBadge route={idea.route} />}
-              {idea.milestone && idea.stage !== "finalize" && <MilestoneChip milestone={idea.milestone} />}
-              {idea.stage === "finalize" && idea.outcome && <OutcomeChip outcome={idea.outcome} />}
+              {idea.milestone && kindOf(idea.stage, stages) !== "terminal" && <MilestoneChip milestone={idea.milestone} />}
+              {kindOf(idea.stage, stages) === "terminal" && idea.outcome && <OutcomeChip outcome={idea.outcome} />}
             </div>
             <h2 className="mt-2.5 text-base font-semibold text-foreground">{idea.title}</h2>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{idea.nonConfidentialSummary}</p>
