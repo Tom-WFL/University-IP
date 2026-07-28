@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Layers, PlusCircle, GraduationCap, Compass, Building2 } from "lucide-react";
+import { Layers, FileUp, GraduationCap, Compass, Building2 } from "lucide-react";
 import Sidebar, { type NavItem, type Persona } from "@/components/Sidebar";
 import IPManagerView from "@/pages/IPManagerView";
 import ProfessorView from "@/pages/ProfessorView";
@@ -70,7 +70,7 @@ export default function App() {
     role === "IP Manager"
       ? [
           { key: "pipeline", label: "Pipeline", icon: Layers, badge: needsAttention },
-          { key: "intake", label: "Bring IP in", icon: PlusCircle },
+          { key: "intake", label: "Import disclosure", icon: FileUp },
         ]
       : role === "Professor"
         ? [{ key: "ideas", label: "My ideas", icon: GraduationCap }]
