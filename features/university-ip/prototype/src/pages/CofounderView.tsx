@@ -5,13 +5,18 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/Shell";
-import { InvolvementChip, PatentChip } from "@/components/chips";
-import { FOUNDER_NAME, type IpIdea } from "@/data";
+import { InvolvementChip } from "@/components/chips";
+import { FOUNDER_NAME, INVENTION_STAGE_LABEL, type IpIdea } from "@/data";
 import { Building2, Search, Hand, CheckCircle2, MessagesSquare } from "lucide-react";
 
 /* Founder Match marketplace — every published Founder-Match idea across
    universities. Expressing interest attaches an interest record to the idea,
-   which surfaces in that university's IP Manager pipeline. */
+   which surfaces in that university's IP Manager pipeline.
+
+   Confidentiality: this is a founder-facing, cross-university surface. It
+   renders ONLY the non-confidential tier — title, the public summary,
+   invention stage, and involvement. No inventor names, no disclosure detail,
+   no patent status ever appear here. */
 
 const ALL = "__all__";
 
@@ -31,6 +36,7 @@ export default function CofounderView({
           i.route === "founder_match" &&
           i.published &&
           !i.onHold &&
+          i.nonConfidentialSummary.trim().length > 0 &&
           (i.stage === "routed" || i.stage === "in_motion")
       ),
     [ideas]
@@ -40,7 +46,7 @@ export default function CofounderView({
     (i) =>
       (uniFilter === ALL || i.university === uniFilter) &&
       (i.title.toLowerCase().includes(query.toLowerCase()) ||
-        i.summary.toLowerCase().includes(query.toLowerCase()))
+        i.nonConfidentialSummary.toLowerCase().includes(query.toLowerCase()))
   );
 
   return (
@@ -109,16 +115,20 @@ function MarketplaceCard({ idea, onInterest }: { idea: IpIdea; onInterest: () =>
       <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <Building2 className="h-3 w-3" /> {idea.university}
       </p>
-      <p className="flex-1 text-xs leading-relaxed text-muted-foreground">{idea.summary}</p>
+      <p className="flex-1 text-xs leading-relaxed text-muted-foreground">{idea.nonConfidentialSummary}</p>
       <div className="flex flex-wrap gap-1.5">
         <InvolvementChip involvement={idea.involvement} />
-        <PatentChip status={idea.patentStatus} />
+        {idea.disclosure.inventionStage.slice(0, 2).map((s) => (
+          <span key={s} className="inline-flex items-center rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs text-muted-foreground whitespace-nowrap">
+            {INVENTION_STAGE_LABEL[s]}
+          </span>
+        ))}
       </div>
       {mine ? (
         <p className="flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50/70 px-2.5 py-1.5 text-[11px] text-emerald-800">
           <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
           {mine.status === "connected"
-            ? `You're being connected with ${idea.professor}.`
+            ? `You're being connected with the inventor via ${idea.university}'s IP manager.`
             : `Interest sent — ${idea.university}'s IP manager has been notified.`}
         </p>
       ) : (
