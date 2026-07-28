@@ -1,9 +1,51 @@
-# University IP — Validation Prototype (v5 redesign)
+# University IP — Validation Prototype (v6 disclosure model)
 
 A **clickable validation prototype** for the University IP feature, built on the
 real Wildfire app's stack (React 18 + Vite + Tailwind + shadcn/ui). It is a
 **throwaway mockup** — no backend, nothing persists — for clicking through the
 flows with universities.
+
+**v6 (2026-07-28)** reworks intake and the data model around the real USD
+Invention Disclosure Form, driven by a University of South Dakota tech-transfer
+interview. Five changes, on top of the v5 pipeline:
+
+1. **Disclosure-driven intake.** "Bring IP in" becomes **Import invention
+   disclosure**. Instead of typing six fields, Kirby imports the USD Invention
+   Disclosure Form: a mock file-select **auto-fills a structured, editable
+   disclosure record** (tech number, dates, invention stage, funding entities,
+   confidential abstract, advantages/limitations/applications, inventors,
+   public-disclosure history, data/materials). Real PDF parsing is a backend
+   follow-up — the prototype shows the flow. Progressive disclosure keeps it
+   calm: the non-confidential block sits up top; the confidential detail folds
+   into collapsible sections.
+2. **Two-tier confidentiality.** A distinct **non-confidential summary**
+   (Kirby-authored — "the gist without giving away IP") is separate from the
+   form's confidential abstract. **Non-confidential** = title, non-confidential
+   summary, invention stage, involvement, route availability. **Confidential**
+   (TTO-only, never rendered to professors or founders) = the whole disclosure
+   record. The Founder-Match marketplace and Professor view render only the
+   non-confidential tier; publishing to founders requires the non-confidential
+   summary.
+3. **I-Corps as a route.** Added alongside Founder / Hackathon / Founder Match.
+   Once an idea is in motion, an **Apply to I-Corps** action records the
+   application (I-Corps itself — the cohort customer-discovery program — is
+   separate and not built here).
+4. **Mentor invite → note.** In the idea detail, Kirby enters a mentor's name +
+   email; it attaches the mentor to the idea as a note (mock — no real email).
+   A disabled **Find from founder-match pool** affordance marks the future path.
+5. **Licensed / Abandoned terminal.** The pipeline's real end is a license
+   hand-off. The final stage is **License / finalize**; the true terminal
+   outcomes are **Licensed** (success) or **Abandoned**. Positive route
+   milestones (company formed / founder matched / built at hackathon / in
+   I-Corps cohort) are recorded on the way but are not the terminal — an idea
+   can be company-formed *and then* licensed. "Passed" folds into Abandoned.
+
+The multi-inventor reality of the form is modeled: the old single `professor`
+field is now an **inventors array** (up to 5, each with title / department /
+inventorship % / email); the first inventor is the lead, and involvement stays
+a per-idea flag. The IP-Manager persona is **Kirby Fuglsby** (USD).
+
+---
 
 **v5 (2026-07-22)** is a management-model redesign, implementing the flow
 critique's recommendation (Model A "one pipeline" + a thin attention strip):
@@ -54,9 +96,9 @@ npm run dev     # http://localhost:8754
 
 ## The four roles (switcher in the sidebar footer)
 
-- **IP Manager** (Kirby Nelson, University of South Dakota) — the single
+- **IP Manager** (Kirby Fuglsby, University of South Dakota) — the single
   university-side role (VP of Research merged in), scoped to their own
-  university. Screens: Pipeline, idea detail, Bring IP in.
+  university. Screens: Pipeline, idea detail, Import disclosure.
 - **Professor** (Dr. Miriam Hale) — the idea owner, carried as the existing
   Founder role. One screen: their ideas, involvement per idea, and program
   progress for the founder route.

@@ -1,22 +1,24 @@
-import { Rocket, Trophy, HeartHandshake, Users, Phone, PauseCircle } from "lucide-react";
+import { Rocket, Trophy, HeartHandshake, Compass, Users, Phone, PauseCircle, BadgeCheck, Archive, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  STAGE_LABEL, ROUTE_LABEL, PATENT_LABEL, OUTCOME_LABEL,
-  type Stage, type RouteKind, type PatentStatus, type Involvement, type OutcomeKind,
+  ROUTE_LABEL, PATENT_LABEL, OUTCOME_LABEL, MILESTONE_LABEL, DEFAULT_STAGES, stageOf,
+  type StageId, type PipelineStage, type RouteKind, type PatentStatus, type Involvement,
+  type OutcomeKind, type MilestoneKind,
 } from "@/data";
 
 /* Small, quiet status chips shared across views. Stages read as a colored
    dot on a neutral chip; routes as a muted icon badge. */
 
-export const STAGE_DOT: Record<Stage, string> = {
-  new: "bg-sky-500",
-  reviewing: "bg-amber-500",
-  routed: "bg-violet-500",
-  in_motion: "bg-emerald-500",
-  done: "bg-stone-400",
-};
-
-export function StageChip({ stage, className }: { stage: Stage; className?: string }) {
+/* Stage identity is data now (customizable). The chip resolves label + dot
+   from the live stage list, falling back to the default set. */
+export function StageChip({
+  stageId, stages = DEFAULT_STAGES, className,
+}: {
+  stageId: StageId;
+  stages?: PipelineStage[];
+  className?: string;
+}) {
+  const s = stageOf(stageId, stages);
   return (
     <span
       className={cn(
@@ -24,8 +26,25 @@ export function StageChip({ stage, className }: { stage: Stage; className?: stri
         className
       )}
     >
-      <span className={cn("h-1.5 w-1.5 rounded-full", STAGE_DOT[stage])} />
-      {STAGE_LABEL[stage]}
+      <span className={cn("h-1.5 w-1.5 rounded-full", s.dot)} />
+      {s.label}
+    </span>
+  );
+}
+
+/* Compact overdue / due-soon badge for the pipeline row (IP-Manager side). */
+export function CheckInBadge({ overdue, className }: { overdue: boolean; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[11px] whitespace-nowrap",
+        overdue
+          ? "border-rose-200 bg-rose-50 text-rose-700"
+          : "border-amber-200 bg-amber-50 text-amber-700",
+        className
+      )}
+    >
+      <Clock className="h-3 w-3" /> {overdue ? "Overdue" : "Due soon"}
     </span>
   );
 }
@@ -47,6 +66,7 @@ const ROUTE_ICON: Record<RouteKind, JSX.Element> = {
   founder: <Rocket className="h-3 w-3" />,
   hackathon: <Trophy className="h-3 w-3" />,
   founder_match: <HeartHandshake className="h-3 w-3" />,
+  i_corps: <Compass className="h-3 w-3" />,
 };
 
 export function RouteBadge({ route, className }: { route: RouteKind | null; className?: string }) {
@@ -64,19 +84,36 @@ export function RouteBadge({ route, className }: { route: RouteKind | null; clas
   );
 }
 
+/* Terminal outcome — the true TTO end state. Licensed is the success. */
 export function OutcomeChip({ outcome, className }: { outcome: OutcomeKind; className?: string }) {
-  const positive = outcome !== "passed";
+  const licensed = outcome === "licensed";
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs whitespace-nowrap",
-        positive
+        licensed
           ? "border-emerald-200 bg-emerald-50 text-emerald-700"
           : "border-border bg-muted text-muted-foreground",
         className
       )}
     >
+      {licensed ? <BadgeCheck className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
       {OUTCOME_LABEL[outcome]}
+    </span>
+  );
+}
+
+/* A positive, route-appropriate milestone reached while in motion. Quieter
+   than the terminal outcome — a step on the way, not the end. */
+export function MilestoneChip({ milestone, className }: { milestone: MilestoneKind; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs text-foreground/70 whitespace-nowrap",
+        className
+      )}
+    >
+      {MILESTONE_LABEL[milestone]}
     </span>
   );
 }
