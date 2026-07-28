@@ -663,11 +663,11 @@ function IdeaPanel({
             <Eye className="h-3.5 w-3.5" /> Non-confidential — the gist founders and the marketplace see. No IP given away.
           </p>
           <Textarea
-            rows={3}
+            rows={4}
             value={summaryDraft}
             onChange={(e) => setSummaryDraft(e.target.value)}
             placeholder="The gist of what the product is, without giving away any IP."
-            className="text-sm"
+            className="min-h-[104px] text-sm"
           />
           <div className="mt-2 flex items-center gap-3">
             <Button
