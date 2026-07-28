@@ -798,8 +798,7 @@ function IdeaPanel({
           <div className="mt-2 flex items-center gap-3">
             <Button
               size="sm"
-              variant="outline"
-              disabled={summaryDraft.trim() === idea.nonConfidentialSummary.trim()}
+              variant="default"
               onClick={() => {
                 onChange({ nonConfidentialSummary: summaryDraft.trim() });
                 notify("Public summary saved.");
@@ -1850,7 +1849,7 @@ function IntakeScreen({
                     <TableHeader>
                       <TableRow className="hover:bg-transparent">
                         <TableHead className="w-10"></TableHead>
-                        <TableHead className="w-[38%]">Title</TableHead>
+                        <TableHead className="w-[48%]">Title</TableHead>
                         <TableHead>Lead inventor</TableHead>
                         <TableHead>Suggested route</TableHead>
                         <TableHead>Status</TableHead>
@@ -1872,7 +1871,8 @@ function IntakeScreen({
                               <Input
                                 value={r.title}
                                 onChange={(e) => patchRow(r.key, { title: e.target.value })}
-                                className="h-8 text-xs"
+                                className="h-8 w-full text-xs"
+                                title={r.title}
                                 aria-label="Draft title"
                               />
                               {!r.nonConfidentialSummary.trim() && (

@@ -7,7 +7,7 @@ import {
   StageChip, RouteBadge, OutcomeChip, MilestoneChip, CheckInBadge,
 } from "@/components/chips";
 import {
-  kindOf, isOverdue, isDueSoon, leadInventorName, leadInventorDept,
+  kindOf, isOverdue, isDueSoon,
   type IpIdea, type PipelineStage,
 } from "@/data";
 import { cn } from "@/lib/utils";
@@ -65,16 +65,15 @@ export default function TechScoutView({ ideas, stages }: { ideas: IpIdea[]; stag
         <Tile label="Overdue check-ins" value={stats.overdue} tone="text-rose-700" icon={<Clock className="h-3.5 w-3.5" />} />
       </div>
 
-      <div className="rounded-lg border border-border bg-card">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[34%]">Idea</TableHead>
-              <TableHead>Lead inventor</TableHead>
+              <TableHead className="w-[40%]">Idea</TableHead>
               <TableHead>Stage</TableHead>
               <TableHead>Route</TableHead>
               <TableHead>Outcome / milestone</TableHead>
-              <TableHead>Check-in</TableHead>
+              <TableHead className="whitespace-nowrap">Check-in</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -86,11 +85,7 @@ export default function TechScoutView({ ideas, stages }: { ideas: IpIdea[]; stag
                 <TableRow key={i.id} className="hover:bg-transparent">
                   <TableCell className="py-3">
                     <p className="font-medium text-foreground">{i.title}</p>
-                    <p className="mt-0.5 max-w-[42ch] truncate text-xs text-muted-foreground">{i.nonConfidentialSummary}</p>
-                  </TableCell>
-                  <TableCell>
-                    <p className="whitespace-nowrap text-sm text-foreground">{leadInventorName(i)}</p>
-                    <p className="whitespace-nowrap text-xs text-muted-foreground">{leadInventorDept(i)}</p>
+                    <p className="mt-0.5 max-w-[52ch] truncate text-xs text-muted-foreground">{i.nonConfidentialSummary}</p>
                   </TableCell>
                   <TableCell><StageChip stageId={i.stage} stages={stages} /></TableCell>
                   <TableCell><RouteBadge route={i.route} /></TableCell>
@@ -109,7 +104,7 @@ export default function TechScoutView({ ideas, stages }: { ideas: IpIdea[]; stag
                     ) : overdue || dueSoon ? (
                       <CheckInBadge overdue={overdue} />
                     ) : i.nextCheckIn ? (
-                      <span className="text-xs text-muted-foreground">{i.nextCheckIn}</span>
+                      <span className="whitespace-nowrap text-xs text-muted-foreground">{i.nextCheckIn}</span>
                     ) : (
                       <span className="text-xs text-muted-foreground/60">—</span>
                     )}
