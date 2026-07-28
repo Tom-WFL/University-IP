@@ -12,33 +12,38 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/Shell";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  StageChip, HoldChip, RouteBadge, OutcomeChip, MilestoneChip, PatentChip, STAGE_DOT,
+  StageChip, HoldChip, RouteBadge, OutcomeChip, MilestoneChip, PatentChip, CheckInBadge,
 } from "@/components/chips";
 import {
-  UNIVERSITY, STAGES, STAGE_LABEL, ROUTE_LABEL, MILESTONE_LABEL, OUTCOME_LABEL, PATENT_LABEL,
+  UNIVERSITY, IP_MANAGER, ROUTE_LABEL, MILESTONE_LABEL, OUTCOME_LABEL, PATENT_LABEL,
   INVENTION_STAGE_LABEL, FUNDING_SOURCE_LABEL, DATA_MATERIAL_LABEL, DATA_MATERIAL_ORDER,
-  SAMPLE_IMPORTED_DISCLOSURE, leadInventor, leadInventorName, leadInventorDept,
-  type IpIdea, type Stage, type RouteKind, type MilestoneKind, type OutcomeKind,
-  type Involvement, type PatentStatus, type Disclosure,
+  SAMPLE_IMPORTED_DISCLOSURE, DEFAULT_STAGES, kindOf, stageOf, firstStageOfKind,
+  TODAY, isOverdue, isDueSoon, addDaysISO, simulateBatchImport, mkBatchDraft,
+  leadInventor, leadInventorName, leadInventorDept,
+  type IpIdea, type StageId, type PipelineStage, type RouteKind, type MilestoneKind,
+  type OutcomeKind, type Involvement, type PatentStatus, type Disclosure, type Note, type BatchDraftRow,
 } from "@/data";
 import { cn } from "@/lib/utils";
 import {
   Plus, X, ArrowRight, ArrowLeft, CheckCircle2, PauseCircle, Rocket, Trophy,
   HeartHandshake, Compass, Send, Sparkles, Lock, Eye, FileUp, ChevronDown,
   Users2, UserPlus, FlaskConical, Landmark, ShieldAlert, BadgeCheck, Archive,
+  CalendarClock, Mail, MessageSquarePlus, Table2, FileSpreadsheet, Rows3,
 } from "lucide-react";
 
 /* ── View shell: pipeline ⇄ intake, with the idea detail as a slide-over ── */
 
 export default function IPManagerView({
-  ideas, updateIdea, addIdea, screen, gotoPipeline,
+  ideas, updateIdea, addIdea, screen, gotoPipeline, stages,
 }: {
   ideas: IpIdea[];
   updateIdea: (id: number, patch: Partial<IpIdea> | ((i: IpIdea) => Partial<IpIdea>)) => void;
   addIdea: (idea: Omit<IpIdea, "id">) => number;
   screen: "pipeline" | "intake";
   gotoPipeline: () => void;
+  stages: PipelineStage[];
 }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const selected = ideas.find((i) => i.id === selectedId) ?? null;
@@ -46,7 +51,7 @@ export default function IPManagerView({
   return (
     <>
       {screen === "pipeline" ? (
-        <PipelineScreen ideas={ideas} onOpen={setSelectedId} />
+        <PipelineScreen ideas={ideas} onOpen={setSelectedId} stages={stages} />
       ) : (
         <IntakeScreen
           onAdd={addIdea}
@@ -54,12 +59,14 @@ export default function IPManagerView({
             gotoPipeline();
             setSelectedId(id);
           }}
+          gotoPipeline={gotoPipeline}
         />
       )}
       {selected && screen === "pipeline" && (
         <IdeaPanel
           key={selected.id}
           idea={selected}
+          stages={stages}
           onChange={(patch) => updateIdea(selected.id, patch)}
           onClose={() => setSelectedId(null)}
         />
@@ -70,36 +77,44 @@ export default function IPManagerView({
 
 /* ── Screen 1: Pipeline — attention strip + one table of all ideas ───────── */
 
-type TabKey = "all" | Stage;
-type AttentionFilter = "none" | "interest" | "hold";
-
-const STAGE_ORDER: Record<Stage, number> = { new: 0, reviewing: 1, routed: 2, in_motion: 3, finalize: 4 };
+type TabKey = "all" | StageId;
+type AttentionFilter = "none" | "interest" | "hold" | "overdue";
 
 function newInterestCount(i: IpIdea) {
   return i.interests.filter((n) => n.status === "new").length;
 }
 
-function PipelineScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: number) => void }) {
+function PipelineScreen({ ideas, onOpen, stages }: { ideas: IpIdea[]; onOpen: (id: number) => void; stages: PipelineStage[] }) {
   const [tab, setTab] = useState<TabKey>("all");
   const [attention, setAttention] = useState<AttentionFilter>("none");
 
+  /* List-order index for a stage id — drives sort order (never a hard-coded map). */
+  const orderOf = (id: StageId) => {
+    const idx = stages.findIndex((s) => s.id === id);
+    return idx === -1 ? stages.length : idx;
+  };
+  const isTerminal = (i: IpIdea) => kindOf(i.stage, stages) === "terminal";
+
   const counts = useMemo(() => {
-    const byStage = Object.fromEntries(STAGES.map((s) => [s, ideas.filter((i) => i.stage === s).length])) as Record<Stage, number>;
+    const byStage = Object.fromEntries(stages.map((s) => [s.id, ideas.filter((i) => i.stage === s.id).length])) as Record<string, number>;
+    const intakeStage = firstStageOfKind("intake", stages);
     return {
       byStage,
-      newIdeas: byStage.new,
+      newIdeas: intakeStage ? ideas.filter((i) => i.stage === intakeStage.id).length : 0,
       interests: ideas.reduce((n, i) => n + newInterestCount(i), 0),
-      onHold: ideas.filter((i) => i.onHold && i.stage !== "finalize").length,
+      onHold: ideas.filter((i) => i.onHold && !isTerminal(i)).length,
+      overdue: ideas.filter((i) => isOverdue(i)).length,
     };
-  }, [ideas]);
+  }, [ideas, stages]);
 
   const visible = useMemo(() => {
     let list = ideas;
     if (tab !== "all") list = list.filter((i) => i.stage === tab);
     if (attention === "interest") list = list.filter((i) => newInterestCount(i) > 0);
-    if (attention === "hold") list = list.filter((i) => i.onHold && i.stage !== "finalize");
-    return [...list].sort((a, b) => STAGE_ORDER[a.stage] - STAGE_ORDER[b.stage] || a.id - b.id);
-  }, [ideas, tab, attention]);
+    if (attention === "hold") list = list.filter((i) => i.onHold && !isTerminal(i));
+    if (attention === "overdue") list = list.filter((i) => isOverdue(i));
+    return [...list].sort((a, b) => orderOf(a.stage) - orderOf(b.stage) || a.id - b.id);
+  }, [ideas, tab, attention, stages]);
 
   const pickTab = (t: TabKey) => {
     setTab(t);
@@ -110,14 +125,15 @@ function PipelineScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
     setTab("all");
   };
 
+  const intakeStage = firstStageOfKind("intake", stages);
   const strip: { key: AttentionFilter | "new"; count: number; label: string; dot: string; active: boolean; onClick: () => void }[] = [
     {
       key: "new",
       count: counts.newIdeas,
       label: counts.newIdeas === 1 ? "new disclosure to review" : "new disclosures to review",
-      dot: STAGE_DOT.new,
-      active: tab === "new" && attention === "none",
-      onClick: () => pickTab(tab === "new" ? "all" : "new"),
+      dot: intakeStage?.dot ?? "bg-sky-500",
+      active: tab === intakeStage?.id && attention === "none",
+      onClick: () => intakeStage && pickTab(tab === intakeStage.id ? "all" : intakeStage.id),
     },
     {
       key: "interest",
@@ -126,6 +142,14 @@ function PipelineScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
       dot: "bg-primary",
       active: attention === "interest",
       onClick: () => pickAttention("interest"),
+    },
+    {
+      key: "overdue",
+      count: counts.overdue,
+      label: counts.overdue === 1 ? "check-in overdue" : "check-ins overdue",
+      dot: "bg-rose-500",
+      active: attention === "overdue",
+      onClick: () => pickAttention("overdue"),
     },
     {
       key: "hold",
@@ -182,9 +206,10 @@ function PipelineScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
 
       {/* Stage tabs + hold filter */}
       <div className="flex flex-wrap items-end gap-x-1 border-b border-border">
-        {(["all", ...STAGES] as TabKey[]).map((t) => {
+        {(["all", ...stages.map((s) => s.id)] as TabKey[]).map((t) => {
           const active = tab === t && attention === "none";
-          const count = t === "all" ? ideas.length : counts.byStage[t];
+          const count = t === "all" ? ideas.length : counts.byStage[t] ?? 0;
+          const label = t === "all" ? "All" : stageOf(t, stages).label;
           return (
             <button
               key={t}
@@ -196,7 +221,7 @@ function PipelineScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
-              {t === "all" ? "All" : STAGE_LABEL[t]}
+              {label}
               <span className="text-xs tabular-nums text-muted-foreground/70">{count}</span>
             </button>
           );
@@ -230,6 +255,9 @@ function PipelineScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
           <TableBody>
             {visible.map((i) => {
               const waiting = newInterestCount(i);
+              const terminal = kindOf(i.stage, stages) === "terminal";
+              const overdue = isOverdue(i);
+              const dueSoon = isDueSoon(i);
               return (
                 <TableRow key={i.id} className="cursor-pointer" onClick={() => onOpen(i.id)}>
                   <TableCell className="py-3">
@@ -240,6 +268,7 @@ function PipelineScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
                           {waiting} new interest{waiting > 1 ? "s" : ""}
                         </span>
                       )}
+                      {!terminal && (overdue || dueSoon) && <CheckInBadge overdue={overdue} />}
                     </div>
                     <p className="mt-0.5 max-w-[42ch] truncate text-xs text-muted-foreground">{i.nonConfidentialSummary}</p>
                   </TableCell>
@@ -254,19 +283,24 @@ function PipelineScreen({ ideas, onOpen }: { ideas: IpIdea[]; onOpen: (id: numbe
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap items-center gap-1">
-                      <StageChip stage={i.stage} />
-                      {i.onHold && i.stage !== "finalize" && <HoldChip />}
+                      <StageChip stageId={i.stage} stages={stages} />
+                      {i.onHold && !terminal && <HoldChip />}
                     </div>
                   </TableCell>
                   <TableCell><RouteBadge route={i.route} /></TableCell>
                   <TableCell><PatentChip status={i.patentStatus} /></TableCell>
                   <TableCell>
-                    {i.stage === "finalize" && i.outcome ? (
+                    {terminal && i.outcome ? (
                       <OutcomeChip outcome={i.outcome} />
                     ) : i.milestone ? (
                       <MilestoneChip milestone={i.milestone} />
                     ) : (
                       <span className="text-xs text-muted-foreground">{i.updated}</span>
+                    )}
+                    {i.lastUpdateEmailSent && (
+                      <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground/70">
+                        <Mail className="h-3 w-3" /> Emailed {i.lastUpdateEmailSent}
+                      </p>
                     )}
                   </TableCell>
                 </TableRow>
@@ -342,6 +376,42 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
     <div>
       <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70">{label}</p>
       <p className="mt-0.5 text-xs leading-relaxed text-foreground/90">{value || <span className="text-muted-foreground/60">—</span>}</p>
+    </div>
+  );
+}
+
+/* A labeled group inside the Team section — keeps the consolidated view legible. */
+function TeamGroup({ label, confidential, children }: { label: string; confidential?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="mt-3 first:mt-0">
+      <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">
+        {label}
+        {confidential && <Lock className="h-3 w-3 text-amber-600" />}
+      </p>
+      <div className="space-y-1.5">{children}</div>
+    </div>
+  );
+}
+
+/* One entry in the running note log. Founder updates are badged distinctly. */
+const NOTE_ROLE_META: Record<Note["authorRole"], { label: string; cls: string }> = {
+  ip_manager: { label: "IP Manager", cls: "border-border bg-muted/60 text-muted-foreground" },
+  founder: { label: "Founder update", cls: "border-primary/25 bg-primary/5 text-primary" },
+  system: { label: "System", cls: "border-border bg-muted/40 text-muted-foreground/80" },
+};
+
+function NoteRow({ note }: { note: Note }) {
+  const meta = NOTE_ROLE_META[note.authorRole];
+  return (
+    <div className="rounded-md border border-border px-3 py-2">
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <span className={cn("inline-flex items-center rounded-full border px-1.5 py-px text-[10px] font-medium", meta.cls)}>
+          {meta.label}
+        </span>
+        <span className="text-xs font-medium text-foreground">{note.author}</span>
+        <span className="text-[11px] text-muted-foreground/70">· {note.when}</span>
+      </div>
+      <p className="text-xs leading-relaxed text-foreground/90">{note.text}</p>
     </div>
   );
 }
@@ -448,12 +518,12 @@ function ConfidentialDisclosure({ d }: { d: Disclosure }) {
 
 /* ── The idea detail slide-over — everything actionable lives here ───────── */
 
-function StageStepper({ idea }: { idea: IpIdea }) {
-  const cur = STAGES.indexOf(idea.stage);
+function StageStepper({ idea, stages }: { idea: IpIdea; stages: PipelineStage[] }) {
+  const cur = stages.findIndex((s) => s.id === idea.stage);
   return (
     <div className="flex items-center gap-1.5">
-      {STAGES.map((s, i) => (
-        <div key={s} className="flex min-w-0 items-center gap-1.5" style={{ flex: i < STAGES.length - 1 ? "1 1 0" : "0 0 auto" }}>
+      {stages.map((s, i) => (
+        <div key={s.id} className="flex min-w-0 items-center gap-1.5" style={{ flex: i < stages.length - 1 ? "1 1 0" : "0 0 auto" }}>
           <span
             className={cn(
               "h-2 w-2 shrink-0 rounded-full",
@@ -466,9 +536,9 @@ function StageStepper({ idea }: { idea: IpIdea }) {
               i === cur ? "font-medium text-foreground" : "text-muted-foreground/80"
             )}
           >
-            {STAGE_LABEL[s]}
+            {s.label}
           </span>
-          {i < STAGES.length - 1 && <span className="h-px min-w-2 flex-1 bg-border" />}
+          {i < stages.length - 1 && <span className="h-px min-w-2 flex-1 bg-border" />}
         </div>
       ))}
     </div>
@@ -507,18 +577,19 @@ function defaultMilestone(route: RouteKind | null): MilestoneKind {
 }
 
 function IdeaPanel({
-  idea, onChange, onClose,
+  idea, onChange, onClose, stages,
 }: {
   idea: IpIdea;
   onChange: (patch: Partial<IpIdea> | ((i: IpIdea) => Partial<IpIdea>)) => void;
   onClose: () => void;
+  stages: PipelineStage[];
 }) {
   const [flash, notify] = useFlash();
   const [routePick, setRoutePick] = useState<RouteKind | null>(idea.route);
   const [milestonePick, setMilestonePick] = useState<MilestoneKind>(idea.milestone ?? defaultMilestone(idea.route));
   const [outcomePick, setOutcomePick] = useState<OutcomeKind>("licensed");
   const [outcomeNoteDraft, setOutcomeNoteDraft] = useState("");
-  const [notesDraft, setNotesDraft] = useState(idea.notes ?? "");
+  const [noteDraft, setNoteDraft] = useState("");
   const [summaryDraft, setSummaryDraft] = useState(idea.nonConfidentialSummary);
   const [mentorName, setMentorName] = useState("");
   const [mentorEmail, setMentorEmail] = useState("");
@@ -534,19 +605,39 @@ function IdeaPanel({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const paused = idea.onHold && idea.stage !== "finalize";
+  /* Everything branches on stage KIND (never the label or index), so custom
+     stages inserted in Settings never break routing / gating. */
+  const idx = stages.findIndex((s) => s.id === idea.stage);
+  const kind = kindOf(idea.stage, stages);
+  const nextStage = idx >= 0 ? stages[idx + 1] : undefined;
+  const prevStage = idx > 0 ? stages[idx - 1] : undefined;
+  const terminalStage = firstStageOfKind("terminal", stages);
+  const motionStage = firstStageOfKind("motion", stages);
+  const isTerminal = kind === "terminal";
+
+  const paused = idea.onHold && !isTerminal;
   const lead = leadInventor(idea);
   const hasSummary = idea.nonConfidentialSummary.trim().length > 0;
 
+  /* Append a note to the running log (newest first). */
+  const nextNoteId = (log: Note[]) => Math.max(0, ...log.map((n) => n.id)) + 1;
+  const appendNote = (text: string, role: Note["authorRole"] = "ip_manager", author = IP_MANAGER) =>
+    onChange((i) => ({
+      noteLog: [{ id: nextNoteId(i.noteLog), author, authorRole: role, when: "Just now", text }, ...i.noteLog],
+    }));
+
   const advance = {
-    fromNew: () => {
-      onChange({ stage: "reviewing" });
-      notify("Moved to Reviewing.");
+    /* Generic one-step move (intake, routed, custom) — pure list order. */
+    next: () => {
+      if (!nextStage) return;
+      onChange({ stage: nextStage.id });
+      notify(`Moved to ${nextStage.label}.`);
     },
+    /* review-kind: set route (+ publish for founder_match), then advance one. */
     route: () => {
       if (!routePick) return;
       onChange({
-        stage: "routed",
+        stage: nextStage ? nextStage.id : idea.stage,
         route: routePick,
         published: routePick === "founder_match",
         ...(routePick === "hackathon" && !idea.hackathonTracking
@@ -559,17 +650,14 @@ function IdeaPanel({
           : `Routed to ${ROUTE_LABEL[routePick]}.`
       );
     },
-    toMotion: () => {
-      onChange({ stage: "in_motion" });
-      notify("Marked in motion.");
-    },
     milestone: () => {
       onChange({ milestone: milestonePick });
       notify(`Milestone recorded — ${MILESTONE_LABEL[milestonePick].toLowerCase()}.`);
     },
+    /* motion-kind: close out — jump to the terminal anchor by KIND. */
     finalize: () => {
       onChange({
-        stage: "finalize",
+        stage: terminalStage?.id ?? idea.stage,
         outcome: outcomePick,
         outcomeNote: outcomeNoteDraft.trim() || undefined,
         published: false,
@@ -577,17 +665,18 @@ function IdeaPanel({
       notify(outcomePick === "licensed" ? "Licensed — closed out." : "Closed as abandoned.");
     },
     abandon: () => {
-      onChange({ stage: "finalize", outcome: "abandoned", outcomeNote: "Abandoned.", published: false });
+      onChange({ stage: terminalStage?.id ?? idea.stage, outcome: "abandoned", outcomeNote: "Abandoned.", published: false });
       notify("Closed as abandoned.");
     },
+    /* Generic back one step. Leaving a routed-kind stage backward drops the route. */
     back: () => {
-      if (idea.stage === "reviewing") onChange({ stage: "new" });
-      if (idea.stage === "routed") onChange({ stage: "reviewing", route: null, published: false });
-      if (idea.stage === "in_motion") onChange({ stage: "routed" });
-      notify("Moved back a stage.");
+      if (!prevStage) return;
+      const leavingRouted = kind === "routed";
+      onChange({ stage: prevStage.id, ...(leavingRouted ? { route: null, published: false } : {}) });
+      notify(`Moved back to ${prevStage.label}.`);
     },
     reopen: () => {
-      onChange({ stage: "in_motion", outcome: undefined, outcomeNote: undefined });
+      onChange({ stage: motionStage?.id ?? idea.stage, outcome: undefined, outcomeNote: undefined });
       notify("Reopened — back in motion.");
     },
   };
@@ -613,7 +702,23 @@ function IdeaPanel({
     const interest = idea.interests.find((n) => n.id === interestId);
     onChange((i) => ({
       interests: i.interests.map((n) => (n.id === interestId ? { ...n, status } : n)),
-      ...(status === "connected" && i.stage === "routed" ? { stage: "in_motion" as Stage } : {}),
+      ...(status === "connected" && kindOf(i.stage, stages) === "routed" && motionStage
+        ? { stage: motionStage.id }
+        : {}),
+      ...(status === "connected"
+        ? {
+            noteLog: [
+              {
+                id: nextNoteId(i.noteLog),
+                author: IP_MANAGER,
+                authorRole: "system" as const,
+                when: "Just now",
+                text: `Connected ${interest?.founder ?? "founder"} with ${leadInventorName(i)}.`,
+              },
+              ...i.noteLog,
+            ],
+          }
+        : {}),
     }));
     notify(
       status === "connected"
@@ -621,6 +726,27 @@ function IdeaPanel({
         : "Interest declined."
     );
   };
+
+  /* Check-in reminder + update-email — compact quick actions in Progress header. */
+  const setCheckIn = (iso: string | undefined) => {
+    onChange({ nextCheckIn: iso });
+    notify(iso ? `Next check-in set for ${iso}.` : "Check-in cleared.");
+  };
+  const logUpdateEmail = () =>
+    onChange((i) => ({
+      lastUpdateEmailSent: TODAY,
+      noteLog: [
+        {
+          id: nextNoteId(i.noteLog),
+          author: IP_MANAGER,
+          authorRole: "system" as const,
+          when: "Just now",
+          text: `Stakeholder update email logged (${TODAY}).`,
+        },
+        ...i.noteLog,
+      ],
+    }));
+  const overdue = isOverdue(idea);
 
   return (
     <div className="fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label={idea.title}>
@@ -630,7 +756,7 @@ function IdeaPanel({
         <div className="border-b border-border px-6 pb-5 pt-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-wrap items-center gap-1.5">
-              <StageChip stage={idea.stage} />
+              <StageChip stageId={idea.stage} stages={stages} />
               {paused && <HoldChip />}
               {idea.route && <RouteBadge route={idea.route} />}
             </div>
@@ -691,7 +817,7 @@ function IdeaPanel({
         <Section
           title="Progress"
           aside={
-            idea.stage !== "finalize" && (
+            !isTerminal && (
               <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
                 On hold
                 <Switch
@@ -706,11 +832,71 @@ function IdeaPanel({
             )
           }
         >
-          <StageStepper idea={idea} />
+          <StageStepper idea={idea} stages={stages} />
 
-          {idea.milestone && idea.stage !== "finalize" && (
+          {idea.milestone && !isTerminal && (
             <div className="mt-3">
               <MilestoneChip milestone={idea.milestone} />
+            </div>
+          )}
+
+          {/* Compact quick-actions: check-in reminder + update-email marker.
+              IP-Manager-only signals — never on founder / professor surfaces. */}
+          {!isTerminal && (
+            <div className="mt-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs",
+                    overdue ? "border-rose-200 bg-rose-50 text-rose-700" : "border-border bg-muted/40 text-muted-foreground"
+                  )}
+                >
+                  <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                  <span>Next check-in</span>
+                  <input
+                    type="date"
+                    value={idea.nextCheckIn ?? ""}
+                    onChange={(e) => setCheckIn(e.target.value || undefined)}
+                    className="bg-transparent text-xs text-foreground outline-none"
+                    aria-label="Next check-in date"
+                  />
+                </span>
+                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setCheckIn(addDaysISO(TODAY, 14))}>
+                  +2 wks
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setCheckIn(addDaysISO(TODAY, 30))}>
+                  +1 mo
+                </Button>
+                {idea.nextCheckIn && (
+                  <button
+                    onClick={() => setCheckIn(undefined)}
+                    className="text-xs text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {overdue && (
+                <p className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50/70 px-2.5 py-1.5 text-xs text-rose-700">
+                  <CalendarClock className="h-3.5 w-3.5 shrink-0" /> Check-in overdue — was due {idea.nextCheckIn}. Time to reach out.
+                </p>
+              )}
+              <div className="flex flex-wrap items-center gap-2">
+                {idea.lastUpdateEmailSent ? (
+                  <>
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+                      <Mail className="h-3.5 w-3.5 shrink-0" /> Last update email: {idea.lastUpdateEmailSent}
+                    </span>
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={logUpdateEmail}>
+                      Re-stamp today
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={logUpdateEmail}>
+                    <Mail className="mr-1 h-3.5 w-3.5" /> Log update email sent
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
@@ -731,13 +917,14 @@ function IdeaPanel({
 
           {!paused && (
             <div className="mt-4">
-              {idea.stage === "new" && (
-                <Button size="sm" onClick={advance.fromNew}>
-                  Start reviewing <ArrowRight className="ml-1 h-3.5 w-3.5" />
+              {kind === "intake" && (
+                <Button size="sm" disabled={!nextStage} onClick={advance.next}>
+                  {nextStage?.kind === "review" ? "Start reviewing" : `Move to ${nextStage?.label ?? "next"}`}{" "}
+                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
                 </Button>
               )}
 
-              {idea.stage === "reviewing" && (
+              {kind === "review" && (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">Pick a route, then move it on:</p>
                   <div className="space-y-1.5">
@@ -775,21 +962,36 @@ function IdeaPanel({
                 </div>
               )}
 
-              {idea.stage === "routed" && (
+              {kind === "routed" && (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">
                     {idea.route === "founder" && "Once the inventor starts the program, mark it in motion."}
                     {idea.route === "hackathon" && "Once a team picks it up at an event, mark it in motion."}
                     {idea.route === "founder_match" && "Connecting a founder moves it in motion automatically — or mark it yourself."}
                     {idea.route === "i_corps" && "Once a founder picks it up for a cohort, mark it in motion."}
+                    {!idea.route && "Move it on when work starts."}
                   </p>
-                  <Button size="sm" onClick={advance.toMotion}>
-                    Mark in motion <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  <Button size="sm" disabled={!nextStage} onClick={advance.next}>
+                    {nextStage?.kind === "motion" ? "Mark in motion" : `Move to ${nextStage?.label ?? "next"}`}{" "}
+                    <ArrowRight className="ml-1 h-3.5 w-3.5" />
                   </Button>
                 </div>
               )}
 
-              {idea.stage === "in_motion" && (
+              {kind === "custom" && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Custom stage — a tracking marker. Move it forward or back when you're ready.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" disabled={!nextStage} onClick={advance.next}>
+                      {nextStage ? `Move to ${nextStage.label}` : "Last stage"} <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {kind === "motion" && (
                 <div className="space-y-4">
                   {/* Milestone (positive, route-appropriate marker) */}
                   <div className="space-y-2">
@@ -848,7 +1050,7 @@ function IdeaPanel({
                 </div>
               )}
 
-              {idea.stage === "finalize" && idea.outcome && (
+              {isTerminal && idea.outcome && (
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <OutcomeChip outcome={idea.outcome} />
@@ -861,20 +1063,24 @@ function IdeaPanel({
                 </div>
               )}
 
-              {(idea.stage === "reviewing" || idea.stage === "routed" || idea.stage === "in_motion") && (
+              {(kind === "review" || kind === "routed" || kind === "motion" || kind === "custom") && (
                 <div className="mt-3 flex items-center gap-3">
-                  <button
-                    onClick={advance.back}
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    <ArrowLeft className="h-3 w-3" /> Back a stage
-                  </button>
-                  <button
-                    onClick={advance.abandon}
-                    className="text-xs text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
-                  >
-                    Abandon this idea
-                  </button>
+                  {prevStage && (
+                    <button
+                      onClick={advance.back}
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <ArrowLeft className="h-3 w-3" /> Back to {prevStage.label}
+                    </button>
+                  )}
+                  {kind !== "custom" && (
+                    <button
+                      onClick={advance.abandon}
+                      className="text-xs text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+                    >
+                      Abandon this idea
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -882,7 +1088,7 @@ function IdeaPanel({
         </Section>
 
         {/* I-Corps — apply once in motion */}
-        {idea.stage === "in_motion" && (
+        {kind === "motion" && (
           <Section title="I-Corps">
             {idea.icorps?.applied ? (
               <div className="space-y-1">
@@ -909,7 +1115,7 @@ function IdeaPanel({
           <Section
             title="Founder Match"
             aside={
-              idea.stage !== "finalize" && (
+              !isTerminal && (
                 <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
                   Listed for founders
                   <Switch
@@ -926,7 +1132,7 @@ function IdeaPanel({
             }
           >
             <p className="text-xs text-muted-foreground">
-              {idea.stage === "finalize"
+              {isTerminal
                 ? "This idea has closed out — the listing is withdrawn."
                 : paused
                   ? "Hidden from founders while on hold."
@@ -1087,15 +1293,35 @@ function IdeaPanel({
           <ConfidentialDisclosure d={idea.disclosure} />
         </Section>
 
-        {/* Inventor involvement */}
-        <Section title="Lead inventor">
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm font-medium text-foreground">{lead.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {lead.title} · {lead.department} · {UNIVERSITY}
-              </p>
-            </div>
+        {/* Team — everyone on the idea, folding in inventors + involvement + mentors */}
+        <Section title="Team">
+          <p className="mb-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Users2 className="h-3.5 w-3.5" /> Everyone on this idea. You see full names; founders never see inventor names.
+          </p>
+
+          {/* Inventors — confidential */}
+          <TeamGroup label={`Inventors · ${idea.disclosure.inventors.length}`} confidential>
+            {idea.disclosure.inventors.map((inv, i) => (
+              <div key={i} className="rounded-md border border-border px-2.5 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-foreground">
+                    {inv.name}
+                    {i === 0 && (
+                      <span className="ml-1.5 inline-flex items-center rounded-full border border-primary/25 bg-primary/5 px-1.5 py-px text-[10px] text-primary">
+                        Lead
+                      </span>
+                    )}
+                  </p>
+                  <span className="text-[11px] tabular-nums text-muted-foreground">{inv.inventorshipPct}%</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">{inv.title} · {inv.department}</p>
+              </div>
+            ))}
+          </TeamGroup>
+
+          {/* Lead-inventor involvement flag + invite */}
+          <div className="mt-3 space-y-2.5 rounded-md border border-border px-3 py-3">
+            <p className="text-xs font-medium text-foreground">Lead inventor involvement — {lead.name}</p>
             <RadioGroup
               value={idea.involvement}
               onValueChange={(v) => {
@@ -1134,26 +1360,49 @@ function IdeaPanel({
               </Button>
             )}
           </div>
-        </Section>
 
-        {/* Mentors */}
-        <Section title="Mentors">
-          <div className="space-y-2">
-            {idea.mentors.length === 0 && (
-              <p className="text-sm text-muted-foreground">No mentors attached yet.</p>
-            )}
-            {idea.mentors.map((m) => (
-              <div key={m.id} className="rounded-md border border-border px-3 py-2">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-foreground">{m.name}</p>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700">
-                    <CheckCircle2 className="h-3 w-3" /> Invited · {m.invitedWhen}
-                  </span>
+          {/* Founders who picked it up */}
+          {(() => {
+            const founders = idea.interests.filter((n) => n.status === "connected");
+            const coFounder = idea.founderTracking?.coFounder;
+            if (founders.length === 0 && !coFounder) return null;
+            return (
+              <TeamGroup label="Founders">
+                {coFounder && (
+                  <div className="rounded-md border border-border px-2.5 py-2">
+                    <p className="text-xs font-medium text-foreground">{coFounder}</p>
+                    <p className="text-[11px] text-muted-foreground">Co-founder · {idea.founderTracking?.companyName}</p>
+                  </div>
+                )}
+                {founders.map((n) => (
+                  <div key={n.id} className="rounded-md border border-border px-2.5 py-2">
+                    <p className="text-xs font-medium text-foreground">{n.founder}</p>
+                    <p className="text-[11px] text-muted-foreground">Picked it up · {n.founderContext}</p>
+                  </div>
+                ))}
+              </TeamGroup>
+            );
+          })()}
+
+          {/* Mentors */}
+          <TeamGroup label="Mentors">
+            {idea.mentors.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No mentors attached yet.</p>
+            ) : (
+              idea.mentors.map((m) => (
+                <div key={m.id} className="rounded-md border border-border px-2.5 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-medium text-foreground">{m.name}</p>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700">
+                      <CheckCircle2 className="h-3 w-3" /> Invited · {m.invitedWhen}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">{m.email}</p>
                 </div>
-                <p className="text-xs text-muted-foreground">{m.email}</p>
-              </div>
-            ))}
-          </div>
+              ))
+            )}
+          </TeamGroup>
+
           <div className="mt-3 space-y-2 rounded-md border border-border px-3 py-3">
             <p className="text-xs font-medium text-foreground">Invite a mentor</p>
             <div className="grid grid-cols-2 gap-2">
@@ -1180,33 +1429,39 @@ function IdeaPanel({
                 <Users2 className="mr-1.5 h-3.5 w-3.5" /> Find from founder-match pool
               </Button>
             </div>
-            <p className="text-[11px] text-muted-foreground/80">
-              Sends an invite (mock) and attaches the mentor to this idea as a note.
-            </p>
           </div>
         </Section>
 
-        {/* Notes */}
-        <Section title="Notes">
-          <Textarea
-            rows={3}
-            value={notesDraft}
-            onChange={(e) => setNotesDraft(e.target.value)}
-            placeholder="Working notes — only you see these."
-            className="text-sm"
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            className="mt-2"
-            disabled={notesDraft === (idea.notes ?? "")}
-            onClick={() => {
-              onChange({ notes: notesDraft.trim() || undefined });
-              notify("Notes saved.");
-            }}
-          >
-            Save notes
-          </Button>
+        {/* Notes — one running timestamped log (IP-manager notes + founder updates + system) */}
+        <Section title="Notes & updates">
+          <div className="space-y-2">
+            <Textarea
+              rows={2}
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              placeholder="Add a note — timestamped and attributed to you."
+              className="text-sm"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!noteDraft.trim()}
+              onClick={() => {
+                appendNote(noteDraft.trim());
+                setNoteDraft("");
+                notify("Note added.");
+              }}
+            >
+              <MessageSquarePlus className="mr-1.5 h-3.5 w-3.5" /> Add note
+            </Button>
+          </div>
+          <div className="mt-4 space-y-3">
+            {idea.noteLog.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No notes yet.</p>
+            ) : (
+              idea.noteLog.map((n) => <NoteRow key={n.id} note={n} />)
+            )}
+          </div>
         </Section>
 
         <div className="px-6 py-4 text-[11px] text-muted-foreground/70">
@@ -1220,11 +1475,16 @@ function IdeaPanel({
 /* ── Screen 2: Import invention disclosure ───────────────────────────────── */
 
 function IntakeScreen({
-  onAdd, onOpenIdea,
+  onAdd, onOpenIdea, gotoPipeline,
 }: {
   onAdd: (idea: Omit<IpIdea, "id">) => number;
   onOpenIdea: (id: number) => void;
+  gotoPipeline: () => void;
 }) {
+  /* Top chooser: bring in one disclosure (PDF auto-fill) vs many (spreadsheet).
+     One flow is revealed at a time — progressive disclosure, not two shouting. */
+  const [mode, setMode] = useState<"single" | "batch">("single");
+
   /* Before import: just the upload affordance. After a mock file-select the
      structured disclosure record auto-fills and becomes editable. */
   const [imported, setImported] = useState<Disclosure | null>(null);
@@ -1235,6 +1495,29 @@ function IntakeScreen({
   const [route, setRoute] = useState<RouteKind | "none">("none");
   const [addedId, setAddedId] = useState<number | null>(null);
   const [addedTitle, setAddedTitle] = useState("");
+
+  /* Batch flow state: draft rows (with include/skip + editable title), then a
+     success count once they land in the pipeline. */
+  type DraftRow = BatchDraftRow & { include: boolean };
+  const [batchRows, setBatchRows] = useState<DraftRow[] | null>(null);
+  const [batchAdded, setBatchAdded] = useState<number | null>(null);
+
+  const runBatchImport = () => {
+    setBatchRows(simulateBatchImport().map((r) => ({ ...r, include: true })));
+    setBatchAdded(null);
+  };
+  const patchRow = (key: number, p: Partial<DraftRow>) =>
+    setBatchRows((rows) => (rows ? rows.map((r) => (r.key === key ? { ...r, ...p } : r)) : rows));
+  const rowReady = (r: DraftRow) => r.title.trim().length > 0 && r.nonConfidentialSummary.trim().length > 0;
+  const includedCount = batchRows?.filter((r) => r.include).length ?? 0;
+
+  const commitBatch = () => {
+    if (!batchRows) return;
+    const rows = batchRows.filter((r) => r.include);
+    rows.forEach((r) => onAdd(mkBatchDraft(r)));
+    setBatchAdded(rows.length);
+    setBatchRows(null);
+  };
 
   const simulateImport = () => {
     // Deep-clone so edits don't mutate the shared sample.
@@ -1276,6 +1559,7 @@ function IntakeScreen({
       route: chosen,
       published: chosen === "founder_match",
       updated: "Just now",
+      noteLog: [],
       interests: [],
       mentors: [],
       ...(chosen === "hackathon" ? { hackathonTracking: { event: null, pickedBy: null, built: null } } : {}),
@@ -1289,9 +1573,34 @@ function IntakeScreen({
     <>
       <PageHeader
         title="Import invention disclosure"
-        subtitle="Import the USD Invention Disclosure Form instead of retyping it. It auto-fills a structured record you can review and edit, then lands in the pipeline."
+        subtitle="Bring in a single disclosure form, or a whole spreadsheet at once. Either way it lands in your pipeline for review."
       />
-      <div className="max-w-2xl">
+      <div className="max-w-3xl">
+        {/* Top chooser — reveal one flow at a time */}
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {[
+            { m: "single" as const, icon: <FileUp className="h-4 w-4" />, title: "Bring in one", blurb: "Import a single USD disclosure form (PDF) — auto-fills a structured record." },
+            { m: "batch" as const, icon: <FileSpreadsheet className="h-4 w-4" />, title: "Bring in many", blurb: "Import a spreadsheet (.csv / .xlsx) of disclosures and review them in a batch." },
+          ].map(({ m, icon, title: t, blurb }) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={cn(
+                "flex items-start gap-2.5 rounded-lg border px-4 py-3 text-left transition-colors",
+                mode === m ? "border-primary/60 bg-primary/5" : "border-border bg-card hover:border-primary/40"
+              )}
+            >
+              <span className={cn("mt-0.5", mode === m ? "text-primary" : "text-muted-foreground")}>{icon}</span>
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t}</span>
+                <span className="block text-xs text-muted-foreground">{blurb}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {mode === "single" && (
+        <>
         {addedId != null && (
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/70 px-4 py-3">
             <p className="flex items-center gap-2 text-sm text-emerald-800">
@@ -1486,6 +1795,126 @@ function IntakeScreen({
               <p className="text-center text-xs text-muted-foreground">Write the non-confidential summary to submit.</p>
             )}
           </div>
+        )}
+        </>
+        )}
+
+        {mode === "batch" && (
+          <>
+            {batchAdded != null && (
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/70 px-4 py-3">
+                <p className="flex items-center gap-2 text-sm text-emerald-800">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <span>
+                    <span className="font-medium">{batchAdded}</span> disclosure{batchAdded === 1 ? "" : "s"} added to the pipeline as New.
+                  </span>
+                </p>
+                <Button size="sm" variant="outline" className="h-7 bg-card text-xs" onClick={gotoPipeline}>
+                  View in pipeline <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              </div>
+            )}
+
+            {batchRows == null ? (
+              /* Select-spreadsheet affordance */
+              <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <FileSpreadsheet className="h-6 w-6 text-primary" />
+                </div>
+                <h2 className="mt-4 text-base font-semibold text-foreground">Select spreadsheet (.csv / .xlsx)</h2>
+                <p className="mx-auto mt-1.5 max-w-md text-sm text-muted-foreground">
+                  Drop in a spreadsheet with a row per disclosure — title, non-confidential summary, lead inventor, suggested route. Review them before anything lands.
+                </p>
+                <Button className="mt-4" onClick={runBatchImport}>
+                  <FileSpreadsheet className="mr-1.5 h-4 w-4" /> Select spreadsheet
+                </Button>
+                <p className="mx-auto mt-4 flex max-w-md items-center justify-center gap-1.5 text-[11px] text-muted-foreground/80">
+                  <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                  Prototype: this loads sample rows. Real spreadsheet parsing is a backend follow-up — this shows the flow.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-2.5">
+                  <p className="flex items-center gap-2 text-sm text-emerald-800">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    {batchRows.length} rows read — review, edit titles, and pick which to bring in.
+                  </p>
+                  <Button size="sm" variant="outline" className="h-7 bg-card text-xs" onClick={() => setBatchRows(null)}>
+                    Start over
+                  </Button>
+                </div>
+
+                <div className="rounded-lg border border-border bg-card">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-10"></TableHead>
+                        <TableHead className="w-[38%]">Title</TableHead>
+                        <TableHead>Lead inventor</TableHead>
+                        <TableHead>Suggested route</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {batchRows.map((r) => {
+                        const ready = rowReady(r);
+                        return (
+                          <TableRow key={r.key} className={cn("hover:bg-transparent", !r.include && "opacity-45")}>
+                            <TableCell className="py-2">
+                              <Checkbox
+                                checked={r.include}
+                                onCheckedChange={(v) => patchRow(r.key, { include: !!v })}
+                                aria-label={`Include ${r.title}`}
+                              />
+                            </TableCell>
+                            <TableCell className="py-2">
+                              <Input
+                                value={r.title}
+                                onChange={(e) => patchRow(r.key, { title: e.target.value })}
+                                className="h-8 text-xs"
+                                aria-label="Draft title"
+                              />
+                              {!r.nonConfidentialSummary.trim() && (
+                                <p className="mt-1 text-[11px] text-amber-700">No summary on the sheet — add one before publishing to founders.</p>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-xs text-foreground/80">
+                              <p className="whitespace-nowrap">{r.leadInventor}</p>
+                              <p className="whitespace-nowrap text-[11px] text-muted-foreground">{r.department}</p>
+                            </TableCell>
+                            <TableCell>
+                              {r.suggestedRoute ? <RouteBadge route={r.suggestedRoute} /> : <span className="text-xs text-muted-foreground/60">—</span>}
+                            </TableCell>
+                            <TableCell>
+                              {ready ? (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700 whitespace-nowrap">
+                                  <CheckCircle2 className="h-3 w-3" /> Ready
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 whitespace-nowrap">
+                                  Needs summary
+                                </span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button disabled={includedCount === 0} onClick={commitBatch}>
+                    <Rows3 className="mr-1.5 h-4 w-4" /> Add {includedCount} disclosure{includedCount === 1 ? "" : "s"} to pipeline
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Each lands as a New disclosure with a skeleton record (tech number USD-BATCH-00x). "Needs summary" rows still import — add the gist before listing them to founders.
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </>

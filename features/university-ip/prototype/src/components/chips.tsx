@@ -1,22 +1,24 @@
-import { Rocket, Trophy, HeartHandshake, Compass, Users, Phone, PauseCircle, BadgeCheck, Archive } from "lucide-react";
+import { Rocket, Trophy, HeartHandshake, Compass, Users, Phone, PauseCircle, BadgeCheck, Archive, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  STAGE_LABEL, ROUTE_LABEL, PATENT_LABEL, OUTCOME_LABEL, MILESTONE_LABEL,
-  type Stage, type RouteKind, type PatentStatus, type Involvement, type OutcomeKind, type MilestoneKind,
+  ROUTE_LABEL, PATENT_LABEL, OUTCOME_LABEL, MILESTONE_LABEL, DEFAULT_STAGES, stageOf,
+  type StageId, type PipelineStage, type RouteKind, type PatentStatus, type Involvement,
+  type OutcomeKind, type MilestoneKind,
 } from "@/data";
 
 /* Small, quiet status chips shared across views. Stages read as a colored
    dot on a neutral chip; routes as a muted icon badge. */
 
-export const STAGE_DOT: Record<Stage, string> = {
-  new: "bg-sky-500",
-  reviewing: "bg-amber-500",
-  routed: "bg-violet-500",
-  in_motion: "bg-emerald-500",
-  finalize: "bg-stone-400",
-};
-
-export function StageChip({ stage, className }: { stage: Stage; className?: string }) {
+/* Stage identity is data now (customizable). The chip resolves label + dot
+   from the live stage list, falling back to the default set. */
+export function StageChip({
+  stageId, stages = DEFAULT_STAGES, className,
+}: {
+  stageId: StageId;
+  stages?: PipelineStage[];
+  className?: string;
+}) {
+  const s = stageOf(stageId, stages);
   return (
     <span
       className={cn(
@@ -24,8 +26,25 @@ export function StageChip({ stage, className }: { stage: Stage; className?: stri
         className
       )}
     >
-      <span className={cn("h-1.5 w-1.5 rounded-full", STAGE_DOT[stage])} />
-      {STAGE_LABEL[stage]}
+      <span className={cn("h-1.5 w-1.5 rounded-full", s.dot)} />
+      {s.label}
+    </span>
+  );
+}
+
+/* Compact overdue / due-soon badge for the pipeline row (IP-Manager side). */
+export function CheckInBadge({ overdue, className }: { overdue: boolean; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[11px] whitespace-nowrap",
+        overdue
+          ? "border-rose-200 bg-rose-50 text-rose-700"
+          : "border-amber-200 bg-amber-50 text-amber-700",
+        className
+      )}
+    >
+      <Clock className="h-3 w-3" /> {overdue ? "Overdue" : "Due soon"}
     </span>
   );
 }
