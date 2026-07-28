@@ -1,8 +1,8 @@
-import { Rocket, Trophy, HeartHandshake, Users, Phone, PauseCircle } from "lucide-react";
+import { Rocket, Trophy, HeartHandshake, Compass, Users, Phone, PauseCircle, BadgeCheck, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  STAGE_LABEL, ROUTE_LABEL, PATENT_LABEL, OUTCOME_LABEL,
-  type Stage, type RouteKind, type PatentStatus, type Involvement, type OutcomeKind,
+  STAGE_LABEL, ROUTE_LABEL, PATENT_LABEL, OUTCOME_LABEL, MILESTONE_LABEL,
+  type Stage, type RouteKind, type PatentStatus, type Involvement, type OutcomeKind, type MilestoneKind,
 } from "@/data";
 
 /* Small, quiet status chips shared across views. Stages read as a colored
@@ -13,7 +13,7 @@ export const STAGE_DOT: Record<Stage, string> = {
   reviewing: "bg-amber-500",
   routed: "bg-violet-500",
   in_motion: "bg-emerald-500",
-  done: "bg-stone-400",
+  finalize: "bg-stone-400",
 };
 
 export function StageChip({ stage, className }: { stage: Stage; className?: string }) {
@@ -47,6 +47,7 @@ const ROUTE_ICON: Record<RouteKind, JSX.Element> = {
   founder: <Rocket className="h-3 w-3" />,
   hackathon: <Trophy className="h-3 w-3" />,
   founder_match: <HeartHandshake className="h-3 w-3" />,
+  i_corps: <Compass className="h-3 w-3" />,
 };
 
 export function RouteBadge({ route, className }: { route: RouteKind | null; className?: string }) {
@@ -64,19 +65,36 @@ export function RouteBadge({ route, className }: { route: RouteKind | null; clas
   );
 }
 
+/* Terminal outcome — the true TTO end state. Licensed is the success. */
 export function OutcomeChip({ outcome, className }: { outcome: OutcomeKind; className?: string }) {
-  const positive = outcome !== "passed";
+  const licensed = outcome === "licensed";
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs whitespace-nowrap",
-        positive
+        licensed
           ? "border-emerald-200 bg-emerald-50 text-emerald-700"
           : "border-border bg-muted text-muted-foreground",
         className
       )}
     >
+      {licensed ? <BadgeCheck className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
       {OUTCOME_LABEL[outcome]}
+    </span>
+  );
+}
+
+/* A positive, route-appropriate milestone reached while in motion. Quieter
+   than the terminal outcome — a step on the way, not the end. */
+export function MilestoneChip({ milestone, className }: { milestone: MilestoneKind; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs text-foreground/70 whitespace-nowrap",
+        className
+      )}
+    >
+      {MILESTONE_LABEL[milestone]}
     </span>
   );
 }
