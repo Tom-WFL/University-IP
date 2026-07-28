@@ -31,8 +31,48 @@
    Tenancy: the IP Manager sees only their own university's ideas; the
    founder-facing marketplace spans universities. */
 
+/* Today, ISO. Date comparisons are lexical on YYYY-MM-DD strings. */
+export const TODAY = "2026-07-28";
+
+/* The five SYSTEM stage ids. Stage identity lives in the PipelineStage list
+   (customizable, in App state) — this union is only the built-in ids and a
+   convenience for the seeds. `IpIdea.stage` is a stage id (string) so custom
+   stages can be added without widening every literal. Routing / confidentiality
+   / outcome logic keys off a stage's KIND (see StageKind), never its id. */
 export type Stage = "new" | "reviewing" | "routed" | "in_motion" | "finalize";
+export type StageId = string;
 export type RouteKind = "founder" | "hackathon" | "founder_match" | "i_corps";
+
+/* ── Customizable pipeline stages ────────────────────────────────────────────
+   Presentation (label / dot / order) is separated from SEMANTICS (kind). The
+   five system anchors carry a fixed kind and their special behaviors; added
+   custom stages are kind:"custom" — inert markers with only Next / Back. */
+export type StageKind = "intake" | "review" | "routed" | "motion" | "terminal" | "custom";
+
+export interface PipelineStage {
+  id: string;
+  label: string;
+  kind: StageKind;
+  dot: string; // tailwind bg-* class for the status dot
+  system: boolean; // system anchors: renamable + reorderable, never removable
+}
+
+export const DEFAULT_STAGES: PipelineStage[] = [
+  { id: "new", label: "New", kind: "intake", dot: "bg-sky-500", system: true },
+  { id: "reviewing", label: "Reviewing", kind: "review", dot: "bg-amber-500", system: true },
+  { id: "routed", label: "Routed", kind: "routed", dot: "bg-violet-500", system: true },
+  { id: "in_motion", label: "In motion", kind: "motion", dot: "bg-emerald-500", system: true },
+  { id: "finalize", label: "License / finalize", kind: "terminal", dot: "bg-stone-400", system: true },
+];
+
+/* Resolve a stage id to its record (falls back to the default set), and its
+   KIND — the one thing routing / gating logic is allowed to branch on. */
+export const stageOf = (id: StageId, stages: PipelineStage[] = DEFAULT_STAGES): PipelineStage =>
+  stages.find((s) => s.id === id) ?? DEFAULT_STAGES.find((s) => s.id === id) ?? DEFAULT_STAGES[0];
+export const kindOf = (id: StageId, stages: PipelineStage[] = DEFAULT_STAGES): StageKind => stageOf(id, stages).kind;
+/* First stage of a given kind — used to jump to the terminal / motion anchor. */
+export const firstStageOfKind = (kind: StageKind, stages: PipelineStage[]): PipelineStage | undefined =>
+  stages.find((s) => s.kind === kind);
 /* Positive, route-appropriate milestone reached while in motion. */
 export type MilestoneKind = "company_formed" | "matched" | "built_at_hackathon" | "icorps_cohort";
 /* The true terminal outcomes a tech-transfer office resolves to. */
@@ -208,6 +248,19 @@ export interface ICorpsApplication {
   note?: string;
 }
 
+/* ── Unified timeline note ───────────────────────────────────────────────────
+   ONE running log per idea, shared by the IP Manager's notes (#3), founder /
+   company updates (#6), and system markers (#4 update-email, etc.). The role
+   carries attribution so each entry can be badged. Newest-first in the UI. */
+export type NoteAuthorRole = "ip_manager" | "founder" | "system";
+export interface Note {
+  id: number;
+  author: string;
+  authorRole: NoteAuthorRole;
+  when: string;
+  text: string;
+}
+
 export interface IpIdea {
   id: number;
   title: string; // NON-confidential (the form states so)
@@ -221,16 +274,18 @@ export interface IpIdea {
   patentStatus: PatentStatus;
   /* CONFIDENTIAL structured disclosure record imported from the USD form. */
   disclosure: Disclosure;
-  stage: Stage;
+  stage: StageId; // a PipelineStage id — default set uses the Stage union values
   onHold: boolean; // pause flag — not a stage, not a route
   holdNote?: string;
-  route: RouteKind | null; // set when stage reaches "routed"
+  route: RouteKind | null; // set at a review-kind stage
   published: boolean; // meaningful when route = founder_match: listed on the marketplace
   milestone?: MilestoneKind; // positive marker reached in motion
-  outcome?: OutcomeKind; // TRUE terminal — set when stage = finalize (licensed | abandoned)
+  outcome?: OutcomeKind; // TRUE terminal — set at a terminal-kind stage (licensed | abandoned)
   outcomeNote?: string;
   updated: string; // last activity, human-readable (mock)
-  notes?: string; // IP Manager's working notes
+  noteLog: Note[]; // running timestamped log — IP-manager notes + founder updates + system (newest first)
+  nextCheckIn?: string; // ISO date — IP-Manager check-in reminder
+  lastUpdateEmailSent?: string; // ISO date — last stakeholder update email logged
   inviteSent?: boolean; // lead inventor profile created + invite sent
   founderTracking?: FounderTracking;
   hackathonTracking?: HackathonTracking;
@@ -245,6 +300,186 @@ export const leadInventor = (i: IpIdea): Inventor =>
   i.disclosure.inventors[0] ?? { name: "—", title: "", department: "—", inventorshipPct: 100, email: "" };
 export const leadInventorName = (i: IpIdea): string => leadInventor(i).name;
 export const leadInventorDept = (i: IpIdea): string => leadInventor(i).department;
+
+/* A check-in is overdue when its date has passed (lexical YYYY-MM-DD compare). */
+export const isOverdue = (i: IpIdea): boolean => !!i.nextCheckIn && i.nextCheckIn < TODAY;
+/* Due within the next week (but not yet overdue) — a softer "due soon" signal. */
+export const isDueSoon = (i: IpIdea): boolean => {
+  if (!i.nextCheckIn || isOverdue(i)) return false;
+  const d = new Date(i.nextCheckIn + "T00:00:00Z");
+  const soon = new Date(TODAY + "T00:00:00Z");
+  soon.setUTCDate(soon.getUTCDate() + 7);
+  return d <= soon;
+};
+
+/* Add N days to an ISO date, returning ISO. Used by the check-in presets. */
+export const addDaysISO = (iso: string, days: number): string => {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
+/* ── Team selector — the ONE place the two-tier confidentiality rule lives ───
+   IP Manager sees everyone with names. Founders NEVER see inventor names
+   (confidential) — their tier gets co-founders + mentors + an anonymous
+   "University inventor team" marker. */
+export type ViewerRole = "ip_manager" | "founder";
+
+export interface TeamMember {
+  name: string; // "" when anonymized (inventor team, founder tier)
+  role: string; // human label, e.g. "Lead inventor", "Co-founder", "Mentor"
+  detail?: string; // dept / context (confidential detail omitted for founders)
+  lead?: boolean;
+  anonymous?: boolean; // a name-less placeholder (founder-tier inventor team)
+}
+
+export function teamOf(idea: IpIdea, viewer: ViewerRole): TeamMember[] {
+  const members: TeamMember[] = [];
+
+  if (viewer === "ip_manager") {
+    idea.disclosure.inventors.forEach((inv, idx) =>
+      members.push({
+        name: inv.name,
+        role: idx === 0 ? "Lead inventor" : "Inventor",
+        detail: `${inv.title} · ${inv.department} · ${inv.inventorshipPct}%`,
+        lead: idx === 0,
+      })
+    );
+  } else {
+    /* Founder tier: inventor NAMES are confidential — collapse to a count. */
+    const n = idea.disclosure.inventors.length;
+    members.push({
+      name: "",
+      role: "University inventor team",
+      detail: n === 1 ? "1 inventor at the university" : `${n} inventors at the university`,
+      anonymous: true,
+    });
+  }
+
+  /* Founders who picked it up: connected interests + the founder-route co-founder. */
+  idea.interests
+    .filter((n) => n.status === "connected")
+    .forEach((n) =>
+      members.push({ name: n.founder, role: "Founder", detail: viewer === "ip_manager" ? n.founderContext : undefined })
+    );
+  if (idea.founderTracking?.coFounder) {
+    members.push({ name: idea.founderTracking.coFounder, role: "Co-founder", detail: idea.founderTracking.companyName });
+  }
+
+  /* Mentors — non-confidential; shown on both tiers. */
+  idea.mentors.forEach((m) =>
+    members.push({ name: m.name, role: "Mentor", detail: viewer === "ip_manager" ? m.email : undefined })
+  );
+
+  return members;
+}
+
+/* ── Batch / mass import (mock) ──────────────────────────────────────────────
+   Stands in for spreadsheet parsing (a backend follow-up). Returns a fixed set
+   of draft rows the IP Manager reviews before they land in the pipeline. */
+export interface BatchDraftRow {
+  key: number;
+  title: string;
+  nonConfidentialSummary: string;
+  leadInventor: string;
+  department: string;
+  suggestedRoute: RouteKind | null;
+}
+
+export function simulateBatchImport(): BatchDraftRow[] {
+  return [
+    {
+      key: 1,
+      title: "Piezoelectric road energy-harvesting tile",
+      nonConfidentialSummary:
+        "A road-embedded tile that harvests energy from passing traffic to power roadside sensors and signage off-grid.",
+      leadInventor: "Dr. Owen Pruitt",
+      department: "Electrical Engineering",
+      suggestedRoute: "founder_match",
+    },
+    {
+      key: 2,
+      title: "Antifungal coating for stored grain",
+      nonConfidentialSummary:
+        "A food-safe antifungal coating that extends the storage life of grain in on-farm bins without chemical fumigants.",
+      leadInventor: "Dr. Grace Iron Cloud",
+      department: "Biology",
+      suggestedRoute: "hackathon",
+    },
+    {
+      key: 3,
+      title: "Low-power wildfire-smoke early sensor",
+      nonConfidentialSummary:
+        "A solar-powered node that detects wildfire smoke particulates minutes earlier than satellite passes in remote terrain.",
+      leadInventor: "Dr. Sam Littlefeather",
+      department: "Earth Sciences",
+      suggestedRoute: "i_corps",
+    },
+    {
+      key: 4,
+      title: "Recyclable wind-turbine blade resin",
+      nonConfidentialSummary:
+        "", // intentionally missing — demonstrates a "Needs summary" row that can't publish to founders
+      leadInventor: "Dr. Anna Voss",
+      department: "Materials Science",
+      suggestedRoute: null,
+    },
+    {
+      key: 5,
+      title: "Adaptive hearing-aid noise model",
+      nonConfidentialSummary:
+        "An on-device model that adapts hearing-aid noise suppression to a wearer's environment in real time.",
+      leadInventor: "Dr. Lena Cho",
+      department: "Chemistry",
+      suggestedRoute: "founder",
+    },
+    {
+      key: 6,
+      title: "Freeze-tolerant probiotic yogurt culture",
+      nonConfidentialSummary:
+        "A yogurt starter culture that survives freeze-thaw shipping to reach shelf-stable distribution in rural markets.",
+      leadInventor: "Dr. Ruth Bishop",
+      department: "Nursing",
+      suggestedRoute: "founder_match",
+    },
+  ];
+}
+
+/* Build a skeleton IpIdea from a reviewed batch row. Lands as stage:new with a
+   minimal disclosure record; the IP Manager fills the confidential detail later. */
+let BATCH_SEQ = 1;
+export function mkBatchDraft(row: BatchDraftRow): Omit<IpIdea, "id"> {
+  const techNumber = `USD-BATCH-${String(BATCH_SEQ++).padStart(3, "0")}`;
+  return {
+    title: row.title.trim(),
+    nonConfidentialSummary: row.nonConfidentialSummary.trim(),
+    university: UNIVERSITY,
+    involvement: "contact",
+    patentStatus: "not_filed",
+    disclosure: mkDisclosure({
+      techNumber,
+      briefSummary: "",
+      inventionStage: ["concept_only"],
+      inventors: [mkInventor(row.leadInventor, "", row.department, 100, "")],
+    }),
+    stage: "new",
+    onHold: false,
+    route: null,
+    published: false,
+    updated: "Just now",
+    noteLog: [
+      {
+        id: 1,
+        author: IP_MANAGER,
+        authorRole: "system",
+        when: "Just now",
+        text: `Imported via batch spreadsheet (${techNumber}).`,
+      },
+    ],
+    interests: [],
+    mentors: [],
+  };
+}
 
 export const UNIVERSITY = "University of South Dakota";
 export const IP_MANAGER = "Kirby Fuglsby";
@@ -366,7 +601,24 @@ export const SEED_IDEAS: IpIdea[] = [
     published: false,
     milestone: "company_formed",
     updated: "2 days ago",
-    notes: "Dr. Hale and Jess pairing well — Build phase on pace after a slow start.",
+    nextCheckIn: "2026-08-05",
+    lastUpdateEmailSent: "2026-07-22",
+    noteLog: [
+      {
+        id: 2,
+        author: "Dr. Miriam Hale",
+        authorRole: "founder",
+        when: "2 days ago",
+        text: "Build phase moving — first two porcine runs replicated the 48-hour window. Lining up a production partner for chip yield.",
+      },
+      {
+        id: 1,
+        author: IP_MANAGER,
+        authorRole: "ip_manager",
+        when: "1 week ago",
+        text: "Dr. Hale and Jess pairing well — Build phase on pace after a slow start.",
+      },
+    ],
     inviteSent: true,
     founderTracking: {
       currentPhase: "Build",
@@ -415,7 +667,16 @@ export const SEED_IDEAS: IpIdea[] = [
     published: false,
     milestone: "built_at_hackathon",
     updated: "3 weeks ago",
-    notes: "2nd place at Fall Builders Jam 2026 — Team AgriSense is applying to Wildfire Labs.",
+    nextCheckIn: "2026-07-10",
+    noteLog: [
+      {
+        id: 1,
+        author: IP_MANAGER,
+        authorRole: "ip_manager",
+        when: "3 weeks ago",
+        text: "2nd place at Fall Builders Jam 2026 — Team AgriSense is applying to Wildfire Labs.",
+      },
+    ],
     inviteSent: true,
     hackathonTracking: {
       event: "Fall Builders Jam 2026",
@@ -464,6 +725,16 @@ export const SEED_IDEAS: IpIdea[] = [
     outcome: "licensed",
     outcomeNote: "Exclusive license to Prairie Panel Co. (two-founder company); Dr. Voss advising as contact.",
     updated: "1 month ago",
+    lastUpdateEmailSent: "2026-06-30",
+    noteLog: [
+      {
+        id: 1,
+        author: IP_MANAGER,
+        authorRole: "system",
+        when: "1 month ago",
+        text: "Closed as licensed — exclusive license executed with Prairie Panel Co.",
+      },
+    ],
     inviteSent: true,
     interests: [
       { id: 1, founder: "Priya Raman", founderContext: "Wildfire Network member", when: "April", status: "connected" },
@@ -504,6 +775,7 @@ export const SEED_IDEAS: IpIdea[] = [
     route: null,
     published: false,
     updated: "Yesterday",
+    noteLog: [],
     interests: [],
     mentors: [],
   },
@@ -541,7 +813,16 @@ export const SEED_IDEAS: IpIdea[] = [
     route: "i_corps",
     published: false,
     updated: "5 days ago",
-    notes: "Routed to I-Corps — good customer-discovery candidate before anyone commits to build.",
+    nextCheckIn: "2026-08-01",
+    noteLog: [
+      {
+        id: 1,
+        author: IP_MANAGER,
+        authorRole: "ip_manager",
+        when: "5 days ago",
+        text: "Routed to I-Corps — good customer-discovery candidate before anyone commits to build.",
+      },
+    ],
     interests: [],
     mentors: [],
   },
@@ -581,6 +862,7 @@ export const SEED_IDEAS: IpIdea[] = [
     route: null,
     published: false,
     updated: "2 weeks ago",
+    noteLog: [],
     interests: [],
     mentors: [],
   },
@@ -618,7 +900,17 @@ export const SEED_IDEAS: IpIdea[] = [
     route: "founder_match",
     published: true,
     updated: "1 week ago",
-    notes: "Published to Founder Match — waiting for a founder to pick it up.",
+    nextCheckIn: "2026-08-11",
+    lastUpdateEmailSent: "2026-07-18",
+    noteLog: [
+      {
+        id: 1,
+        author: IP_MANAGER,
+        authorRole: "ip_manager",
+        when: "1 week ago",
+        text: "Published to Founder Match — waiting for a founder to pick it up.",
+      },
+    ],
     interests: [],
     mentors: [
       { id: 1, name: "Carl Dahl", email: "carl@structuralventures.io", invitedWhen: "4 days ago" },
@@ -664,10 +956,36 @@ export const SEED_IDEAS: IpIdea[] = [
     published: true,
     milestone: "matched",
     updated: "This morning",
+    nextCheckIn: "2026-08-04",
+    lastUpdateEmailSent: "2026-07-25",
+    noteLog: [
+      {
+        id: 3,
+        author: FOUNDER_NAME,
+        authorRole: "founder",
+        when: "This morning",
+        text: "Picked this up through Founder Match — I'd love to run the field-scale trial. Lining up two ag-retail co-ops for pilots. When can we talk terms?",
+      },
+      {
+        id: 2,
+        author: "Dana Whitfield",
+        authorRole: "founder",
+        when: "Yesterday",
+        text: "Submitted the I-Corps application for the Fall cohort — starting customer discovery interviews this week.",
+      },
+      {
+        id: 1,
+        author: IP_MANAGER,
+        authorRole: "ip_manager",
+        when: "2 days ago",
+        text: "Strong founder interest — two founders engaged. Watch for overlap with the licensed background patent before committing.",
+      },
+    ],
     inviteSent: true,
     interests: [
       { id: 1, founder: "Dana Whitfield", founderContext: "Student founder · USD MBA program", when: "Yesterday", status: "connected" },
       { id: 2, founder: "Leo Tran", founderContext: "Wildfire Network member", when: "This morning", status: "new" },
+      { id: 3, founder: FOUNDER_NAME, founderContext: "Founder · Wildfire Network", when: "This morning", status: "connected" },
     ],
     mentors: [],
     icorps: { applied: true, when: "Yesterday", note: "Dana applied to the Fall 2026 regional I-Corps cohort." },
@@ -706,6 +1024,7 @@ export const SEED_IDEAS: IpIdea[] = [
     route: null,
     published: false,
     updated: "2 days ago",
+    noteLog: [],
     interests: [],
     mentors: [],
   },
@@ -747,6 +1066,15 @@ export const SEED_IDEAS: IpIdea[] = [
     outcome: "abandoned",
     outcomeNote: "No team picked it up over two events and the inventor moved on — closed as abandoned.",
     updated: "6 weeks ago",
+    noteLog: [
+      {
+        id: 1,
+        author: IP_MANAGER,
+        authorRole: "system",
+        when: "6 weeks ago",
+        text: "Closed as abandoned after two hackathons with no pickup.",
+      },
+    ],
     interests: [],
     mentors: [],
   },
@@ -785,6 +1113,8 @@ export const SEED_IDEAS: IpIdea[] = [
     route: null,
     published: false,
     updated: "4 days ago",
+    nextCheckIn: "2026-07-21",
+    noteLog: [],
     interests: [],
     mentors: [],
   },
@@ -814,6 +1144,7 @@ export const OTHER_UNI_MATCH_IDEAS: IpIdea[] = [
     route: "founder_match",
     published: true,
     updated: "1 week ago",
+    noteLog: [],
     interests: [],
     mentors: [],
   },
@@ -835,6 +1166,7 @@ export const OTHER_UNI_MATCH_IDEAS: IpIdea[] = [
     route: "founder_match",
     published: true,
     updated: "2 weeks ago",
+    noteLog: [],
     interests: [],
     mentors: [],
   },
@@ -856,6 +1188,7 @@ export const OTHER_UNI_MATCH_IDEAS: IpIdea[] = [
     route: "founder_match",
     published: true,
     updated: "5 days ago",
+    noteLog: [],
     interests: [],
     mentors: [],
   },
@@ -877,6 +1210,7 @@ export const OTHER_UNI_MATCH_IDEAS: IpIdea[] = [
     route: "founder_match",
     published: true,
     updated: "1 week ago",
+    noteLog: [],
     interests: [],
     mentors: [],
   },
