@@ -4,3 +4,4 @@ dist/
 .DS_Store
 
 # Built single-file demo is committed deliberately (see README) — keep dist out.
+tsconfig.tsbuildinfo
