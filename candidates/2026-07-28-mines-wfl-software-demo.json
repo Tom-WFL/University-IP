@@ -1,0 +1,526 @@
+{
+  "source": "A Get Together to do Awesome Innovation Things for Mines - Meeting 3 - Wild Fire Labs software demo (Jul 28)",
+  "source_type": "transcript",
+  "date": "2026-07-28",
+  "candidates": [
+    {
+      "type": "feature",
+      "title": "University IP — IP disclosure import (bulk + one-at-a-time, mapped to standard form)",
+      "surface_request": "Import a university's IP disclosure spreadsheet into the platform, either in bulk or one at a time, mapped to the state-standard disclosure form (USD's form, copied to Mines), in compliance with SDBOR policy 491.",
+      "root_need": "Universities manage IP disclosures on spreadsheets and disjointed systems; the IP has to get into the platform before it can be routed toward commercialization at scale.",
+      "summary": "Bulk/single import of university IP disclosures mapped to the USD-derived standard form, BOR-491 compliant, secured and non-public by default.",
+      "source_quote": "So you guys have a whole bunch of university IP disclosures. I know you have a system to manage it. I know there's a spreadsheet or an alleged spreadsheet. And so the idea behind this is to be able to import that spreadsheet and have whoever on your team ends up being the IP manager, which according to the SDBOR policy 491, which we learned more about than I expected, there's a whole process around that that basically allows you to either bring in a bunch of IP into the platform or one at a Time",
+      "who_raised": null,
+      "gaps": [
+        "Exact spreadsheet format(s) at Mines not stated — 'a spreadsheet or an alleged spreadsheet'.",
+        "Who at Mines will be the IP manager role is unresolved.",
+        "Whether the USD form is truly the state standard is stated as 'best to our knowledge' only."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP — staged disclosure workflow (private → campus summary → community/statewide)",
+      "surface_request": "A three-stage publishing model for imported IP: stage 1 private in the platform, stage 2 publish a non-confidential summary to students and faculty on campus, stage 3 publish out to the community/statewide.",
+      "root_need": "The right founder match often isn't on campus (faculty mostly won't be founders), so IP needs progressively wider, controlled exposure without disclosing the actual IP.",
+      "summary": "Three-stage IP exposure: in-platform only, campus-only non-confidential summary, then community/statewide publish.",
+      "source_quote": "And there's kind of a three stage thing that we've decided which I, you know in, in step one is it's just in the platform. Step two is you can disclose or you can publish just a non confidential summary, not the actual IP but non confidential summary to students and faculty here at Mines.",
+      "who_raised": null,
+      "gaps": [
+        "What qualifies as a 'non confidential summary' (and who approves it) is not defined.",
+        "Mines' preferred rollout (campus-first vs statewide-immediately like DSU/USD) was left open — 'totally up to you'."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP — IP management console",
+      "surface_request": "A console listing all of a university's IP and the stage each item is in (internal, published, etc.).",
+      "root_need": "The IP manager needs one place to see and control the disclosure stage of every piece of IP.",
+      "summary": "Console view of all university IP with per-item stage status and publish actions.",
+      "source_quote": "These are all the stages of all your ip, whether it's just internal, whether it's been published. And then what you can do is you can say I want to publish this out to the community.",
+      "who_raised": null,
+      "gaps": [
+        "Console columns/filters beyond stage were not specified."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP — publish-scope filter (campus-only vs everywhere)",
+      "surface_request": "A filter letting the IP manager choose whether a published item goes 'everywhere or just to Mines'.",
+      "root_need": "Schools differ: DSU/USD plan to go statewide/public immediately for reach; Mines may want campus-first then statewide, so scope must be per-item and per-school.",
+      "summary": "Per-item publish scope control for the IP manager (campus-only vs statewide/public).",
+      "source_quote": "We just were like, we got to have a way for people to say, yeah, I want to do that, and a filter to say, as the IP manager, I want this to go everywhere or just to Mines.",
+      "who_raised": null,
+      "gaps": [
+        "Whether scope changes are one-way (campus → statewide) or reversible was not discussed."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP — expose authorized IP to the national founder network",
+      "surface_request": "When authorized by the school, expose published IP to Wildfire's national founder network from the accelerator.",
+      "root_need": "The founder who fits a given piece of IP may be anywhere in the country; matching them and giving them a founder profile could pair them with the IP.",
+      "summary": "Opt-in national exposure of published IP to Wildfire's founder network.",
+      "source_quote": "We have a national founder network for our accelerator. We are planning on exposing this IP to when it's authorized by US schools",
+      "who_raised": null,
+      "gaps": [
+        "Explicitly framed as unproven — 'Guys. This is a thesis.'",
+        "Authorization mechanics per school were not specified."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP — faculty attachment decision at import",
+      "surface_request": "At IP import, decide whether the faculty inventor stays attached to the idea or it becomes idea-only.",
+      "root_need": "Faculty are important to a match but often won't stay involved (tenure track, limited hours); the platform must handle both attached and idea-only IP.",
+      "summary": "Per-item flag at import: faculty stays attached vs idea-only.",
+      "source_quote": "So when you import the IP you can decide if a faculty stays attached, if it's going to be an idea only the faculty member doesn't want to stay involved.",
+      "who_raised": null,
+      "gaps": [
+        "What 'attached' entails for the faculty member (visibility, approvals, role on team) was not defined."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP — hand-raise interest and team formation on published IP",
+      "surface_request": "Anyone at the school (or wider, per scope) can raise their hand on a published IP item; interested founders submit a profile, the IP manager is notified, and a team can be formed around the IP.",
+      "root_need": "There was no mechanism to go from IP into I-Corps — it was disjointed; a faculty member and a student need to be attached to an idea before it enters I-Corps, and faculty need a way to find a CEO/founder to work with.",
+      "summary": "Hand-raise + founder profile + IP-manager notification, feeding team formation ahead of I-Corps.",
+      "source_quote": "But either way founders who are interested can put in a profile and say I want to pick this up. And it raises their hand and, and it sends whoever's managing all this stuff, hey, I've got somebody interested in this. And then now a team could be formed around this and we view this as necessary for I Corps before it goes into I Corps.",
+      "who_raised": null,
+      "gaps": [
+        "Presenter explicitly asked for input on whether this flow is right — 'this is like our first crack at this'.",
+        "The CEO-matching problem it partly answers was called out as unsolved — 'this is a problem we have not yet solved'.",
+        "What information the hand-raiser's profile must contain was not specified."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP — match approval by IP owner/manager",
+      "surface_request": "The IP owner/manager approves a hand-raise match before the team proceeds; could be automated or handled by a person.",
+      "root_need": "DSU and USD wanted a human check on who gets matched to their IP (relationships matter).",
+      "summary": "Approval step (manual or automated) on IP-to-founder matches.",
+      "source_quote": "I guess DSU and USD wanted to have whoever's the owner of that IP or the manager of it, the person you hire approves the match and says, okay, you know, how's the relationships? Could automate it if you wanted, but could be a person too.",
+      "who_raised": null,
+      "gaps": [
+        "Per-school choice of automated vs manual approval is unresolved."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP → I-Corps — 'apply to next I-Corps cohort' button after team formation",
+      "surface_request": "Once a hand-raise is accepted by the faculty member, show a button to apply to the next I-Corps cohort; the team goes on a list and staff decide if there's room.",
+      "root_need": "Teams should carry forward through the pipeline without re-entering data — 'they just do one thing, and then after that, it just sort of carried forward'.",
+      "summary": "One-click I-Corps cohort application from an accepted IP team, feeding the staff intake list.",
+      "source_quote": "Yeah, I guess our hope was that as soon as they raised their hand and the faculty member accepted the on team, there'd be another button which is, say, apply to be in the next I Corps cohort. And then they would. They would go on the list, and then you would decide if you have room for them or whatever.",
+      "who_raised": null,
+      "gaps": [
+        "Cohort capacity/decision workflow on the staff side was not detailed."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP — shelved/historical IP mining",
+      "surface_request": "Bring old, shelved university IP (going back years, inventor possibly gone) into the platform to look for matches with new teams and interested faculty/students; connect with the Innovation Based Learning Hub's team-formation process.",
+      "root_need": "IP is sitting on the shelf already protected (hence already public via USPTO); students/faculty other than the original inventor may pick it up, form a team, and take it through I-Corps to stakeholder value.",
+      "summary": "Load back-catalog IP for rediscovery and team matching ('IP mining'), coordinated with Mines' IBL Hub.",
+      "source_quote": "We were thinking, like, maybe there's some old stuff that maybe even the faculty member who invented is not no longer here, but maybe there's a student or another faculty member who gets Excited about it. They could say I'm interested.",
+      "who_raised": null,
+      "gaps": [
+        "How the platform plugs into the IBL Hub's existing IP-mining process without duplicating it was explicitly left for a later conversation.",
+        "Scope of the back catalog to import was not defined."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP — industry partner discovery and licensing access",
+      "surface_request": "Give industry partners (e.g., Northrop Grumman) access to discover the university's research/innovation capabilities and license tech; include a hand-raise for founders/inventors willing to talk to a licensee.",
+      "root_need": "Showcase capabilities to attract companies (e.g., to Rapid City) for licensing, workforce development, and job creation.",
+      "summary": "Industry-facing discovery/matchmaking view with licensing hand-raise; options floated: anonymized or summarized non-PII data, consent captured at onboarding, public-IP summaries only.",
+      "source_quote": "So I want Northrop Grumman to go in and look at, look at the cool stuff we're doing with materials and blah blah, blah. How do I get Northrop Grumman or an industry partner to be able to have access to this to discover how they could work with us?",
+      "who_raised": null,
+      "gaps": [
+        "Privacy requirement: founders must be told their data goes to a third party; consent language not designed.",
+        "BOR-owned IP complicates disclosure — must comply with BOR 491; student-owned IP requires the student's decision.",
+        "Startups fear disclosing to big potential competitors; anonymized/summary-only approach unresolved.",
+        "Timing pushed out — 'Maybe that's version three or something'."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "University IP — dual-control safeguard for making anything public",
+      "surface_request": "A hard in-app security policy: a university person checks a box to make an item public plus a second agreement checkbox — dual control — before anything goes out.",
+      "root_need": "An inadvertent or non-compliant public disclosure of university/BOR IP would be bad; accidental publish must be structurally impossible.",
+      "summary": "Dual-control (two-checkbox) release gate on any public disclosure of IP-related data.",
+      "source_quote": "I think that we have to have like a really hard security policy inside of our app that would allow somebody from the university to check a box that says to make that public and like another checkbox that agreed. And like it's almost like a dual control and then it goes out.",
+      "who_raised": null,
+      "gaps": [
+        "Whether the two controls must be two different people was not stated."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "I-Corps — intake/application dashboard with statewide common form",
+      "surface_request": "Replace spreadsheet-managed I-Corps intake with a dashboard of all applicants (STEM status etc.) and a decision button for who gets in; use the same statewide application form; hub-level apply already integrated. Planned build: August.",
+      "root_need": "Schools don't have the manpower to manage I-Corps intake and distilling on spreadsheets (DSU's scout retired; remaining staff overloaded), and DSU needs it running for a September demand-gen push.",
+      "summary": "Statewide common I-Corps application form feeding a staff intake dashboard with accept/decline workflow.",
+      "source_quote": "But this is just like all of the people that applied the STEM status, they were just managing on spreadsheets. So we were just like, man, can we make a better spreadsheet where there's a button, you know, who's, who's going to get in and all that sort of business.",
+      "who_raised": null,
+      "gaps": [
+        "Presenter said it explicitly: 'this is not done' — fields and decision workflow to be defined with whoever does intake.",
+        "The application process was named a pain point and a follow-up working session was proposed; details not captured in this meeting."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "I-Corps — tech scout dashboard",
+      "surface_request": "A dashboard for the (new) tech scout role showing everything in the queue and its current status, to feed startups into the Wildfire program.",
+      "root_need": "DSU lost its tech scout and startups risk stalling with nobody watching the pipeline; the scout needs queue-wide visibility of what's coming out of I-Corps and where it stands.",
+      "summary": "Queue/status dashboard for the tech scout role, fed by program data.",
+      "source_quote": "So the idea behind this is just to give a dashboard to the tech scout of everything that is in the queue. This is a request from Aaron as well and basically say like, hey, I'm going to put them into the Wildfire program to go through, you know, the rest of, you know, deciding on the product building and launching it.",
+      "who_raised": null,
+      "gaps": [
+        "Module unfinished — 'we have not finished this module. We just showed it to USD and DSU last week'.",
+        "Presenter acknowledged holes: founders may go dark and data will go stale, requiring manual decisions."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "I-Corps — hub/federal reporting export",
+      "surface_request": "Produce hub reporting in whatever format is needed to report up to the feds — delivered as a button or even a login.",
+      "root_need": "The hub currently captures required statistics on spreadsheets; reporting up should come from program data automatically.",
+      "summary": "Configurable reporting output (button or read access) matching the hub's federal reporting format.",
+      "source_quote": "It makes it easier for you at the Hub to report up to that the fact feds what you're doing. So we were thinking we could just take whatever format you needed and then it would just be a button or even a login.",
+      "who_raised": null,
+      "gaps": [
+        "The actual reporting format is unknown to the presenter — 'there's some reporting which I don't know firsthand what it is'."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "I-Corps — closed-loop founder/mentor progress data (WIFM incentive)",
+      "surface_request": "Reuse the data founders and mentors generate in the accelerator to populate university/tech-scout views, with funding access as the founder's incentive to keep data current.",
+      "root_need": "Founders and mentors won't provide updates without a 'what's in it for me'; a closed loop (updates → investor visibility → funding) is the only way the data stays fresh without manual chasing.",
+      "summary": "Program-generated data flows into university dashboards; the incentive path (funding) keeps it updated.",
+      "source_quote": "we want the data of what's happening in the program with the founder and the mentor to get used here because we don't think that mentors and founders are going to update us unless there's a reason. And the reason is because they want to get funded. And so I'm trying to create a closed loop system because if you don't have an incentive path, people won't do it.",
+      "who_raised": null,
+      "gaps": [
+        "Presenter conceded holes: some founders 'fall off the planet' and staff will have to make judgment calls on stale records."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "I-Corps — longitudinal tracking of teams beyond a single cohort",
+      "surface_request": "Track not just one cohort but all teams affiliated with the school, including ones not accepted, so they can be routed into other funnels.",
+      "root_need": "Rejected/finished teams currently disappear into emails and spreadsheets; the hub also needs longitudinal tracking (6 months, a year out).",
+      "summary": "Cross-cohort, longitudinal team tracking with re-routing of non-accepted teams into other programs.",
+      "source_quote": "the pain point with I Corps is keeping track not just of one cohort, but the teams that are affiliated with South Dakota Mines being, if they're not accepted into this, can we put them in the funnel for something else?",
+      "who_raised": null,
+      "gaps": [
+        "Which alternate funnels a non-accepted team should be offered was not specified."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "I-Corps — track reportable metrics in-platform while content stays in NovoEd",
+      "surface_request": "Leave course content and file dropboxes in NovoEd; track only the metrics that need reporting (e.g., number of customer discovery interviews) in the platform.",
+      "root_need": "Avoid building a duplicate system where teams update two places; NovoEd already fills the content need for most hubs, but metric capture is still emails and spreadsheets.",
+      "summary": "Metrics-only integration posture with NovoEd: platform records reportable I-Corps metrics such as interview counts.",
+      "source_quote": "So we leave the content in. Would you call it Nova Novo Ed. And maybe we just track metrics that need to be reported in here, like number of customer interviews.",
+      "who_raised": null,
+      "gaps": [
+        "The full list of metrics to track was left open — 'Whatever, I guess. Whatever we need.'"
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "I-Corps — post-cohort team summaries stored in-platform (rate-of-change record)",
+      "surface_request": "Capture the post-cohort summary docs (currently individual Google Docs in a Drive directory — what the team did, how engaged they were, interview counts) in the platform.",
+      "root_need": "Future mentors and the investor portal need documents showing how a team performed; investors specifically want transparency into founder rate of change from idea through raising capital, not just pitch decks.",
+      "summary": "Ingest/store post-cohort team performance summaries so mentors and investors can reference founder progression.",
+      "source_quote": "Would definitely want that in there because that helps your future mentors and your investor portal to have documents to reference and say, how did they do?",
+      "who_raised": null,
+      "gaps": [
+        "Whether upload is manual, imported from Google Drive, or form-based was not decided."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "I-Corps — AI coach for customer discovery interviews",
+      "surface_request": "A small AI coach that helps founders do customer interviews.",
+      "root_need": "Customer discovery interview counts are already tracked in Wildfire and founders need help doing the interviews; staff can't coach everyone manually.",
+      "summary": "AI coaching aid for conducting customer discovery interviews.",
+      "source_quote": "We were even going to build like a little AI coach to help them do customer interviews",
+      "who_raised": null,
+      "gaps": [
+        "Mentioned in passing; scope, timing, and form of the coach were not discussed."
+      ],
+      "confidence": "medium",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "I-Corps — import third-party evaluator survey data (outcomes feedback)",
+      "surface_request": "Feed the hub's third-party evaluation data (pre/post surveys, 6- and 12-month follow-ups, currently Excel reports via a Google tool) into the platform, per school, potentially for all Dakota schools.",
+      "root_need": "Feed outcomes back into the system to measure how the program did and improve it; today the results only exist as Excel reports in a separate dashboard.",
+      "summary": "Import per-school evaluator survey reports so program outcomes flow back into Wildfire.",
+      "source_quote": "Where I see there might be some benefit, Micah, then, is that you can take information specifically for Mines and then feed it into this",
+      "who_raised": null,
+      "gaps": [
+        "The third-party evaluator is paid by the hub and feeding other organizations is not in their task scope — a contractual kink to work out.",
+        "Each partner school would have to agree before their data is included.",
+        "Exact export format ('some Google tool') to be provided to Tom."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Staff — single 'one plate' program tracking (enroll, track, prompt, mentor-match)",
+      "surface_request": "One place instead of emails and spreadsheets to see who is signed up for the business plan competition, EMGE, I-Corps, etc., track them, prompt them, and find/match mentors.",
+      "root_need": "A staff member moving into new roles is asked 'how many people do we have signed up' across programs and must answer today from email and spreadsheets; the state also asks for statistics with no capture mechanism beyond 'keep a spreadsheet'.",
+      "summary": "Unified cross-program participant tracker for university staff with prompting and mentor-matching.",
+      "source_quote": "I want something rather than a spreadsheet, so that when you ask me or Brian asked me, hey, how many people do we have signed up for the business plan competition? Who's doing emge? Who's, you know, done I Corps? What's, you know, that I have one plate. You know, I put folks in and then I can keep track of, and then I can prompt them and I can find the mentors and I can match them rather than email and spreadsheets.",
+      "who_raised": null,
+      "gaps": [
+        "Which programs beyond business plan comp, EMGE, and I-Corps must be covered was not enumerated."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — business plan competition module (vetter/funnel into I-Corps)",
+      "surface_request": "Support ramping up the business plan competition: enter the competition, win money, then a button routes the team onward through I-Corps and into the tech scout funnel toward investors.",
+      "root_need": "The competition acts as another vetter for I-Corps and multiple schools want it; it must connect into the same pipeline rather than run standalone.",
+      "summary": "Business plan competition managed in-platform as an on-ramp to I-Corps and the funnel.",
+      "source_quote": "And then Mr. Ganagar wants to ramp up the business plan competition and turns out that you're not the only one. So we think this is another Vetter for I Core because you do a business plan and if it's half decent they go. And then there's a button.",
+      "who_raised": null,
+      "gaps": [
+        "Presenter noted they'll 'have to sprint' because everybody's competitions start soon — timing and scope unresolved.",
+        "Judging/award mechanics were not discussed."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — build module for non-SaaS / physical-product IP (September)",
+      "surface_request": "Add a build module that isn't SaaS-specific, for other IP types like physical products; planned release in September.",
+      "root_need": "The program has been SaaS-only; university IP (e.g., material sciences) is largely physical, with different build and business realities.",
+      "summary": "Non-SaaS build module covering physical products, targeted for September.",
+      "source_quote": "So in September we're planning on releasing a build module that's not SaaS specific.",
+      "who_raised": null,
+      "gaps": [
+        "A material-sciences-only variant was considered and dropped in favor of a white-glove approach; final module scope not detailed."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — business-plan curriculum additions for physical products",
+      "surface_request": "Add the missing business plan components for physical products (inventory costs, manufacturing outsource costs, part lead times) to the curriculum, white-gloving roughly five material-sciences ventures at Mines to find the gaps.",
+      "root_need": "The current curriculum synthesizes a strong business plan for software, but physical-product plans need components it doesn't cover.",
+      "summary": "Extend course library with physical-product business plan content, discovered via ~5 white-glove Mines ventures.",
+      "source_quote": "we're going to have to white glove probably five of these at Mines that are material sciences and add some of those missing business plan components into the curriculum. Because I think the truth is there's some gaps.",
+      "who_raised": null,
+      "gaps": [
+        "Which specific curriculum modules get the additions was not decided."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — capture mentorship playbook during white-glove cohort",
+      "surface_request": "As experienced mentors white-glove the first companies through, capture what they did for the mentorship so the next cohort knows what to do ahead of time — building the content behind the first users instead of ahead of them.",
+      "root_need": "The timeframe is too short to build everything up front; capturing real mentorship as it happens turns the first cohort into reusable guidance.",
+      "summary": "Record white-glove mentorship activity to seed guidance for subsequent founders/mentors.",
+      "source_quote": "as, as a Merle Sims or a Mohan or somebody mentors these folks that we capture what they did for the mentorship and say, hey, the next folks will know what to do ahead of time versus rather than trying to get out.",
+      "who_raised": null,
+      "gaps": [
+        "How mentorship activity gets captured (notes, recordings, structured forms) was not specified."
+      ],
+      "confidence": "medium",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — hackathon event manager",
+      "surface_request": "A hackathon event manager module (listed as planned, not in the demo); interest in running a fall hackathon at Mines.",
+      "root_need": "Hackathons generate interest in commercialization — you can build something in a weekend; a prior Mines hackathon drew ~40 people.",
+      "summary": "Event-management module for hackathons, with a Mines fall hackathon floated.",
+      "source_quote": "We have a hackathon event manager because hackathons are huge. We did one at Mines and we got like what, 40 something people.",
+      "who_raised": null,
+      "gaps": [
+        "No functional detail given — named as a roadmap item only."
+      ],
+      "confidence": "medium",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — content management system",
+      "surface_request": "A content management system, listed among the not-yet-demoed planned items.",
+      "root_need": null,
+      "summary": "CMS named as a planned module; no detail given.",
+      "source_quote": "We have a content management system and then a program admin.",
+      "who_raised": null,
+      "gaps": [
+        "Root need not stated in the meeting — named on the roadmap slide only.",
+        "One line names two items (CMS and program admin); treated as two candidates."
+      ],
+      "confidence": "low",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — program admin",
+      "surface_request": "A program admin capability, listed among the not-yet-demoed planned items.",
+      "root_need": null,
+      "summary": "Program admin named as a planned module; no detail given.",
+      "source_quote": "We have a content management system and then a program admin.",
+      "who_raised": null,
+      "gaps": [
+        "Root need not stated in the meeting — named on the roadmap slide only."
+      ],
+      "confidence": "low",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — comprehensive founder dashboard",
+      "surface_request": "A really nice dashboard showing every single founder, what programs they're in and not in, which EIR they have — 'basic stuff'; to be built after the modules.",
+      "root_need": "Staff currently can't see the whole founder population and program membership in one view.",
+      "summary": "All-founders dashboard (programs, EIR assignment), sequenced after module build-out — crawl, walk, run.",
+      "source_quote": "Next up, we need a really nice dashboard. I don't think I did a good job at giving you a dashboard today. And Aaron pointed that we need to see every single founder, what programs they're in, what they're not in, which ear they have basic stuff.",
+      "who_raised": null,
+      "gaps": [
+        "Explicitly sequenced after modules — 'I think we need to build the modules first and then we can build the dashboard'."
+      ],
+      "confidence": "high",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — AI chatbot knowledge-feeding loop",
+      "surface_request": "Feed recurring founder questions into the AI agent as new knowledge, so repeatedly-asked things get answered by the chatbot.",
+      "root_need": "The same questions come up with every team ('how can I find people') and staff can't answer them all manually.",
+      "summary": "Continuous knowledge ingestion for the founder-facing AI agent from recurring questions.",
+      "source_quote": "we're planning on basically feeding that in, and then every time we have a thing that gets asked over and over, we basically feed new knowledge",
+      "who_raised": null,
+      "gaps": [
+        "Explicitly 'not today' — no timing or mechanism given."
+      ],
+      "confidence": "medium",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — mentor AI insight to founders",
+      "surface_request": "Mentors will soon provide AI insight to the founder on what they're doing, on top of viewing progress and giving input.",
+      "root_need": "Mentors can see founder progress but the feedback loop back to the founder is still manual.",
+      "summary": "AI-generated insight from the mentor view delivered to founders.",
+      "source_quote": "they can provide input, and very soon they're actually going to provide AI insight to the founder on what they're doing.",
+      "who_raised": null,
+      "gaps": [
+        "Mentioned in passing during the demo; no scope or timing beyond 'very soon'."
+      ],
+      "confidence": "medium",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Roadmap — public community dashboard for launched startups",
+      "surface_request": "A public community-dashboard-type page for startups once they go public with their story — money raised, product, website.",
+      "root_need": "Once a startup is public it's a real story that supports attraction and visibility (press-release pipeline with Elevate already exists); before that everything is too private to show.",
+      "summary": "Public showcase dashboard for startups that have publicly launched.",
+      "source_quote": "we're planning on creating like a, you know, sort of more of a community dashboard type thing that I think is public because then it talks about how much money they raised, it talks about their product, they have a website, it's like a real thing.",
+      "who_raised": null,
+      "gaps": [
+        "What triggers a startup's inclusion (their consent flow) was not detailed."
+      ],
+      "confidence": "medium",
+      "status": "candidate — needs review"
+    },
+    {
+      "type": "feature",
+      "title": "Compliance — certification package for university IT/ISO clearance",
+      "surface_request": "Provide a copy of the BIT certification (or similar) that the university's Information Security Officer can use to clear the platform for campus use.",
+      "root_need": "Before Mines staff can start using the platform, someone in IT must sign off that it's cleared; there's also a question of what agreements are needed if students are writing data (the state contract is read-only access).",
+      "summary": "Shareable compliance/certification evidence to unblock university IT approval.",
+      "source_quote": "Do we need to get a copy of that and provide it to a local. Do we have an va, we call them ISO Information Security Officer. Do we have somebody in IT on there that says, hey, you can use this platform? Do we get a certification like that and say, hey, we're going to start using this, it's been cleared.",
+      "who_raised": null,
+      "gaps": [
+        "Process unknown — 'What's our process for something like that? As we get into the plan, we'll have to get into Jason.'",
+        "Students would be writing data, unlike the state's read-only access — 'I would guess there's probably some changes'."
+      ],
+      "confidence": "medium",
+      "status": "candidate — needs review"
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "R1",
+      "title": "Written publish-stage compliance policy mapped to BOR 491",
+      "rationale": "The staged disclosure workflow, statewide publishing, and industry access all hinge on what BOR 491 permits (e.g., non-confidential public-facing summaries). A short written policy defining what each stage may expose, and who signs off, would de-risk every publish feature at once. The meeting referenced the policy repeatedly but never pinned the rules down.",
+      "status": "recommendation — needs review"
+    },
+    {
+      "id": "R2",
+      "title": "Audit trail on IP publish and match-approval events",
+      "rationale": "The dual-control release gate was requested, but nothing was said about recording who published/approved what and when. An audit log is the natural companion for BOR-compliance defensibility if a disclosure is ever questioned.",
+      "status": "recommendation — needs review"
+    },
+    {
+      "id": "R3",
+      "title": "Collect the two unknown data formats before building the reporting features",
+      "rationale": "Two candidates block on formats nobody in the room had: the hub's federal reporting format and the third-party evaluator's survey export ('some Google tool'). Both were promised to be sent to Tom — chasing them now keeps the August/September builds unblocked.",
+      "status": "recommendation — needs review"
+    },
+    {
+      "id": "R4",
+      "title": "IP ownership flag (BOR / student-owned / entangled) on each imported item",
+      "rationale": "The meeting established that not all IP is BOR-owned — students own pure class-project IP, and faculty involvement entangles it. Publish scope, consent, and industry-licensing rules differ by owner, so the import schema likely needs an ownership field to drive those rules. This was implied but never requested outright.",
+      "status": "recommendation — needs review"
+    }
+  ]
+}
