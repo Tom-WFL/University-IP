@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design tokens copied verbatim from WF-App-7-10/src/index.css so the
+/* Design tokens copied verbatim from the Wildfire app so the
    prototype renders in the real app's palette. Light mode only — the app
    ships a .dark block but never toggles it. */
 @layer base {

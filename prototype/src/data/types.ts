@@ -1,8 +1,8 @@
 /**
  * University IP prototype — domain model.
  *
- * Every type notes its anchor in the real Wildfire app (WF-App-7-10) so the
- * screens here can be ported rather than reinterpreted. See docs/port-map.md.
+ * Every type notes its anchor in the real Wildfire app so the screens here can
+ * be ported rather than reinterpreted.
  */
 
 /** Real app: `organizations` with org_kind='university'; parent_org_id gives

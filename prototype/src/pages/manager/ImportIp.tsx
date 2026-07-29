@@ -480,7 +480,7 @@ function SingleAdd() {
               type="email"
               value={draft.professorEmail}
               onChange={(e) => set('professorEmail', e.target.value)}
-              placeholder="alan.voss@sdmines.edu"
+              placeholder="alan.voss@sdmines.example.edu"
             />
           </Field>
         </div>

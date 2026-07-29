@@ -56,10 +56,13 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
         {user.persona === 'ip_manager' && activeUniversity && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ED1C24] focus-visible:ring-offset-2">
-                <Building2 className="w-4 h-4 text-gray-400" />
-                <span className="truncate max-w-[10rem]">{activeUniversity.name}</span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
+              {/* min-w-0 lets this shrink below its content so the school name
+                  truncates instead of shoving the right-hand group — including
+                  the synthetic-data label — off the edge on a narrow screen. */}
+              <button className="inline-flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 px-2 sm:px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ED1C24] focus-visible:ring-offset-2">
+                <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="truncate">{activeUniversity.name}</span>
+                <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
@@ -75,12 +78,18 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
           </DropdownMenu>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
-          {/* This page gets shared around. Say plainly that none of the
-              disclosures in it are real, so nobody has to ask. */}
-          <span className="hidden fold:inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-500">
-            <FlaskConical className="w-3 h-3" />
-            Prototype · synthetic data
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {/* This page gets forwarded around, so the label must survive every
+              width — a narrow window is exactly where someone skims a polished
+              IP console and assumes the disclosures are real. The icon may drop
+              on the smallest screens; the words never do. */}
+          <span
+            data-testid="synthetic-badge"
+            className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2 fold:px-2.5 py-1 text-xs font-medium text-gray-500 shrink-0"
+          >
+            <FlaskConical className="hidden xs:block w-3 h-3" />
+            <span className="hidden fold:inline">Prototype · synthetic data</span>
+            <span className="fold:hidden">Demo data</span>
           </span>
 
           <Button variant="ghost" size="sm" onClick={() => setScriptOpen(true)} className="hidden sm:inline-flex">

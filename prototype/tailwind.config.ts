@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss';
 import tailwindcssAnimate from 'tailwindcss-animate';
 
-// Mirrors WF-App-7-10/tailwind.config.ts so screens port 1:1.
+// Mirrors the Wildfire app's Tailwind config so screens port 1:1.
 export default {
   darkMode: ['class'],
   content: ['./index.html', './src/**/*.{ts,tsx}'],

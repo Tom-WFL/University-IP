@@ -337,7 +337,7 @@ function EditIpForm({
                       <Input
                         type="email"
                         value={inv.email}
-                        placeholder="j.turnbull@sdsmt.edu"
+                        placeholder="j.turnbull@sdmines.example.edu"
                         onChange={(e) => patchInventor(inv.id, { email: e.target.value })}
                       />
                     </Field>

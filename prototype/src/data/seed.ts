@@ -146,8 +146,8 @@ export const seedIpItems: IpItem[] = [
     confidentialDetail:
       'CONFIDENTIAL — Gyroid unit cell at 1.8mm pitch in AlSi10Mg, post-sinter HIP cycle at 520C. The claimed advantage comes from the boundary-layer disruption geometry in claim 3 of the provisional. Two industrial partners have asked about exclusive terms.',
     inventors: [
-      { id: 'ip-001-inv-0', name: 'A. Voss', email: 'a.voss@sdsmt.edu', primary: true, departed: false },
-      { id: 'ip-001-inv-1', name: 'J. Turnbull', email: 'j.turnbull@sdsmt.edu', primary: false, departed: false },
+      { id: 'ip-001-inv-0', name: 'A. Voss', email: 'a.voss@sdmines.example.edu', primary: true, departed: false },
+      { id: 'ip-001-inv-1', name: 'J. Turnbull', email: 'j.turnbull@sdmines.example.edu', primary: false, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2024-014',
@@ -178,7 +178,7 @@ export const seedIpItems: IpItem[] = [
     confidentialDetail:
       'CONFIDENTIAL — Manganese-oxide sorbent with a proprietary surface treatment; regeneration chemistry is the crown jewel and is deliberately absent from the public summary.',
     inventors: [
-      { id: 'ip-002-inv-0', name: 'N. Kerr', email: 'n.kerr@sdsmt.edu', primary: true, departed: false },
+      { id: 'ip-002-inv-0', name: 'N. Kerr', email: 'n.kerr@sdmines.example.edu', primary: true, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2025-003',
@@ -209,7 +209,7 @@ export const seedIpItems: IpItem[] = [
     confidentialDetail:
       'CONFIDENTIAL — Capsule wall chemistry and the catalyst loading ratio are the differentiators. Field data from two turbines in the Black Hills is under NDA.',
     inventors: [
-      { id: 'ip-003-inv-0', name: 'R. Halvorsen', email: 'r.halvorsen@sdsmt.edu', primary: true, departed: true },
+      { id: 'ip-003-inv-0', name: 'R. Halvorsen', email: 'r.halvorsen@sdmines.example.edu', primary: true, departed: true },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2023-041',
@@ -240,7 +240,7 @@ export const seedIpItems: IpItem[] = [
     confidentialDetail:
       'CONFIDENTIAL — Ligand grafting density and the anti-fouling backwash sequence. Yield numbers from the bench rig are unpublished.',
     inventors: [
-      { id: 'ip-004-inv-0', name: 'P. Okonkwo', email: 'p.okonkwo@sdsmt.edu', primary: true, departed: true },
+      { id: 'ip-004-inv-0', name: 'P. Okonkwo', email: 'p.okonkwo@sdmines.example.edu', primary: true, departed: true },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2022-027',
@@ -271,8 +271,8 @@ export const seedIpItems: IpItem[] = [
     confidentialDetail:
       'CONFIDENTIAL — Beamforming firmware and the transducer array spacing. Prototype exists; two field trials completed.',
     inventors: [
-      { id: 'ip-005-inv-0', name: 'D. Reyes', email: 'd.reyes@sdsmt.edu', primary: true, departed: false },
-      { id: 'ip-005-inv-1', name: 'S. Kohl', email: 's.kohl@sdsmt.edu', primary: false, departed: false },
+      { id: 'ip-005-inv-0', name: 'D. Reyes', email: 'd.reyes@sdmines.example.edu', primary: true, departed: false },
+      { id: 'ip-005-inv-1', name: 'S. Kohl', email: 's.kohl@sdmines.example.edu', primary: false, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2024-008',
@@ -303,7 +303,7 @@ export const seedIpItems: IpItem[] = [
     confidentialDetail:
       'CONFIDENTIAL — Student-owned IP from a senior design project. The student, not the Board of Regents, decides on any disclosure or licensing conversation.',
     inventors: [
-      { id: 'ip-006-inv-0', name: 'T. Iverson', email: 't.iverson@sdsmt.edu', primary: true, departed: false },
+      { id: 'ip-006-inv-0', name: 'T. Iverson', email: 't.iverson@sdmines.example.edu', primary: true, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2026-002',
@@ -334,8 +334,8 @@ export const seedIpItems: IpItem[] = [
     confidentialDetail:
       'CONFIDENTIAL — Accelerator blend ratios; jointly developed with a graduate student, so ownership is entangled between the Board of Regents and the student inventor.',
     inventors: [
-      { id: 'ip-007-inv-0', name: 'M. Braun', email: 'm.braun@sdsmt.edu', primary: true, departed: false },
-      { id: 'ip-007-inv-1', name: 'L. Fisk', email: 'l.fisk@sdsmt.edu', primary: false, departed: false },
+      { id: 'ip-007-inv-0', name: 'M. Braun', email: 'm.braun@sdmines.example.edu', primary: true, departed: false },
+      { id: 'ip-007-inv-1', name: 'L. Fisk', email: 'l.fisk@sdmines.example.edu', primary: false, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2025-019',
@@ -366,7 +366,7 @@ export const seedIpItems: IpItem[] = [
     confidentialDetail:
       'CONFIDENTIAL — Leach-and-bind sequence, plus the specific tailings chemistry ranges where the economics work.',
     inventors: [
-      { id: 'ip-008-inv-0', name: 'W. Castellano', email: 'w.castellano@sdsmt.edu', primary: true, departed: true },
+      { id: 'ip-008-inv-0', name: 'W. Castellano', email: 'w.castellano@sdmines.example.edu', primary: true, departed: true },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2021-033',
@@ -397,7 +397,7 @@ export const seedIpItems: IpItem[] = [
     confidentialDetail:
       'CONFIDENTIAL — Signal-processing model and the calibration dataset across six steel grades.',
     inventors: [
-      { id: 'ip-009-inv-0', name: 'A. Voss', email: 'a.voss@sdsmt.edu', primary: true, departed: false },
+      { id: 'ip-009-inv-0', name: 'A. Voss', email: 'a.voss@sdmines.example.edu', primary: true, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2025-028',
@@ -428,7 +428,7 @@ export const seedIpItems: IpItem[] = [
     confidentialDetail:
       'CONFIDENTIAL — Thermal management approach and the fire-suppression interlock design.',
     inventors: [
-      { id: 'ip-010-inv-0', name: 'S. Kohl', email: 's.kohl@sdsmt.edu', primary: true, departed: false },
+      { id: 'ip-010-inv-0', name: 'S. Kohl', email: 's.kohl@sdmines.example.edu', primary: true, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2026-006',
@@ -458,7 +458,7 @@ export const seedIpItems: IpItem[] = [
     summaryReviewedAt: null,
     confidentialDetail: 'CONFIDENTIAL — Deposition parameters and the interlayer stack.',
     inventors: [
-      { id: 'ip-011-inv-0', name: 'G. Lindstrom', email: 'g.lindstrom@sdsmt.edu', primary: true, departed: true },
+      { id: 'ip-011-inv-0', name: 'G. Lindstrom', email: 'g.lindstrom@sdmines.example.edu', primary: true, departed: true },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2020-011',
@@ -488,7 +488,7 @@ export const seedIpItems: IpItem[] = [
     summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail: 'CONFIDENTIAL — Failure-precursor model weights and the sensor placement heuristic.',
     inventors: [
-      { id: 'ip-012-inv-0', name: 'D. Reyes', email: 'd.reyes@sdsmt.edu', primary: true, departed: false },
+      { id: 'ip-012-inv-0', name: 'D. Reyes', email: 'd.reyes@sdmines.example.edu', primary: true, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2024-022',
@@ -519,7 +519,7 @@ export const seedIpItems: IpItem[] = [
     summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail: 'CONFIDENTIAL — Detection heuristics and the labelled corpus.',
     inventors: [
-      { id: 'ip-101-inv-0', name: 'K. Adeyemi', email: 'k.adeyemi@dsu.edu', primary: true, departed: false },
+      { id: 'ip-101-inv-0', name: 'K. Adeyemi', email: 'k.adeyemi@dsu.example.edu', primary: true, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'DSU-2025-007',
@@ -549,7 +549,7 @@ export const seedIpItems: IpItem[] = [
     summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail: 'CONFIDENTIAL — Hashing scheme and the collision-resolution approach.',
     inventors: [
-      { id: 'ip-102-inv-0', name: 'B. Sorenson', email: 'b.sorenson@dsu.edu', primary: true, departed: false },
+      { id: 'ip-102-inv-0', name: 'B. Sorenson', email: 'b.sorenson@dsu.example.edu', primary: true, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'DSU-2024-019',
@@ -580,7 +580,7 @@ export const seedIpItems: IpItem[] = [
     summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail: 'CONFIDENTIAL — Formulation and stability data.',
     inventors: [
-      { id: 'ip-201-inv-0', name: 'H. Delacroix', email: 'h.delacroix@usd.edu', primary: true, departed: false },
+      { id: 'ip-201-inv-0', name: 'H. Delacroix', email: 'h.delacroix@usd.example.edu', primary: true, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'USD-2025-011',
@@ -610,7 +610,7 @@ export const seedIpItems: IpItem[] = [
     summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail: 'CONFIDENTIAL — Sensor fusion model and the clinical validation set.',
     inventors: [
-      { id: 'ip-202-inv-0', name: 'C. Reinhardt', email: 'c.reinhardt@usd.edu', primary: true, departed: false },
+      { id: 'ip-202-inv-0', name: 'C. Reinhardt', email: 'c.reinhardt@usd.example.edu', primary: true, departed: false },
     ],
     disclosure: {
       disclosureNumber: 'USD-2024-004',

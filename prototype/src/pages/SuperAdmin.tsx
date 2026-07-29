@@ -132,7 +132,7 @@ export function SuperAdmin() {
                     type="email"
                     value={managerEmail}
                     onChange={(e) => setManagerEmail(e.target.value)}
-                    placeholder="dana@bhsu.edu"
+                    placeholder="dana@bhsu.example.edu"
                   />
                 </div>
               </div>
