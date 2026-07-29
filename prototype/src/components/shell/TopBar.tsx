@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Building2, ChevronDown, Menu, PlayCircle, RotateCcw, UserCog } from 'lucide-react';
+import { Building2, ChevronDown, FlaskConical, Menu, PlayCircle, RotateCcw, UserCog } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuCheck,
@@ -76,6 +76,13 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
         )}
 
         <div className="ml-auto flex items-center gap-2">
+          {/* This page gets shared around. Say plainly that none of the
+              disclosures in it are real, so nobody has to ask. */}
+          <span className="hidden fold:inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-500">
+            <FlaskConical className="w-3 h-3" />
+            Prototype · synthetic data
+          </span>
+
           <Button variant="ghost" size="sm" onClick={() => setScriptOpen(true)} className="hidden sm:inline-flex">
             <PlayCircle className="w-4 h-4" />
             How to demo

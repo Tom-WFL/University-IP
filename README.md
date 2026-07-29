@@ -14,13 +14,20 @@ app, produced by the [WFL feature pipeline](https://github.com/Tom-WFL/WFL-Dev-f
 
 ## Running the prototype
 
+**No install:** open `prototype/university-ip-prototype.html` in any browser. It's
+the whole app inlined into one self-contained file — no server, no network. Good
+for emailing to someone or opening on a laptop in a meeting room with bad wifi.
+
+**From source:**
+
 ```bash
 cd prototype
 npm install
 npm run dev
 ```
 
-Then open the printed URL. There is no backend and no login — a **persona
+Then open the printed URL. To regenerate the single-file build after changing
+anything: `npm run build:single`. There is no backend and no login — a **persona
 switcher** in the top right lets you move between all four roles in one browser.
 State lives in `localStorage`; "Reset demo data" in that same menu puts it back.
 
