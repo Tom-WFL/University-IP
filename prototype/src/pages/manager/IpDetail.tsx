@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Archive, Eye, EyeOff, Hand, ScrollText, Send, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  Archive,
+  EyeOff,
+  Hand,
+  PencilLine,
+  ScrollText,
+  Send,
+  Users,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +22,9 @@ import { RouteSelector } from '@/components/manager/RouteSelector';
 import { ProfessorPanel } from '@/components/manager/ProfessorPanel';
 import { InterestQueue } from '@/components/manager/InterestQueue';
 import { SendToCohortDialog } from '@/components/manager/SendToCohortDialog';
-import { useStore } from '@/data/store';
+import { SummaryCard } from '@/components/manager/SummaryCard';
+import { LiveEditDialog } from '@/components/manager/LiveEditDialog';
+import { inventorLine, needsSummaryReview, useStore } from '@/data/store';
 import { formatDate } from '@/lib/utils';
 
 const patentLabels: Record<string, string> = {
@@ -39,12 +50,20 @@ export function IpDetail() {
   const updateScope = useStore((s) => s.updateScope);
   const updateRoute = useStore((s) => s.updateRoute);
   const updateIpItem = useStore((s) => s.updateIpItem);
+  const updateSummary = useStore((s) => s.updateSummary);
+  const approveSummary = useStore((s) => s.approveSummary);
+  const regenerateSummary = useStore((s) => s.regenerateSummary);
   const sendProfessorInvite = useStore((s) => s.sendProfessorInvite);
   const reviewHandRaise = useStore((s) => s.reviewHandRaise);
+  const currentUserId = useStore((s) => s.currentUserId);
 
   const [celebrate, setCelebrate] = useState(false);
   const [cohortDialogTeamId, setCohortDialogTeamId] = useState<string | null>(null);
   const [showConfidential, setShowConfidential] = useState(false);
+  // Controlled so the blocked-publish notice can send the user to the summary.
+  const [tab, setTab] = useState('manage');
+  // Holds an edit to a LIVE summary until it's confirmed.
+  const [pendingSummary, setPendingSummary] = useState<string | null>(null);
 
   const item = ipItems.find((i) => i.id === ipId);
 
@@ -76,6 +95,15 @@ export function IpDetail() {
     }
   };
 
+  /** Private items save straight away; live ones stop for a confirmation. */
+  const handleSaveSummary = (text: string) => {
+    if (item.publishScope === 'private') {
+      updateSummary(item.id, text);
+    } else {
+      setPendingSummary(text);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Confetti show={celebrate} />
@@ -101,12 +129,22 @@ export function IpDetail() {
                   </p>
                   <h1 className="text-2xl font-bold text-white mt-1 leading-tight">{item.title}</h1>
                 </div>
-                {item.shelved && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 border border-white/30 px-2.5 py-1 text-xs font-medium text-white shrink-0">
-                    <Archive className="w-3 h-3" />
-                    Shelved
-                  </span>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {item.shelved && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 border border-white/30 px-2.5 py-1 text-xs font-medium text-white">
+                      <Archive className="w-3 h-3" />
+                      Shelved
+                    </span>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => navigate(`/manage/ip/${item.id}/edit`)}
+                    className="bg-white/20 border border-white/30 text-white hover:bg-white/30"
+                  >
+                    <PencilLine className="w-4 h-4" />
+                    Edit
+                  </Button>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2 mt-4">
                 <ScopeChip scope={item.publishScope} />
@@ -120,7 +158,7 @@ export function IpDetail() {
                 {[
                   { label: 'Field', value: item.disclosure.field || '—' },
                   { label: 'Patent', value: patentLabels[item.disclosure.patentStatus] },
-                  { label: 'Inventors', value: item.disclosure.inventors || '—' },
+                  { label: 'Inventors', value: inventorLine(item.inventors) },
                   { label: 'Updated', value: formatDate(item.updatedAt) },
                 ].map((meta) => (
                   <div key={meta.label} className="bg-gray-50 rounded-xl p-3 min-w-0">
@@ -174,10 +212,18 @@ export function IpDetail() {
         )}
 
         <FadeIn>
-          <Tabs defaultValue="manage">
+          <Tabs value={tab} onValueChange={setTab}>
             <TabsList>
               <TabsTrigger value="manage">Manage</TabsTrigger>
-              <TabsTrigger value="content">Content</TabsTrigger>
+              <TabsTrigger value="content">
+                Content
+                {needsSummaryReview(item) && (
+                  <span
+                    className="ml-1.5 w-2 h-2 rounded-full bg-amber-500"
+                    aria-label="Summary needs review"
+                  />
+                )}
+              </TabsTrigger>
               <TabsTrigger value="interest">
                 Interest
                 {pendingCount > 0 && (
@@ -192,7 +238,11 @@ export function IpDetail() {
             <TabsContent value="manage">
               <Card>
                 <CardContent className="p-6 space-y-6">
-                  <ScopeStepper item={item} onChange={(scope) => updateScope(item.id, scope)} />
+                  <ScopeStepper
+                    item={item}
+                    onChange={(scope) => updateScope(item.id, scope)}
+                    onReviewSummary={() => setTab('content')}
+                  />
                   <Separator />
                   <RouteSelector route={item.route} onChange={(route) => updateRoute(item.id, route)} />
                   <Separator />
@@ -211,26 +261,13 @@ export function IpDetail() {
 
             <TabsContent value="content">
               <div className="space-y-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-gray-400" />
-                      <CardTitle className="text-base">Non-confidential summary</CardTitle>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      The only text that leaves this office. This is what founders read.
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {item.publicSummary || (
-                        <span className="text-gray-400 italic">
-                          No summary yet — write one before publishing.
-                        </span>
-                      )}
-                    </p>
-                  </CardContent>
-                </Card>
+                <SummaryCard
+                  item={item}
+                  reviewer={users.find((u) => u.id === (item.summaryReviewedBy ?? currentUserId))}
+                  onSave={handleSaveSummary}
+                  onApprove={() => approveSummary(item.id)}
+                  onRegenerate={() => regenerateSummary(item.id)}
+                />
 
                 <Card className="border-gray-300">
                   <CardHeader className="pb-2">
@@ -264,14 +301,23 @@ export function IpDetail() {
 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Disclosure record</CardTitle>
+                    <div className="flex items-center justify-between gap-2">
+                      <CardTitle className="text-base">Disclosure record</CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/manage/ip/${item.id}/edit`)}
+                      >
+                        <PencilLine className="w-4 h-4" />
+                        Edit record
+                      </Button>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-3">
                     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                       {[
                         ['Disclosure number', item.disclosure.disclosureNumber || '—'],
                         ['Field', item.disclosure.field || '—'],
-                        ['Inventors', item.disclosure.inventors || '—'],
                         ['Disclosed', formatDate(item.disclosure.disclosedOn)],
                         ['Patent status', patentLabels[item.disclosure.patentStatus]],
                         ['Funding source', item.disclosure.fundingSource || '—'],
@@ -284,6 +330,37 @@ export function IpDetail() {
                         </div>
                       ))}
                     </dl>
+
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-1.5">
+                        Inventors
+                      </p>
+                      {item.inventors.length ? (
+                        <ul className="space-y-1.5">
+                          {item.inventors.map((inv) => (
+                            <li
+                              key={inv.id}
+                              className="flex flex-wrap items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 text-sm"
+                            >
+                              <span className="text-gray-900 font-medium">{inv.name}</span>
+                              {inv.email && <span className="text-gray-500">{inv.email}</span>}
+                              {inv.primary && (
+                                <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 text-xs font-medium">
+                                  Contact
+                                </span>
+                              )}
+                              {inv.departed && (
+                                <span className="inline-flex items-center rounded-full bg-gray-200 text-gray-600 border border-gray-300 px-2 py-0.5 text-xs font-medium">
+                                  Departed
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">No inventors recorded.</p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -333,6 +410,16 @@ export function IpDetail() {
       </Stagger>
 
       <SendToCohortDialog teamId={cohortDialogTeamId} onClose={() => setCohortDialogTeamId(null)} />
+
+      <LiveEditDialog
+        item={item}
+        pendingText={pendingSummary}
+        onCancel={() => setPendingSummary(null)}
+        onConfirm={(text) => {
+          updateSummary(item.id, text);
+          setPendingSummary(null);
+        }}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { ManagerDashboard } from '@/pages/manager/Dashboard';
 import { IpConsole } from '@/pages/manager/IpConsole';
 import { IpDetail } from '@/pages/manager/IpDetail';
 import { ImportIp } from '@/pages/manager/ImportIp';
+import { EditIp } from '@/pages/manager/EditIp';
 import { HandRaises } from '@/pages/manager/HandRaises';
 import { Teams } from '@/pages/manager/Teams';
 import { AuditPage } from '@/pages/manager/AuditPage';
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/manage" element={<ManagerDashboard />} />
           <Route path="/manage/ip" element={<IpConsole />} />
           <Route path="/manage/ip/:ipId" element={<IpDetail />} />
+          <Route path="/manage/ip/:ipId/edit" element={<EditIp />} />
           <Route path="/manage/import" element={<ImportIp />} />
           <Route path="/manage/interest" element={<HandRaises />} />
           <Route path="/manage/teams" element={<Teams />} />

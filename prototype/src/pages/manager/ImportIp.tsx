@@ -4,11 +4,11 @@ import { AlertTriangle, ArrowLeft, ArrowRight, Check, FileDown, Lock, Upload } f
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/misc';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { Field } from '@/components/shared/Field';
 import { FadeIn, Stagger } from '@/components/shared/motion';
 import { useStore, type IpDraft } from '@/data/store';
 import { SAMPLE_CSV, parseCsv, autoMap, toDrafts, TARGET_FIELDS, type ParsedCsv } from '@/lib/csv';
@@ -521,27 +521,3 @@ function SingleAdd() {
   );
 }
 
-function Field({
-  label,
-  required,
-  help,
-  className,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  help?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={cn('space-y-1.5', className)}>
-      <Label>
-        {label}
-        {required && <span className="text-[#ED1C24] ml-1">*</span>}
-      </Label>
-      {children}
-      {help && <p className="text-xs text-gray-500">{help}</p>}
-    </div>
-  );
-}

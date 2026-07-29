@@ -29,7 +29,8 @@ Three things already exist and carry a lot of the weight:
 | Prototype type (`prototype/src/data/types.ts`) | Real anchor | What's new |
 |---|---|---|
 | `University` | `organizations` (`org_kind='university'`, `parent_org_id`) | `autoApproveMatches` → a key in `organizations.settings` jsonb |
-| `IpItem` | `ideas` (+ satellite `idea_files`, `idea_notes`) | New columns: `visibility_scope`, `published_summary`, `ownership`, `faculty_attachment`, `shelved`, plus the disclosure-form fields |
+| `IpItem` | `ideas` (+ satellite `idea_files`, `idea_notes`) | New columns: `visibility_scope`, `published_summary`, `ownership`, `faculty_attachment`, `shelved`, the disclosure-form fields, plus the summary-provenance set below |
+| `Inventor` | — | **New child table** (`idea_inventors`): `idea_id, name, email, is_primary, departed`. Distinct from `professorId`, which is the *account* link for the primary inventor |
 | `HandRaise` | — | **New table.** Shape follows `mentor_assignments` / `investor_company_assignments` (join + `assigned_by`/`assigned_at`), but adds a request → approve handshake those lack |
 | `Team` | `companies` + `users.company_id` | Creation on match-approval; see `src/hooks/useCompanyManagement.ts` for the existing create-company-then-invite-founders pattern |
 | `CohortApplication` | `mm_cohort` / `mm_group` / `mm_group_company` | A cohort *application* entity (the mastermind tables model membership, not application) |
@@ -38,6 +39,32 @@ Three things already exist and carry a lot of the weight:
 | `AuditEvent` | — | **New table.** No audit infrastructure exists today |
 | `Invite` | `memberships` (`membership_status`: `invited \| active \| archived`) + `invite-to-org` | — |
 | `User` / `Persona` | `users` + `memberships` + `membership_roles` | New role keys (see below) |
+
+## The AI summary and its review gate
+
+`publicSummary` is the only body text ever published, so who wrote it and
+whether a human has read it are columns, not metadata. On `ideas`:
+
+| Prototype field | Real column | Notes |
+|---|---|---|
+| `summarySource` | `summary_source` (`'ai' \| 'human'`) | Sits alongside the existing `ai_feedback` / `ai_rating` |
+| `summaryReviewed` | `summary_reviewed boolean not null default false` | — |
+| `summaryReviewedBy` | `summary_reviewed_by` → `users` | — |
+| `summaryReviewedAt` | `summary_reviewed_at timestamptz` | — |
+
+**The gate: an unreviewed AI draft cannot be published.** In the prototype this
+is `canPublish()` in `prototype/src/data/store.ts`, consumed by the scope
+stepper, the console filter and the dashboard count so they cannot drift apart.
+
+In the real app **a UI check is not sufficient** — this has to be a server-side
+precondition, either a `CHECK`-style guard inside the publish RPC or a condition
+on the RLS policy that widens `visibility_scope`. Follow the
+`set_idea_outreach_status` RPC pattern: privileged state transitions go through
+`SECURITY DEFINER` functions, not direct table writes.
+
+Drafting itself is mocked (`prototype/src/lib/aiSummary.ts`) — see "Things the
+prototype fakes". The real version is a server-side model call whose output
+lands with `summary_source='ai'`, `summary_reviewed=false`.
 
 ## The two axes
 
@@ -111,6 +138,12 @@ is a one-object edit if a card entry point is wanted alongside the sidebar.
 
 Both are proposed as the app's first multi-step patterns.
 
+Also new: the **inline summary review** (`components/manager/SummaryCard.tsx`)
+with its provenance badge, and the **live-edit confirm**
+(`components/manager/LiveEditDialog.tsx`) — a single-confirm dialog shown when
+editing the summary of an already-published item, deliberately lighter than
+dual control so the two don't blur into one reflexive click-through.
+
 ## Things the prototype fakes
 
 - **No backend.** State is zustand + `localStorage`
@@ -123,6 +156,12 @@ Both are proposed as the app's first multi-step patterns.
   parse server-side.
 - **Emails are implied, not sent.** Invites just flip a status. Real sends go
   through `email_templates` + Resend, as in `invite-founder/index.ts`.
+- **AI drafting is a deterministic string transform**, not a model call
+  (`prototype/src/lib/aiSummary.ts`). It deliberately seeds realistic failure
+  modes — a leaked confidential phrase, an overclaim, an unannounced partner —
+  so the review step has something real to catch. Seeded examples live on
+  `ip-004`, `ip-008`, `ip-010` and `ip-011`. Note the drafts run against the
+  CONFIDENTIAL body, which is exactly why the review gate exists.
 
 ## Deliberately out of scope
 

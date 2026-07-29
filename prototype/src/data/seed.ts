@@ -139,12 +139,19 @@ export const seedIpItems: IpItem[] = [
     title: 'Sintered lattice heat exchanger',
     publicSummary:
       'An additively manufactured metal lattice that moves heat out of dense electronics packages roughly 40% faster than a machined cold plate of the same footprint, without added pumping power.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail:
       'CONFIDENTIAL — Gyroid unit cell at 1.8mm pitch in AlSi10Mg, post-sinter HIP cycle at 520C. The claimed advantage comes from the boundary-layer disruption geometry in claim 3 of the provisional. Two industrial partners have asked about exclusive terms.',
+    inventors: [
+      { id: 'ip-001-inv-0', name: 'A. Voss', email: 'a.voss@sdsmt.edu', primary: true, departed: false },
+      { id: 'ip-001-inv-1', name: 'J. Turnbull', email: 'j.turnbull@sdsmt.edu', primary: false, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2024-014',
       field: 'Materials / Thermal',
-      inventors: 'A. Voss, J. Turnbull',
       disclosedOn: iso('2024-11-02'),
       patentStatus: 'provisional',
       fundingSource: 'NSF MRI + institutional match',
@@ -164,12 +171,18 @@ export const seedIpItems: IpItem[] = [
     title: 'Low-temperature lithium recovery from brine',
     publicSummary:
       'A selective sorbent process that pulls lithium from low-grade brine at ambient temperature, cutting the energy cost of recovery and opening up sources that are currently uneconomic.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail:
       'CONFIDENTIAL — Manganese-oxide sorbent with a proprietary surface treatment; regeneration chemistry is the crown jewel and is deliberately absent from the public summary.',
+    inventors: [
+      { id: 'ip-002-inv-0', name: 'N. Kerr', email: 'n.kerr@sdsmt.edu', primary: true, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2025-003',
       field: 'Chemical Engineering',
-      inventors: 'N. Kerr',
       disclosedOn: iso('2025-02-18'),
       patentStatus: 'filed',
       fundingSource: 'DOE grant',
@@ -189,12 +202,18 @@ export const seedIpItems: IpItem[] = [
     title: 'Self-healing polymer coating for wind blades',
     publicSummary:
       'A coating that reseals micro-cracks on wind turbine blades using embedded microcapsules, extending inspection intervals in high-abrasion environments.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail:
       'CONFIDENTIAL — Capsule wall chemistry and the catalyst loading ratio are the differentiators. Field data from two turbines in the Black Hills is under NDA.',
+    inventors: [
+      { id: 'ip-003-inv-0', name: 'R. Halvorsen', email: 'r.halvorsen@sdsmt.edu', primary: true, departed: true },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2023-041',
       field: 'Polymers / Energy',
-      inventors: 'R. Halvorsen (departed)',
       disclosedOn: iso('2023-09-12'),
       patentStatus: 'granted',
       fundingSource: 'Industry sponsored research',
@@ -213,13 +232,19 @@ export const seedIpItems: IpItem[] = [
     universityId: mines,
     title: 'Rare-earth separation using ligand-tuned membranes',
     publicSummary:
-      'A membrane stack that separates neodymium and dysprosium in a single pass, replacing a multi-stage solvent extraction line.',
+      'A separations technology from this university\'s research portfolio. A membrane stack that separates neodymium and dysprosium in a single pass, replacing a multi-stage solvent extraction line. The university is already in licensing discussions with a major defense contractor.',
+    summarySource: 'ai',
+    summaryReviewed: false,
+    summaryReviewedBy: null,
+    summaryReviewedAt: null,
     confidentialDetail:
       'CONFIDENTIAL — Ligand grafting density and the anti-fouling backwash sequence. Yield numbers from the bench rig are unpublished.',
+    inventors: [
+      { id: 'ip-004-inv-0', name: 'P. Okonkwo', email: 'p.okonkwo@sdsmt.edu', primary: true, departed: true },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2022-027',
       field: 'Separations',
-      inventors: 'P. Okonkwo (emeritus)',
       disclosedOn: iso('2022-06-30'),
       patentStatus: 'granted',
       fundingSource: 'DOD subcontract',
@@ -239,12 +264,19 @@ export const seedIpItems: IpItem[] = [
     title: 'Acoustic bore-hole mapping probe',
     publicSummary:
       'A compact probe that builds a 3D map of a bore hole from acoustic reflections, giving small mining operations survey data that today requires a contracted crew.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail:
       'CONFIDENTIAL — Beamforming firmware and the transducer array spacing. Prototype exists; two field trials completed.',
+    inventors: [
+      { id: 'ip-005-inv-0', name: 'D. Reyes', email: 'd.reyes@sdsmt.edu', primary: true, departed: false },
+      { id: 'ip-005-inv-1', name: 'S. Kohl', email: 's.kohl@sdsmt.edu', primary: false, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2024-008',
       field: 'Mining Engineering',
-      inventors: 'D. Reyes, S. Kohl',
       disclosedOn: iso('2024-04-19'),
       patentStatus: 'provisional',
       fundingSource: 'State mining research fund',
@@ -264,12 +296,18 @@ export const seedIpItems: IpItem[] = [
     title: 'Student-built drone payload release mechanism',
     publicSummary:
       'A lightweight, reusable release mechanism for survey drones that drops and retrieves sensor pods without landing.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail:
       'CONFIDENTIAL — Student-owned IP from a senior design project. The student, not the Board of Regents, decides on any disclosure or licensing conversation.',
+    inventors: [
+      { id: 'ip-006-inv-0', name: 'T. Iverson', email: 't.iverson@sdsmt.edu', primary: true, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2026-002',
       field: 'Mechanical Engineering',
-      inventors: 'T. Iverson (student)',
       disclosedOn: iso('2026-05-08'),
       patentStatus: 'not_filed',
       fundingSource: 'Course project — unfunded',
@@ -289,12 +327,19 @@ export const seedIpItems: IpItem[] = [
     title: 'Cold-weather concrete admixture',
     publicSummary:
       'An admixture that lets concrete cure reliably below freezing, extending the construction season in northern climates without heated enclosures.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail:
       'CONFIDENTIAL — Accelerator blend ratios; jointly developed with a graduate student, so ownership is entangled between the Board of Regents and the student inventor.',
+    inventors: [
+      { id: 'ip-007-inv-0', name: 'M. Braun', email: 'm.braun@sdsmt.edu', primary: true, departed: false },
+      { id: 'ip-007-inv-1', name: 'L. Fisk', email: 'l.fisk@sdsmt.edu', primary: false, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2025-019',
       field: 'Civil Engineering',
-      inventors: 'M. Braun, L. Fisk (student)',
       disclosedOn: iso('2025-10-01'),
       patentStatus: 'provisional',
       fundingSource: 'DOT research program',
@@ -313,13 +358,19 @@ export const seedIpItems: IpItem[] = [
     universityId: mines,
     title: 'Tailings-to-aggregate reprocessing method',
     publicSummary:
-      'A process that turns legacy mine tailings into construction aggregate, converting a remediation liability into a saleable product.',
+      'A mining and minerals technology from this university\'s research portfolio. A process that reprocesses mine tailings into construction aggregate, diverting waste from containment and producing a saleable material. The separation thresholds and reagent ratios are the crown jewel and must not leave this office.',
+    summarySource: 'ai',
+    summaryReviewed: false,
+    summaryReviewedBy: null,
+    summaryReviewedAt: null,
     confidentialDetail:
       'CONFIDENTIAL — Leach-and-bind sequence, plus the specific tailings chemistry ranges where the economics work.',
+    inventors: [
+      { id: 'ip-008-inv-0', name: 'W. Castellano', email: 'w.castellano@sdsmt.edu', primary: true, departed: true },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2021-033',
       field: 'Mining / Environmental',
-      inventors: 'W. Castellano (departed)',
       disclosedOn: iso('2021-08-17'),
       patentStatus: 'granted',
       fundingSource: 'EPA cooperative agreement',
@@ -339,12 +390,18 @@ export const seedIpItems: IpItem[] = [
     title: 'Hydrogen embrittlement sensor for pipeline steel',
     publicSummary:
       'A clamp-on sensor that flags hydrogen embrittlement in pipeline steel before cracking begins, aimed at operators blending hydrogen into existing gas networks.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail:
       'CONFIDENTIAL — Signal-processing model and the calibration dataset across six steel grades.',
+    inventors: [
+      { id: 'ip-009-inv-0', name: 'A. Voss', email: 'a.voss@sdsmt.edu', primary: true, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2025-028',
       field: 'Metallurgy',
-      inventors: 'A. Voss',
       disclosedOn: iso('2025-12-04'),
       patentStatus: 'provisional',
       fundingSource: 'Industry consortium',
@@ -363,13 +420,19 @@ export const seedIpItems: IpItem[] = [
     universityId: mines,
     title: 'Modular grid-edge battery enclosure',
     publicSummary:
-      'A weather-sealed modular enclosure that lets rural co-ops deploy small battery banks at substations without custom civil work.',
+      'An energy systems technology from this university\'s research portfolio. A pre-engineered enclosure for grid-edge battery installations that cuts siting and permitting time for small utilities and co-ops.',
+    summarySource: 'ai',
+    summaryReviewed: false,
+    summaryReviewedBy: null,
+    summaryReviewedAt: null,
     confidentialDetail:
       'CONFIDENTIAL — Thermal management approach and the fire-suppression interlock design.',
+    inventors: [
+      { id: 'ip-010-inv-0', name: 'S. Kohl', email: 's.kohl@sdsmt.edu', primary: true, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2026-006',
       field: 'Electrical Engineering',
-      inventors: 'S. Kohl',
       disclosedOn: iso('2026-06-11'),
       patentStatus: 'not_filed',
       fundingSource: 'Rural electric co-op partnership',
@@ -388,12 +451,18 @@ export const seedIpItems: IpItem[] = [
     universityId: mines,
     title: 'Abrasion-resistant coating for slurry pumps',
     publicSummary:
-      'A ceramic-metal coating that roughly doubles impeller life in high-solids slurry service.',
+      'A materials technology from this university\'s research portfolio. A hard coating that extends the service life of slurry pump components in abrasive duty. It outperforms every competing product on the market and is ready for immediate commercial deployment.',
+    summarySource: 'ai',
+    summaryReviewed: false,
+    summaryReviewedBy: null,
+    summaryReviewedAt: null,
     confidentialDetail: 'CONFIDENTIAL — Deposition parameters and the interlayer stack.',
+    inventors: [
+      { id: 'ip-011-inv-0', name: 'G. Lindstrom', email: 'g.lindstrom@sdsmt.edu', primary: true, departed: true },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2020-011',
       field: 'Materials',
-      inventors: 'G. Lindstrom (emeritus)',
       disclosedOn: iso('2020-03-25'),
       patentStatus: 'granted',
       fundingSource: 'Industry sponsored research',
@@ -413,11 +482,17 @@ export const seedIpItems: IpItem[] = [
     title: 'Real-time slope stability monitoring array',
     publicSummary:
       'A low-cost sensor array plus alerting model that warns of open-pit slope failure hours earlier than visual inspection.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail: 'CONFIDENTIAL — Failure-precursor model weights and the sensor placement heuristic.',
+    inventors: [
+      { id: 'ip-012-inv-0', name: 'D. Reyes', email: 'd.reyes@sdsmt.edu', primary: true, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'SDM-2024-022',
       field: 'Mining Engineering',
-      inventors: 'D. Reyes',
       disclosedOn: iso('2024-08-30'),
       patentStatus: 'filed',
       fundingSource: 'MSHA research grant',
@@ -438,11 +513,17 @@ export const seedIpItems: IpItem[] = [
     title: 'Adversarial log-poisoning detector',
     publicSummary:
       'A detector that spots deliberately falsified entries in security logs, aimed at SOC teams who cannot trust their own telemetry after a breach.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail: 'CONFIDENTIAL — Detection heuristics and the labelled corpus.',
+    inventors: [
+      { id: 'ip-101-inv-0', name: 'K. Adeyemi', email: 'k.adeyemi@dsu.edu', primary: true, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'DSU-2025-007',
       field: 'Cyber Operations',
-      inventors: 'K. Adeyemi',
       disclosedOn: iso('2025-07-14'),
       patentStatus: 'provisional',
       fundingSource: 'NSA CAE research',
@@ -462,11 +543,17 @@ export const seedIpItems: IpItem[] = [
     title: 'Privacy-preserving health record linkage',
     publicSummary:
       'A method for linking patient records across rural clinics without exposing identifiers, so small providers can share outcomes data.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail: 'CONFIDENTIAL — Hashing scheme and the collision-resolution approach.',
+    inventors: [
+      { id: 'ip-102-inv-0', name: 'B. Sorenson', email: 'b.sorenson@dsu.edu', primary: true, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'DSU-2024-019',
       field: 'Health Informatics',
-      inventors: 'B. Sorenson',
       disclosedOn: iso('2024-10-22'),
       patentStatus: 'filed',
       fundingSource: 'HRSA rural health grant',
@@ -487,11 +574,17 @@ export const seedIpItems: IpItem[] = [
     title: 'Targeted delivery vehicle for pediatric antibiotics',
     publicSummary:
       'A carrier that improves dosing accuracy for pediatric antibiotics, reducing the taste-driven non-compliance that undermines treatment.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail: 'CONFIDENTIAL — Formulation and stability data.',
+    inventors: [
+      { id: 'ip-201-inv-0', name: 'H. Delacroix', email: 'h.delacroix@usd.edu', primary: true, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'USD-2025-011',
       field: 'Pharmaceutical Sciences',
-      inventors: 'H. Delacroix',
       disclosedOn: iso('2025-05-30'),
       patentStatus: 'filed',
       fundingSource: 'NIH R01',
@@ -511,11 +604,17 @@ export const seedIpItems: IpItem[] = [
     title: 'Wearable gait-asymmetry monitor',
     publicSummary:
       'A wearable that quantifies gait asymmetry during rehab, giving physical therapists objective progress data between visits.',
+    summarySource: 'human',
+    summaryReviewed: true,
+    summaryReviewedBy: 'u-ipm-mines',
+    summaryReviewedAt: iso('2026-07-20'),
     confidentialDetail: 'CONFIDENTIAL — Sensor fusion model and the clinical validation set.',
+    inventors: [
+      { id: 'ip-202-inv-0', name: 'C. Reinhardt', email: 'c.reinhardt@usd.edu', primary: true, departed: false },
+    ],
     disclosure: {
       disclosureNumber: 'USD-2024-004',
       field: 'Biomedical Engineering',
-      inventors: 'C. Reinhardt',
       disclosedOn: iso('2024-02-09'),
       patentStatus: 'granted',
       fundingSource: 'Foundation gift',
@@ -662,9 +761,19 @@ export const seedAudit: AuditEvent[] = [
     universityId: mines,
     actorId: 'u-ipm-mines',
     action: 'import',
-    detail: 'Imported 12 disclosures from sdmines-disclosures.csv — all landed private.',
+    detail:
+      'Imported 12 disclosures from sdmines-disclosures.csv — all landed private, 4 with an AI draft summary awaiting review.',
     ipItemId: null,
     at: iso('2026-07-11'),
+  },
+  {
+    id: 'ev-002b',
+    universityId: mines,
+    actorId: 'u-ipm-mines',
+    action: 'summary_reviewed',
+    detail: 'Corrected the AI draft summary for "Sintered lattice heat exchanger".',
+    ipItemId: 'ip-001',
+    at: iso('2026-07-20'),
   },
   {
     id: 'ev-003',

@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Send,
   Signpost,
+  Sparkles,
   Users,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { StatsRow } from '@/components/shared/StatsRow';
 import { AuditTimeline } from '@/components/shared/AuditTimeline';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { useActiveUniversity, useStore } from '@/data/store';
+import { needsSummaryReview, useActiveUniversity, useStore } from '@/data/store';
 import { daysSince } from '@/lib/utils';
 
 /**
@@ -56,7 +57,22 @@ export function ManagerDashboard() {
     { label: 'Sent to I-Corps', value: sentToCohort.length, icon: Send },
   ];
 
+  const needsReview = ipItems.filter(needsSummaryReview);
+
   const attention = [
+    // Above hand-raises: an unread draft blocks publishing entirely, so it is
+    // the thing most likely to be quietly holding the portfolio up.
+    needsReview.length && {
+      key: 'needs_review',
+      icon: Sparkles,
+      tone: 'bg-amber-50 text-amber-600',
+      title: `${needsReview.length} AI draft summar${
+        needsReview.length === 1 ? 'y needs' : 'ies need'
+      } your review`,
+      body: 'These were written from the confidential disclosure. None of them can be published until you have read them.',
+      cta: 'Review drafts',
+      to: '/manage/ip?filter=needs_review',
+    },
     pending.length && {
       key: 'pending',
       icon: Hand,

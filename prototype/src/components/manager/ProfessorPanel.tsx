@@ -1,6 +1,7 @@
 import { Mail, UserCheck, UserMinus, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusChip } from '@/components/shared/chips';
+import { inventorLine } from '@/data/store';
 import type { FacultyAttachment, Invite, IpItem, User } from '@/data/types';
 import { formatDate, initials } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -69,7 +70,7 @@ export function ProfessorPanel({
             <p className="text-sm text-gray-700">No professor attached</p>
             <p className="text-xs text-gray-500">
               Common for older disclosures where the inventor has left. Listed inventors:{' '}
-              {item.disclosure.inventors || 'unknown'}.
+              {inventorLine(item.inventors)}.
             </p>
           </div>
         </div>

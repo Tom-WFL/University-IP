@@ -35,6 +35,30 @@ export type PublishScope = 'private' | 'campus' | 'statewide' | 'national';
 /** AXIS 2 — what happens to this IP next (from the Jul 2 intake). */
 export type Route = 'undecided' | 'founder' | 'hackathon' | 'founder_match';
 
+/** Who drafted the non-confidential summary.
+ *  Real app: a `summary_source` column on `ideas`, alongside the existing
+ *  `ai_feedback` / `ai_rating`. */
+export type SummarySource = 'ai' | 'human';
+
+/** One named inventor on a disclosure. Disclosures routinely have several.
+ *
+ *  This is the RECORD of who invented the thing, which is a different question
+ *  from who holds an account in the app — that link is `IpItem.professorId`,
+ *  pointing at the primary inventor's `User`. Conflating the two is the easy
+ *  mistake: a disclosure can list four inventors, three of whom will never log
+ *  in, and one of whom left the university a decade ago.
+ *
+ *  Real app: an `idea_inventors` child table keyed to `ideas`. */
+export interface Inventor {
+  id: string;
+  name: string;
+  email: string;
+  /** The contact for this disclosure. Exactly one inventor should be primary. */
+  primary: boolean;
+  /** No longer at the university — the back-catalog "IP mining" case. */
+  departed: boolean;
+}
+
 /** Real app: `ideas` (+ new columns). `confidentialDetail` maps to the private
  *  disclosure body and must NEVER render in a founder-facing view. */
 export interface IpItem {
@@ -43,19 +67,30 @@ export interface IpItem {
   title: string;
   /** The non-confidential summary. This is the ONLY body text published. */
   publicSummary: string;
+  /** Who wrote `publicSummary` — a machine draft or a person. */
+  summarySource: SummarySource;
+  /** Has a human actually read the summary and stood behind it?
+   *  An unreviewed AI draft CANNOT be published — see `canPublish` in store.ts.
+   *  A machine summary of confidential IP going campus-wide unread is the
+   *  precise failure the dual-control gate exists to prevent. */
+  summaryReviewed: boolean;
+  summaryReviewedBy: string | null;
+  summaryReviewedAt: string | null;
   /** Private disclosure detail — IP manager eyes only. */
   confidentialDetail: string;
+  /** Everyone credited on the disclosure. See `Inventor`. */
+  inventors: Inventor[];
   /** USD-derived disclosure form fields. */
   disclosure: {
     disclosureNumber: string;
     field: string;
-    inventors: string;
     disclosedOn: string;
     patentStatus: 'not_filed' | 'provisional' | 'filed' | 'granted';
     fundingSource: string;
   };
   ownership: Ownership;
   facultyAttachment: FacultyAttachment;
+  /** Account link for the primary inventor. Null until someone is invited. */
   professorId: string | null;
   publishScope: PublishScope;
   route: Route;
@@ -133,6 +168,7 @@ export type AuditAction =
   | 'import'
   | 'create'
   | 'edit'
+  | 'summary_reviewed'
   | 'route'
   | 'publish'
   | 'unpublish'

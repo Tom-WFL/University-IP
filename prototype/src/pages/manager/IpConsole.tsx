@@ -1,21 +1,35 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Archive, FlaskConical, Hand, Search } from 'lucide-react';
+import { Archive, FlaskConical, Hand, MoreHorizontal, PencilLine, Search, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { FacultyChip, OwnershipChip, RouteChip, ScopeChip } from '@/components/shared/chips';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { useStore } from '@/data/store';
+import { needsSummaryReview, useStore } from '@/data/store';
 import { formatDate } from '@/lib/utils';
 
-type FilterKey = 'all' | 'private' | 'published' | 'undecided' | 'shelved' | 'interest';
+type FilterKey =
+  | 'all'
+  | 'needs_review'
+  | 'private'
+  | 'published'
+  | 'undecided'
+  | 'shelved'
+  | 'interest';
 
 const filterLabels: Record<FilterKey, string> = {
   all: 'All IP',
+  needs_review: 'AI draft — needs review',
   private: 'Private only',
   published: 'Published',
   undecided: 'No route yet',
@@ -58,6 +72,8 @@ export function IpConsole() {
         return false;
       }
       switch (filter) {
+        case 'needs_review':
+          return needsSummaryReview(item);
         case 'private':
           return item.publishScope === 'private';
         case 'published':
@@ -169,6 +185,9 @@ export function IpConsole() {
                       <th className="px-4 py-3">Route</th>
                       <th className="px-4 py-3 text-right">Interest</th>
                       <th className="px-4 py-3">Updated</th>
+                      <th className="px-4 py-3 w-10">
+                        <span className="sr-only">Actions</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -198,6 +217,12 @@ export function IpConsole() {
                                 <p className="text-xs text-gray-500">
                                   {item.disclosure.disclosureNumber} · {item.disclosure.field}
                                 </p>
+                                {needsSummaryReview(item) && (
+                                  <span className="inline-flex items-center gap-1 mt-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 text-xs font-medium">
+                                    <Sparkles className="w-3 h-3" />
+                                    Draft needs review
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </td>
@@ -225,6 +250,37 @@ export function IpConsole() {
                           </td>
                           <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                             {formatDate(item.updatedAt)}
+                          </td>
+                          {/* The whole row navigates, so every control inside
+                              it has to stop the click from bubbling. */}
+                          <td
+                            className="px-2 py-3"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  aria-label={`Actions for ${item.title}`}
+                                >
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => navigate(`/manage/ip/${item.id}`)}>
+                                  Open
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => navigate(`/manage/ip/${item.id}/edit`)}
+                                >
+                                  <PencilLine className="w-4 h-4" />
+                                  Edit disclosure
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </td>
                         </tr>
                       );
@@ -260,6 +316,12 @@ export function IpConsole() {
                         <ScopeChip scope={item.publishScope} />
                         <RouteChip route={item.route} />
                         <OwnershipChip ownership={item.ownership} />
+                        {needsSummaryReview(item) && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1 text-xs font-medium">
+                            <Sparkles className="w-3 h-3" />
+                            Draft needs review
+                          </span>
+                        )}
                       </div>
                       {interest > 0 && (
                         <p className="text-sm text-orange-600 font-medium mt-2 inline-flex items-center gap-1">

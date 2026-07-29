@@ -1,9 +1,9 @@
 import { Fragment, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ChevronRight, Globe, Landmark, Lock, School } from 'lucide-react';
+import { Check, ChevronRight, Globe, Landmark, Lock, School, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DualControlDialog } from './DualControlDialog';
-import { SCOPE_ORDER, scopeRank } from '@/data/store';
+import { SCOPE_ORDER, canPublish, scopeRank } from '@/data/store';
 import type { IpItem, PublishScope } from '@/data/types';
 import { cn } from '@/lib/utils';
 
@@ -42,17 +42,23 @@ const meta: Record<PublishScope, { label: string; who: string; icon: typeof Lock
 export function ScopeStepper({
   item,
   onChange,
+  onReviewSummary,
 }: {
   item: IpItem;
   onChange: (scope: PublishScope) => void;
+  /** Jump the user to the summary so they can clear the block. */
+  onReviewSummary?: () => void;
 }) {
   const [pendingScope, setPendingScope] = useState<PublishScope | null>(null);
   const current = scopeRank(item.publishScope);
+  const gate = canPublish(item);
 
   const handleSelect = (scope: PublishScope) => {
     if (scope === item.publishScope) return;
     if (scopeRank(scope) > current) {
-      // Widening — needs two deliberate confirmations.
+      // Widening. If the summary hasn't been read by a human, we never even
+      // reach dual control — there is nothing to consent to yet.
+      if (!gate.ok) return;
       setPendingScope(scope);
     } else {
       onChange(scope);
@@ -131,9 +137,30 @@ export function ScopeStepper({
         <p className="text-sm text-gray-700">{meta[item.publishScope].who}</p>
       </div>
 
+      {/* Blocked from publishing — say why, and offer the way out. A bare
+          disabled button would leave the reason undiscoverable. */}
+      {!gate.ok && nextScope && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 flex flex-col sm:flex-row sm:items-center gap-3">
+          <TriangleAlert className="w-4 h-4 text-amber-600 shrink-0" />
+          <p className="text-sm text-amber-900 flex-1">{gate.reason}</p>
+          {onReviewSummary && (
+            <Button variant="outline" size="sm" onClick={onReviewSummary} className="shrink-0">
+              Review the summary
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {nextScope && (
-          <Button variant="gradient" size="sm" onClick={() => handleSelect(nextScope)}>
+          <Button
+            variant="gradient"
+            size="sm"
+            aria-disabled={!gate.ok}
+            title={gate.ok ? undefined : gate.reason}
+            className={cn(!gate.ok && 'opacity-40 cursor-not-allowed')}
+            onClick={() => handleSelect(nextScope)}
+          >
             Publish to {meta[nextScope].label.toLowerCase()}
             <ChevronRight className="w-4 h-4" />
           </Button>
