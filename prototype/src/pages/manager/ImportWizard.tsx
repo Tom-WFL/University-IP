@@ -11,6 +11,7 @@ import { PageTitle } from '@/components/shared/primitives';
 import { parseCsv } from '@/lib/csv';
 import { useDemo } from '@/store/DemoStore';
 import { CLASSIFICATIONS } from '@/data/seed';
+import { SAMPLE_IMPORT_CSV } from '@/data/sampleImport';
 import { cn } from '@/lib/utils';
 
 /** The record fields an imported column can be mapped onto. */
@@ -78,10 +79,7 @@ export default function ImportWizard() {
     reader.readAsText(file);
   };
 
-  const loadSample = async () => {
-    const res = await fetch(`${import.meta.env.BASE_URL}sample-import.csv`);
-    ingest(await res.text());
-  };
+  const loadSample = () => ingest(SAMPLE_IMPORT_CSV);
 
   const colFor = (key: FieldKey): number => Number(Object.keys(mapping).find((k) => mapping[Number(k)] === key) ?? -1);
 
