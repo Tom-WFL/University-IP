@@ -44,16 +44,14 @@ jobs:
           touch dist/.nojekyll
 
       - name: Push to gh-pages
+        working-directory: prototype/dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git init -q
+          git checkout -q -b gh-pages
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git worktree add /tmp/site --orphan gh-pages
-          rm -rf /tmp/site/*
-          cp -r prototype/dist/. /tmp/site/
-          cd /tmp/site
           git add -A
-          git commit -m "Publish prototype from ${GITHUB_SHA::7}" || {
-            echo "No change to publish."
-            exit 0
-          }
-          git push -f origin gh-pages
+          git commit -q -m "Publish prototype from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages

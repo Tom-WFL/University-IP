@@ -4,7 +4,10 @@ A walkthrough build of the University IP feature. Everything is fake: the data i
 the browser, saved to `localStorage`, and reset with one click. Nothing leaves the page and
 there is no backend.
 
-**Live:** https://tom-wfl.github.io/University-IP/
+**Live:** https://tom-wfl.github.io/University-IP/ — needs GitHub Pages switched on once:
+**Settings → Pages → Source: "Deploy from a branch" → branch `gh-pages`, folder `/ (root)`**.
+The build is already being pushed to that branch on every commit; the workflow token is not
+allowed to create the Pages site itself, so that one setting is the only manual step.
 
 ## Run it locally
 
