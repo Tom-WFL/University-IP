@@ -48,10 +48,23 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git init -q
           git checkout -q -b gh-pages
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Continue the existing gh-pages history when there is one. Force-pushing an
+          # unrelated history over a branch GitHub Pages is actively serving is rejected
+          # with "fatal error in commit_refs".
+          if git fetch -q --depth=1 "$REMOTE" gh-pages 2>/dev/null; then
+            git reset -q --soft FETCH_HEAD
+          fi
+
           git add -A
+          if git diff --cached --quiet; then
+            echo "Build output is unchanged — nothing to publish."
+            exit 0
+          fi
           git commit -q -m "Publish prototype from ${GITHUB_SHA::7}"
-          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+          git push "$REMOTE" gh-pages
