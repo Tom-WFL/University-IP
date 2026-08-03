@@ -1,10 +1,10 @@
-import { Mail, UserCheck, UserMinus, UserPlus } from 'lucide-react';
+import { Lock, Mail, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusChip } from '@/components/shared/chips';
-import { inventorLine, itemInvolvement } from '@/data/store';
-import type { FacultyAttachment, Invite, IpItem, User } from '@/data/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { inventorLine } from '@/data/store';
+import type { InventorRole, Invite, IpItem, User } from '@/data/types';
 import { formatDate, initials } from '@/lib/utils';
-import { cn } from '@/lib/utils';
 
 /**
  * The professor side of an item: who invented it, whether they stay involved,
@@ -16,13 +16,18 @@ export function ProfessorPanel({
   professor,
   invite,
   onSendInvite,
-  onChangeAttachment,
+  contactOnlyPolicy,
+  schoolName,
+  onSetInventorRole,
 }: {
   item: IpItem;
   professor: User | undefined;
   invite: Invite | undefined;
   onSendInvite: () => void;
-  onChangeAttachment: (attachment: FacultyAttachment) => void;
+  /** The school has removed the choice — see University.inventorRolePolicy. */
+  contactOnlyPolicy: boolean;
+  schoolName: string;
+  onSetInventorRole: (inventorId: string, role: InventorRole) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -76,44 +81,76 @@ export function ProfessorPanel({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {(
-          [
-            {
-              value: 'attached' as const,
-              label: 'Stays attached',
-              body: 'Day-to-day co-founder. Joins the team when a match is approved.',
-              icon: UserCheck,
-            },
-            {
-              value: 'idea-only' as const,
-              label: 'Idea only',
-              body: 'Hands it off. Available as a contact for questions.',
-              icon: UserMinus,
-            },
-          ]
-        ).map((option) => {
-          const Icon = option.icon;
-          const active = itemInvolvement(item) === option.value;
-          return (
-            <button
-              key={option.value}
-              onClick={() => onChangeAttachment(option.value)}
-              aria-pressed={active}
-              className={cn(
-                'text-left rounded-xl border p-3 transition-all duration-200',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ED1C24] focus-visible:ring-offset-2',
-                active ? 'border-[#ED1C24] bg-orange-50/60' : 'border-gray-200 hover:shadow-md',
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <Icon className={cn('w-4 h-4', active ? 'text-[#ED1C24]' : 'text-gray-400')} />
-                <span className="text-sm font-medium text-gray-900">{option.label}</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">{option.body}</p>
-            </button>
-          );
-        })}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Who wants to be part of it
+          </p>
+          {contactOnlyPolicy && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200 px-2 py-0.5 text-xs font-medium">
+              <Lock className="w-3 h-3" />
+              {schoolName} policy
+            </span>
+          )}
+        </div>
+
+        {contactOnlyPolicy && (
+          <p className="text-xs text-blue-900 bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+            Inventors here are listed as contacts only and are not offered the choice, so these
+            cannot be changed.
+          </p>
+        )}
+
+        {item.inventors.length === 0 ? (
+          <p className="text-sm text-gray-400 italic">No inventors recorded.</p>
+        ) : (
+          <ul className="space-y-2">
+            {item.inventors.map((inv) => (
+              <li
+                key={inv.id}
+                className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 p-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-gray-900">{inv.name}</span>
+                    {inv.primary && (
+                      <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 text-xs font-medium">
+                        Contact
+                      </span>
+                    )}
+                    {inv.departed && (
+                      <span className="inline-flex items-center rounded-full bg-gray-200 text-gray-600 border border-gray-300 px-2 py-0.5 text-xs font-medium">
+                        Departed
+                      </span>
+                    )}
+                    {!inv.userId && (
+                      <span className="text-xs text-gray-400">no account</span>
+                    )}
+                  </div>
+                </div>
+
+                <Select
+                  value={inv.role}
+                  disabled={contactOnlyPolicy}
+                  onValueChange={(v) => onSetInventorRole(inv.id, v as InventorRole)}
+                >
+                  <SelectTrigger className="w-full sm:w-52 h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="undecided">Not asked yet</SelectItem>
+                    <SelectItem value="contact_only">Contact only</SelectItem>
+                    <SelectItem value="involved">Involved in the venture</SelectItem>
+                  </SelectContent>
+                </Select>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <p className="text-xs text-gray-500">
+          Anyone marked involved who holds an account joins the team when a match is approved.
+        </p>
       </div>
     </div>
   );

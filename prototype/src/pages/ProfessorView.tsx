@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, GraduationCap, Hand, Mail, UserCheck, UserMinus } from 'lucide-react';
+import { Check, GraduationCap, Hand, Lock, Mail, UserCheck, UserMinus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -24,11 +24,16 @@ export function ProfessorView() {
   const users = useStore((s) => s.users);
   const acceptInvite = useStore((s) => s.acceptInvite);
 
+  const school = universities.find((u) => u.id === user.universityId);
+  // Some schools do not offer the choice at all.
+  const contactOnly = school?.inventorRolePolicy === 'contact_only';
+
   const myItems = ipItems.filter((i) => i.professorId === user.id);
   const pendingInvite = invites.find((inv) => inv.email === user.email && inv.status === 'sent');
   const pendingItem = pendingInvite ? ipItems.find((i) => i.id === pendingInvite.ipItemId) : undefined;
 
   const [choice, setChoice] = useState<InventorRole>('involved');
+  const effectiveChoice: InventorRole = contactOnly ? 'contact_only' : choice;
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -62,11 +67,28 @@ export function ProfessorView() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-gray-700">
-                  Before anyone picks this up, tell them how involved you want to be. You can change this later.
-                </p>
+                {contactOnly ? (
+                  <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 flex items-start gap-2.5">
+                    <Lock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                    <div className="text-sm text-blue-900">
+                      <p className="font-medium">
+                        {school?.shortName} lists inventors as contacts only.
+                      </p>
+                      <p className="mt-0.5 text-blue-800">
+                        You will be shown as someone whoever picks this up can reach with questions.
+                        Joining the venture is not offered here — speak to your IP office if that is
+                        what you want.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-700">
+                    Before anyone picks this up, tell them how involved you want to be. You can
+                    change this later.
+                  </p>
+                )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-3', contactOnly && 'hidden')}>
                   {(
                     [
                       {
@@ -113,7 +135,7 @@ export function ProfessorView() {
                   })}
                 </div>
 
-                <Button variant="gradient" onClick={() => acceptInvite(pendingInvite.id, choice)}>
+                <Button variant="gradient" onClick={() => acceptInvite(pendingInvite.id, effectiveChoice)}>
                   <Check className="w-4 h-4" />
                   Accept and continue
                 </Button>

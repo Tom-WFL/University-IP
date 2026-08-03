@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Save, Trash2, UserPlus } from 'lucide-react';
+import { ArrowLeft, Lock, Plus, Save, Trash2, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { FadeIn, Stagger } from '@/components/shared/motion';
 import { SummaryCard } from '@/components/manager/SummaryCard';
 import { LiveEditDialog } from '@/components/manager/LiveEditDialog';
 import { useStore, type IpItemPatch } from '@/data/store';
-import type { Inventor, IpItem, User } from '@/data/types';
+import type { Inventor, InventorRole, IpItem, University, User } from '@/data/types';
 import { cn } from '@/lib/utils';
 
 /**
@@ -39,6 +39,8 @@ export function EditIp() {
   const approveSummary = useStore((s) => s.approveSummary);
   const regenerateSummary = useStore((s) => s.regenerateSummary);
   const linkProfessor = useStore((s) => s.linkProfessor);
+  const setSummaryCriteria = useStore((s) => s.setSummaryCriteria);
+  const universities = useStore((s) => s.universities);
 
   const item = ipItems.find((i) => i.id === ipId);
 
@@ -61,11 +63,13 @@ export function EditIp() {
         (u) => u.persona === 'professor' && u.universityId === item.universityId,
       )}
       reviewer={users.find((u) => u.id === (item.summaryReviewedBy ?? currentUserId))}
+      university={universities.find((u) => u.id === item.universityId)}
       onSaveRecord={(patch) => updateIpItem(item.id, patch)}
       onSaveSummary={(text) => updateSummary(item.id, text)}
       onApproveSummary={() => approveSummary(item.id)}
       onRegenerateSummary={() => regenerateSummary(item.id)}
       onLinkProfessor={(target) => linkProfessor(item.id, target)}
+      onSetCriteria={(ids) => setSummaryCriteria(item.id, ids)}
       onDone={() => navigate(`/manage/ip/${item.id}`)}
     />
   );
@@ -102,21 +106,25 @@ function EditIpForm({
   item,
   professors,
   reviewer,
+  university,
   onSaveRecord,
   onSaveSummary,
   onApproveSummary,
   onRegenerateSummary,
   onLinkProfessor,
+  onSetCriteria,
   onDone,
 }: {
   item: IpItem;
   professors: User[];
   reviewer: User | undefined;
+  university: University | undefined;
   onSaveRecord: (patch: IpItemPatch) => void;
   onSaveSummary: (text: string) => void;
   onApproveSummary: () => void;
   onRegenerateSummary: () => void;
   onLinkProfessor: (target: { userId: string } | { name: string; email: string }) => void;
+  onSetCriteria: (ids: string[]) => void;
   onDone: () => void;
 }) {
   const [draft, setDraft] = useState<RecordDraft>(() => toDraft(item));
@@ -132,6 +140,7 @@ function EditIpForm({
   );
 
   const canSave = draft.title.trim().length > 0;
+  const contactOnlyPolicy = university?.inventorRolePolicy === 'contact_only';
 
   const handleSave = () => {
     if (!canSave) return;
@@ -220,11 +229,13 @@ function EditIpForm({
           <SummaryCard
             item={item}
             reviewer={reviewer}
+            policy={university?.redactionPolicy ?? []}
             onSave={(text) =>
               item.publishScope === 'private' ? onSaveSummary(text) : setPendingSummary(text)
             }
             onApprove={onApproveSummary}
             onRegenerate={onRegenerateSummary}
+            onSetCriteria={onSetCriteria}
           />
         </FadeIn>
 
@@ -310,6 +321,17 @@ function EditIpForm({
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
+              {contactOnlyPolicy && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 flex items-start gap-2.5">
+                  <Lock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-blue-900">
+                    <span className="font-medium">{university?.shortName} policy:</span> inventors
+                    are listed as contacts only. They are not offered the choice to join a venture,
+                    so the role control below is fixed.
+                  </p>
+                </div>
+              )}
+
               {draft.inventors.length === 0 && (
                 <p className="text-sm text-gray-400 italic">
                   No inventors recorded. Add at least one so there is somebody to contact.
@@ -341,6 +363,30 @@ function EditIpForm({
                       />
                     </Field>
                   </div>
+
+                  <Field
+                    label="Do they want to be part of it?"
+                    help={
+                      contactOnlyPolicy
+                        ? undefined
+                        : 'Involved inventors join the team when a match is approved.'
+                    }
+                  >
+                    <Select
+                      value={inv.role}
+                      disabled={contactOnlyPolicy}
+                      onValueChange={(v) => patchInventor(inv.id, { role: v as InventorRole })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="undecided">Not asked yet</SelectItem>
+                        <SelectItem value="contact_only">Contact only</SelectItem>
+                        <SelectItem value="involved">Involved in the venture</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
 
                   <div className="flex flex-wrap items-center gap-4">
                     <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">

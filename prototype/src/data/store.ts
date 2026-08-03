@@ -15,6 +15,7 @@ import type {
   Invite,
   IpItem,
   PublishScope,
+  RedactionCriterion,
   SummarySource,
   Route,
   Team,
@@ -66,7 +67,10 @@ export function scopeRank(scope: PublishScope): number {
  * In the real app this must ALSO be a server-side precondition — an RLS check
  * or a guard inside the publish RPC. A UI-only rule is not a guardrail.
  */
-export function canPublish(item: IpItem): { ok: boolean; reason?: string } {
+export function canPublish(
+  item: IpItem,
+  policy: RedactionCriterion[] = [],
+): { ok: boolean; reason?: string } {
   if (!item.publicSummary.trim()) {
     return { ok: false, reason: 'There is no summary yet. Write one before publishing.' };
   }
@@ -76,7 +80,22 @@ export function canPublish(item: IpItem): { ok: boolean; reason?: string } {
       reason: 'This summary is still an unread AI draft. Review it before anyone else sees it.',
     };
   }
+  const missing = policy.filter((c) => !item.summaryCriteriaChecked.includes(c.id));
+  if (missing.length) {
+    return {
+      ok: false,
+      reason:
+        missing.length === policy.length
+          ? 'Nobody has checked this summary against the release criteria yet.'
+          : `${missing.length} release criteri${missing.length === 1 ? 'on' : 'a'} still unchecked.`,
+    };
+  }
   return { ok: true };
+}
+
+/** Which of a university's criteria this item has NOT been checked against. */
+export function unmetCriteria(item: IpItem, policy: RedactionCriterion[]): RedactionCriterion[] {
+  return policy.filter((c) => !item.summaryCriteriaChecked.includes(c.id));
 }
 
 /** Items whose AI draft nobody has checked yet — the IP Manager's queue. */
@@ -211,6 +230,15 @@ interface StoreState {
   approveSummary: (ipItemId: string) => void;
   /** Ask the (simulated) model for another draft. Resets the review flag. */
   regenerateSummary: (ipItemId: string) => void;
+  /** Record which release criteria the reviewer has ticked. */
+  setSummaryCriteria: (ipItemId: string, criterionIds: string[]) => void;
+
+  /** Edit this university's release criteria. */
+  updateRedactionPolicy: (universityId: string, policy: RedactionCriterion[]) => void;
+  /** Change whether inventors at this school may choose to be involved. */
+  setInventorRolePolicy: (universityId: string, policy: InventorRolePolicy) => void;
+  /** Set one inventor's role, refused where the school has removed the choice. */
+  setInventorRole: (ipItemId: string, inventorId: string, role: InventorRole) => void;
 
   /** Point this disclosure at a professor account, minting one if needed. */
   linkProfessor: (
@@ -484,7 +512,8 @@ export const useStore = create<StoreState>()(
           // The gate is an invariant, not a UI convention. The stepper already
           // refuses, but anything else reaching this action has to be refused
           // too — in the real app this belongs in the publish RPC or RLS.
-          if (widening && !canPublish(item).ok) return;
+          const owningUniversity = state.universities.find((u) => u.id === item.universityId);
+          if (widening && !canPublish(item, owningUniversity?.redactionPolicy ?? []).ok) return;
 
           set({
             ipItems: state.ipItems.map((i) =>
@@ -575,6 +604,9 @@ export const useStore = create<StoreState>()(
                     ...i,
                     publicSummary: text,
                     summarySource: source,
+                    // The words changed, so what was attested no longer
+                    // describes what would be published.
+                    summaryCriteriaChecked: [],
                     summaryReviewed: true,
                     summaryReviewedBy: state.currentUserId,
                     summaryReviewedAt: now(),
@@ -642,6 +674,119 @@ export const useStore = create<StoreState>()(
             ),
           });
           log('edit', `Redrafted the summary for "${item.title}" — needs review again.`, ipItemId);
+        },
+
+        setSummaryCriteria: (ipItemId, criterionIds) => {
+          const state = get();
+          const item = state.ipItems.find((i) => i.id === ipItemId);
+          if (!item) return;
+          const owner = state.universities.find((u) => u.id === item.universityId);
+          const policy = owner?.redactionPolicy ?? [];
+
+          // Only ever store ids the school's policy actually contains, so a
+          // stale tick from a removed criterion cannot satisfy the gate.
+          const valid = criterionIds.filter((id) => policy.some((c) => c.id === id));
+          const complete = policy.length > 0 && valid.length === policy.length;
+
+          set({
+            ipItems: state.ipItems.map((i) =>
+              i.id === ipItemId ? { ...i, summaryCriteriaChecked: valid, updatedAt: now() } : i,
+            ),
+          });
+
+          if (complete) {
+            log(
+              'summary_reviewed',
+              `Checked "${item.title}" against all ${policy.length} release criteria.`,
+              ipItemId,
+            );
+          }
+        },
+
+        updateRedactionPolicy: (universityId, policy) => {
+          const state = get();
+          const uni = state.universities.find((u) => u.id === universityId);
+          if (!uni) return;
+          const before = uni.redactionPolicy.length;
+
+          set({
+            universities: state.universities.map((u) =>
+              u.id === universityId ? { ...u, redactionPolicy: policy } : u,
+            ),
+          });
+          log(
+            'policy_changed',
+            `Release criteria for ${uni.shortName} changed from ${before} to ${policy.length}.`,
+          );
+        },
+
+        setInventorRolePolicy: (universityId, policy) => {
+          const state = get();
+          const uni = state.universities.find((u) => u.id === universityId);
+          if (!uni || uni.inventorRolePolicy === policy) return;
+
+          set({
+            universities: state.universities.map((u) =>
+              u.id === universityId ? { ...u, inventorRolePolicy: policy } : u,
+            ),
+            // Switching to contact-only is not just a setting — it has to take
+            // effect on inventors who already said yes, or the policy is
+            // decorative.
+            ipItems:
+              policy === 'contact_only'
+                ? state.ipItems.map((i) =>
+                    i.universityId === universityId
+                      ? {
+                          ...i,
+                          inventors: i.inventors.map((inv) =>
+                            inv.role === 'involved' ? { ...inv, role: 'contact_only' } : inv,
+                          ),
+                        }
+                      : i,
+                  )
+                : state.ipItems,
+          });
+
+          log(
+            'policy_changed',
+            policy === 'contact_only'
+              ? `${uni.shortName} inventors are now listed as contacts only.`
+              : `${uni.shortName} inventors may now choose to be involved.`,
+          );
+        },
+
+        setInventorRole: (ipItemId, inventorId, role) => {
+          const state = get();
+          const item = state.ipItems.find((i) => i.id === ipItemId);
+          if (!item) return;
+          const owner = state.universities.find((u) => u.id === item.universityId);
+
+          // The school may have removed the choice entirely.
+          if (owner?.inventorRolePolicy === 'contact_only' && role === 'involved') return;
+
+          const inventor = item.inventors.find((inv) => inv.id === inventorId);
+          if (!inventor) return;
+
+          set({
+            ipItems: state.ipItems.map((i) =>
+              i.id === ipItemId
+                ? {
+                    ...i,
+                    inventors: i.inventors.map((inv) =>
+                      inv.id === inventorId ? { ...inv, role } : inv,
+                    ),
+                    updatedAt: now(),
+                  }
+                : i,
+            ),
+          });
+
+          const label: Record<InventorRole, string> = {
+            undecided: 'not decided yet',
+            contact_only: 'a contact only',
+            involved: 'involved in the venture',
+          };
+          log('edit', `${inventor.name} on "${item.title}" is now ${label[role]}.`, ipItemId);
         },
 
         linkProfessor: (ipItemId, target) => {
@@ -1072,4 +1217,5 @@ if (import.meta.env.DEV) {
   w.__store = useStore;
   w.__visibleToFounder = visibleToFounder;
   w.__SCOPE_ORDER = SCOPE_ORDER;
+  w.__canPublish = canPublish;
 }

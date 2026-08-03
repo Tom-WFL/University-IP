@@ -49,13 +49,15 @@ export function IpDetail() {
 
   const updateScope = useStore((s) => s.updateScope);
   const updateRoute = useStore((s) => s.updateRoute);
-  const updateIpItem = useStore((s) => s.updateIpItem);
   const updateSummary = useStore((s) => s.updateSummary);
   const approveSummary = useStore((s) => s.approveSummary);
   const regenerateSummary = useStore((s) => s.regenerateSummary);
   const sendProfessorInvite = useStore((s) => s.sendProfessorInvite);
   const reviewHandRaise = useStore((s) => s.reviewHandRaise);
   const currentUserId = useStore((s) => s.currentUserId);
+  const setSummaryCriteria = useStore((s) => s.setSummaryCriteria);
+  const setInventorRole = useStore((s) => s.setInventorRole);
+  const universities = useStore((s) => s.universities);
 
   const [celebrate, setCelebrate] = useState(false);
   const [cohortDialogTeamId, setCohortDialogTeamId] = useState<string | null>(null);
@@ -78,6 +80,7 @@ export function IpDetail() {
     );
   }
 
+  const owner = universities.find((u) => u.id === item.universityId);
   const professor = users.find((u) => u.id === item.professorId);
   const invite = invites.find((inv) => inv.ipItemId === item.id && inv.role === 'professor');
   const itemHandRaises = handRaises.filter((hr) => hr.ipItemId === item.id);
@@ -240,6 +243,7 @@ export function IpDetail() {
                 <CardContent className="p-6 space-y-6">
                   <ScopeStepper
                     item={item}
+                    policy={owner?.redactionPolicy ?? []}
                     onChange={(scope) => updateScope(item.id, scope)}
                     onReviewSummary={() => setTab('content')}
                   />
@@ -251,21 +255,10 @@ export function IpDetail() {
                     professor={professor}
                     invite={invite}
                     onSendInvite={() => sendProfessorInvite(item.id)}
-                    onChangeAttachment={(attachment) =>
-                      // Involvement lives per inventor now. This item-level
-                      // control is a bridge: it sets the designated contact's
-                      // role and is replaced by the per-inventor list in the
-                      // edit form.
-                      updateIpItem(item.id, {
-                        inventors: item.inventors.map((inv) =>
-                          inv.primary
-                            ? {
-                                ...inv,
-                                role: attachment === 'attached' ? 'involved' : 'contact_only',
-                              }
-                            : inv,
-                        ),
-                      })
+                    contactOnlyPolicy={owner?.inventorRolePolicy === 'contact_only'}
+                    schoolName={owner?.shortName ?? 'This school'}
+                    onSetInventorRole={(inventorId, role) =>
+                      setInventorRole(item.id, inventorId, role)
                     }
                   />
                 </CardContent>
@@ -277,9 +270,11 @@ export function IpDetail() {
                 <SummaryCard
                   item={item}
                   reviewer={users.find((u) => u.id === (item.summaryReviewedBy ?? currentUserId))}
+                  policy={owner?.redactionPolicy ?? []}
                   onSave={handleSaveSummary}
                   onApprove={() => approveSummary(item.id)}
                   onRegenerate={() => regenerateSummary(item.id)}
+                  onSetCriteria={(ids) => setSummaryCriteria(item.id, ids)}
                 />
 
                 <Card className="border-gray-300">

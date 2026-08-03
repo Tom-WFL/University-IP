@@ -9,6 +9,7 @@ import {
   Home,
   LayoutDashboard,
   ScrollText,
+  ShieldCheck,
   Search,
   Trophy,
   Users,
@@ -37,6 +38,7 @@ export const navByPersona: Record<PersonaKind, NavItem[]> = {
     { to: '/manage/interest', label: 'Hand-raises', icon: Hand, badgeKey: 'pendingHandRaises' },
     { to: '/manage/teams', label: 'Teams & I-Corps', icon: Users },
     { to: '/manage/audit', label: 'Audit trail', icon: ScrollText },
+    { to: '/manage/policy', label: 'Release policy', icon: ShieldCheck },
   ],
   founder: [
     { to: '/home', label: 'Home', icon: Home, exact: true },

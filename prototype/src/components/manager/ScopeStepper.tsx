@@ -4,7 +4,7 @@ import { Check, ChevronRight, Globe, Landmark, Lock, Radio, School, TriangleAler
 import { Button } from '@/components/ui/button';
 import { DualControlDialog } from './DualControlDialog';
 import { SCOPE_ORDER, canPublish, scopeRank } from '@/data/store';
-import type { IpItem, PublishScope } from '@/data/types';
+import type { IpItem, PublishScope, RedactionCriterion } from '@/data/types';
 import { cn } from '@/lib/utils';
 
 const meta: Record<PublishScope, { label: string; who: string; icon: typeof Lock; dot: string }> = {
@@ -47,17 +47,20 @@ const meta: Record<PublishScope, { label: string; who: string; icon: typeof Lock
  */
 export function ScopeStepper({
   item,
+  policy,
   onChange,
   onReviewSummary,
 }: {
   item: IpItem;
+  /** The owning university's release criteria — part of the gate. */
+  policy: RedactionCriterion[];
   onChange: (scope: PublishScope) => void;
   /** Jump the user to the summary so they can clear the block. */
   onReviewSummary?: () => void;
 }) {
   const [pendingScope, setPendingScope] = useState<PublishScope | null>(null);
   const current = scopeRank(item.publishScope);
-  const gate = canPublish(item);
+  const gate = canPublish(item, policy);
 
   const handleSelect = (scope: PublishScope) => {
     if (scope === item.publishScope) return;
@@ -181,6 +184,7 @@ export function ScopeStepper({
 
       <DualControlDialog
         item={item}
+        policy={policy}
         targetScope={pendingScope}
         onCancel={() => setPendingScope(null)}
         onConfirm={(scope) => {

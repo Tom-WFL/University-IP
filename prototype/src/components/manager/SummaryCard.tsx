@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Eye, PencilLine, Sparkles, TriangleAlert } from 'lucide-react';
+import { Check, Eye, PencilLine, ShieldCheck, Sparkles, TriangleAlert } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DRAFT_DELAY_MS } from '@/lib/aiSummary';
 import { needsSummaryReview } from '@/data/store';
 import { formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import type { IpItem, User } from '@/data/types';
+import type { IpItem, RedactionCriterion, User } from '@/data/types';
 
 /**
  * The non-confidential summary, and the review that has to happen before it
@@ -23,16 +24,21 @@ import type { IpItem, User } from '@/data/types';
 export function SummaryCard({
   item,
   reviewer,
+  policy,
   onSave,
   onApprove,
   onRegenerate,
+  onSetCriteria,
 }: {
   item: IpItem;
   reviewer: User | undefined;
+  /** The owning university's release criteria. */
+  policy: RedactionCriterion[];
   /** Save edited text. The caller may intercept to confirm a live change. */
   onSave: (text: string) => void;
   onApprove: () => void;
   onRegenerate: () => void;
+  onSetCriteria: (ids: string[]) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(item.publicSummary);
@@ -88,6 +94,14 @@ export function SummaryCard({
                 It was written from the confidential disclosure, so read it for anything that
                 shouldn&rsquo;t be public. You can&rsquo;t publish until you do.
               </p>
+              {policy.length > 0 && (
+                // What the model was TOLD is not the same as what a human has
+                // verified. Saying both keeps the difference visible.
+                <p className="mt-1.5 text-xs text-amber-700">
+                  Drafted to follow {policy.length} release criteri
+                  {policy.length === 1 ? 'on' : 'a'} — confirm each one below.
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -167,10 +181,103 @@ export function SummaryCard({
                 Redraft with AI
               </Button>
             </div>
+
+            <CriteriaChecklist item={item} policy={policy} onChange={onSetCriteria} />
           </>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * The release criteria, ticked one at a time.
+ *
+ * This replaces a single blanket "I confirm there is no confidential detail"
+ * tick. One box is easy to click through without reading; five specific
+ * questions — is there a formulation in here, is a partner named — make the
+ * reviewer actually look, and record WHAT was attested rather than just that
+ * something was.
+ */
+function CriteriaChecklist({
+  item,
+  policy,
+  onChange,
+}: {
+  item: IpItem;
+  policy: RedactionCriterion[];
+  onChange: (ids: string[]) => void;
+}) {
+  if (!policy.length) return null;
+
+  const checked = new Set(item.summaryCriteriaChecked);
+  const done = policy.every((c) => checked.has(c.id));
+
+  const toggle = (id: string) => {
+    const next = new Set(checked);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onChange([...next]);
+  };
+
+  return (
+    <div
+      className={cn(
+        'rounded-xl border p-3 space-y-2',
+        done ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-200 bg-gray-50/60',
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Checked against
+        </p>
+        {done ? (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            All {policy.length} clear
+          </span>
+        ) : (
+          <span className="text-xs text-gray-500 tabular-nums">
+            {checked.size} of {policy.length}
+          </span>
+        )}
+      </div>
+
+      <ul className="space-y-1.5">
+        {policy.map((c) => {
+          const on = checked.has(c.id);
+          return (
+            <li key={c.id}>
+              <label className="flex gap-2.5 items-start cursor-pointer rounded-lg px-2 py-1.5 -mx-1 hover:bg-white/70 transition-colors">
+                <Checkbox
+                  checked={on}
+                  onCheckedChange={() => toggle(c.id)}
+                  className="mt-0.5 shrink-0"
+                  aria-label={c.label}
+                />
+                <span className="min-w-0">
+                  <span
+                    className={cn(
+                      'block text-sm',
+                      on ? 'text-gray-500 line-through decoration-gray-300' : 'text-gray-800',
+                    )}
+                  >
+                    {c.label}
+                  </span>
+                  {!on && <span className="block text-xs text-gray-500 mt-0.5">{c.help}</span>}
+                </span>
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+
+      {!done && (
+        <p className="text-xs text-gray-500 pt-0.5">
+          This item cannot be published until every line is clear.
+        </p>
+      )}
+    </div>
   );
 }
 

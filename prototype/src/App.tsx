@@ -4,6 +4,7 @@ import { ManagerDashboard } from '@/pages/manager/Dashboard';
 import { IpConsole } from '@/pages/manager/IpConsole';
 import { IpDetail } from '@/pages/manager/IpDetail';
 import { ImportIp } from '@/pages/manager/ImportIp';
+import { PolicyPage } from '@/pages/manager/PolicyPage';
 import { EditIp } from '@/pages/manager/EditIp';
 import { HandRaises } from '@/pages/manager/HandRaises';
 import { Teams } from '@/pages/manager/Teams';
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/manage/interest" element={<HandRaises />} />
           <Route path="/manage/teams" element={<Teams />} />
           <Route path="/manage/audit" element={<AuditPage />} />
+          <Route path="/manage/policy" element={<PolicyPage />} />
 
           {/* Founder / student */}
           <Route path="/home" element={<FounderHome />} />
