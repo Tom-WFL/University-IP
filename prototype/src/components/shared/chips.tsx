@@ -1,4 +1,6 @@
 import { Globe, Landmark, Lock, Radio, School, UserCheck, UserMinus } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { SCOPES } from '@/data/scopes';
 import type { FacultyAttachment, Ownership, PublishScope, Route } from '@/data/types';
 import { cn } from '@/lib/utils';
 
@@ -21,39 +23,34 @@ export function Chip({
 
 // --- Axis 1: publish scope -------------------------------------------------
 
-const scopeStyles: Record<PublishScope, { label: string; className: string; icon: typeof Lock }> = {
-  private: { label: 'Private', className: 'bg-gray-100 text-gray-700 border-gray-200', icon: Lock },
-  campus: { label: 'Campus', className: 'bg-blue-100 text-blue-700 border-blue-200', icon: School },
-  statewide: {
-    label: 'Statewide',
-    className: 'bg-orange-100 text-orange-700 border-orange-200',
-    icon: Landmark,
-  },
-  public: {
-    label: 'Public',
-    className: 'bg-red-100 text-red-800 border-red-200',
-    icon: Radio,
-  },
-  national: {
-    // The widest scope gets the brand gradient — it should feel like a big deal.
-    label: 'National network',
-    className: 'bg-gradient-to-r from-[#ED1C24] to-[#F26522] text-white border-transparent',
-    icon: Globe,
-  },
+/**
+ * Icons live here rather than in `@/data/scopes` so the data layer stays free
+ * of lucide — `store.ts` imports the ladder from there and has no business
+ * pulling in an icon library. Everything else about a scope comes from SCOPES.
+ */
+const scopeIcons: Record<PublishScope, LucideIcon> = {
+  private: Lock,
+  campus: School,
+  statewide: Landmark,
+  national: Globe,
+  public: Radio,
 };
 
+export const scopeIcon = (scope: PublishScope) => scopeIcons[scope];
+
 export function ScopeChip({ scope, showIcon = true }: { scope: PublishScope; showIcon?: boolean }) {
-  const s = scopeStyles[scope];
-  const Icon = s.icon;
+  const Icon = scopeIcons[scope];
   return (
-    <Chip className={s.className}>
+    <Chip className={SCOPES[scope].chipClassName}>
       {showIcon && <Icon className="w-3 h-3" />}
-      {s.label}
+      {SCOPES[scope].label}
     </Chip>
   );
 }
 
-export const scopeLabel = (scope: PublishScope) => scopeStyles[scope].label;
+// Re-exported so existing `from '@/components/shared/chips'` imports keep
+// working; the string itself now lives with the rest of the scope copy.
+export { scopeLabel } from '@/data/scopes';
 
 // --- Axis 2: route ---------------------------------------------------------
 

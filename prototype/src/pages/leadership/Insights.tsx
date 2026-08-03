@@ -15,7 +15,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { StatsRow } from '@/components/shared/StatsRow';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { scopeLabel } from '@/components/shared/chips';
+import { SCOPES, scopeLabel } from '@/data/scopes';
 import { useActiveUniversity, useStore } from '@/data/store';
 import {
   buildFunnel,
@@ -26,18 +26,7 @@ import {
   byScope,
   pct,
 } from '@/lib/insights';
-import type { PublishScope } from '@/data/types';
 import { cn } from '@/lib/utils';
-
-/** Solid fills for the stacked bar. The chip palette is too pale to read at
- *  3px tall, and the national chip is a gradient, which cannot tile. */
-const scopeFill: Record<PublishScope, string> = {
-  private: 'bg-gray-300',
-  campus: 'bg-blue-400',
-  statewide: 'bg-orange-400',
-  national: 'bg-[#ED1C24]',
-  public: 'bg-[#F26522]',
-};
 
 /**
  * University leadership — read-only oversight.
@@ -222,7 +211,7 @@ export function Insights() {
                     .map((s) => (
                       <div
                         key={s.scope}
-                        className={cn('h-full transition-all duration-500', scopeFill[s.scope])}
+                        className={cn('h-full transition-all duration-500', SCOPES[s.scope].fill)}
                         style={{ width: `${s.pct}%` }}
                         title={`${scopeLabel(s.scope)}: ${s.count}`}
                       />
@@ -231,7 +220,7 @@ export function Insights() {
                 <ul className="space-y-2">
                   {scopes.map((s) => (
                     <li key={s.scope} className="flex items-center gap-2.5 text-sm">
-                      <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', scopeFill[s.scope])} />
+                      <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', SCOPES[s.scope].fill)} />
                       <span className="text-gray-700 flex-1 min-w-0 truncate">
                         {scopeLabel(s.scope)}
                       </span>

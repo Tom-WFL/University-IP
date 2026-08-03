@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Radio } from 'lucide-react';
 import { ScopeChip } from '@/components/shared/chips';
-import { scopeWho } from './ScopeStepper';
+import { scopeWho } from '@/data/scopes';
 import type { IpItem } from '@/data/types';
 
 /**

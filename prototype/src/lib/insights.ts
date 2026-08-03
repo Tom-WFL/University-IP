@@ -1,4 +1,5 @@
 import { needsSummaryReview } from '@/data/store';
+import { SCOPE_ORDER } from '@/data/scopes';
 import { daysSince } from '@/lib/utils';
 import type {
   AuditEvent,
@@ -118,22 +119,15 @@ export function pct(part: number, whole: number): number {
 
 // --- portfolio shape -------------------------------------------------------
 
-export const SCOPE_DISPLAY_ORDER: PublishScope[] = [
-  'private',
-  'campus',
-  'statewide',
-  'national',
-  'public',
-];
-
 export interface ScopeSlice {
   scope: PublishScope;
   count: number;
   pct: number;
 }
 
+/** Narrowest first, the same ladder the publish controls use. */
 export function byScope(ipItems: IpItem[]): ScopeSlice[] {
-  return SCOPE_DISPLAY_ORDER.map((scope) => {
+  return SCOPE_ORDER.map((scope) => {
     const count = ipItems.filter((i) => i.publishScope === scope).length;
     return { scope, count, pct: pct(count, ipItems.length) };
   });

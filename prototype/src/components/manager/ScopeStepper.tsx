@@ -1,49 +1,36 @@
 import { Fragment, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ChevronRight, Globe, Landmark, Lock, Radio, School, TriangleAlert } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Lock, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { DualControlDialog } from './DualControlDialog';
-import { SCOPE_ORDER, canPublish, scopeRank } from '@/data/store';
+import { PullBackDialog } from './PullBackDialog';
+import { scopeIcon } from '@/components/shared/chips';
+import { SCOPES, SCOPE_ORDER, scopeRank, scopesSkipped } from '@/data/scopes';
+import { canPublish } from '@/data/store';
 import type { IpItem, PublishScope, RedactionCriterion } from '@/data/types';
 import { cn } from '@/lib/utils';
 
-const meta: Record<PublishScope, { label: string; who: string; icon: typeof Lock; dot: string }> = {
-  private: {
-    label: 'Private',
-    who: 'Only you and this university’s IP staff.',
-    icon: Lock,
-    dot: 'bg-gray-400',
-  },
-  campus: {
-    label: 'Campus',
-    who: 'Students and faculty at this university.',
-    icon: School,
-    dot: 'bg-blue-500',
-  },
-  statewide: {
-    label: 'Statewide',
-    who: 'Everyone at the other schools in the system.',
-    icon: Landmark,
-    dot: 'bg-orange-500',
-  },
-  national: {
-    label: 'National network',
-    who: 'Wildfire’s national founder network.',
-    icon: Globe,
-    dot: 'bg-gradient-to-r from-[#ED1C24] to-[#F26522]',
-  },
-  public: {
-    label: 'Public',
-    who: 'Anyone on the internet. No account, no login, and search engines will find it.',
-    icon: Radio,
-    dot: 'bg-[#ED1C24]',
-  },
-};
-
 /**
- * The publish-scope journey — AXIS 1. Widening always goes through dual
- * control; narrowing is immediate (pulling something back should never be
- * harder than putting it out).
+ * The publish-scope journey — AXIS 1.
+ *
+ * Any tier is reachable in one action: an IP manager who already knows a
+ * disclosure belongs on the national network should not have to walk it up
+ * three times. The rail has always permitted that, but it looked like an inert
+ * progress bar, so nobody found it — this version says so out loud and gives
+ * every node a real affordance.
+ *
+ * Widening always goes through dual control. Narrowing is immediate, because
+ * pulling something back should never be harder than putting it out — with one
+ * exception, coming back from `public`, where the honest answer is that
+ * un-publishing does not un-index.
  */
 export function ScopeStepper({
   item,
@@ -59,6 +46,7 @@ export function ScopeStepper({
   onReviewSummary?: () => void;
 }) {
   const [pendingScope, setPendingScope] = useState<PublishScope | null>(null);
+  const [pendingPullBack, setPendingPullBack] = useState<PublishScope | null>(null);
   const current = scopeRank(item.publishScope);
   const gate = canPublish(item, policy);
 
@@ -69,12 +57,34 @@ export function ScopeStepper({
       // reach dual control — there is nothing to consent to yet.
       if (!gate.ok) return;
       setPendingScope(scope);
+    } else if (item.publishScope === 'public') {
+      // Coming down off the open internet. The item stops being served, but
+      // search engines and archives already have it, and saying so once is
+      // worth more than making the click fast.
+      setPendingPullBack(scope);
     } else {
       onChange(scope);
     }
   };
 
   const nextScope = SCOPE_ORDER[current + 1];
+  const wider = SCOPE_ORDER.filter((s) => scopeRank(s) > current);
+  const narrower = SCOPE_ORDER.filter((s) => scopeRank(s) < current);
+
+  /**
+   * Accessible names are deliberately NOT "Publish to …".
+   *
+   * The primary button below owns that phrasing, and the walkthrough suites
+   * resolve it with an unanchored `getByRole('button', { name: /Publish to/ })`.
+   * Two elements answering to the same name would make that ambiguous, so the
+   * rail speaks in widen/restrict terms instead. Each name still contains the
+   * visible label, which WCAG 2.5.3 requires.
+   */
+  const nodeLabel = (scope: PublishScope) => {
+    const { label } = SCOPES[scope];
+    if (scope === item.publishScope) return `${label} — current level`;
+    return scopeRank(scope) > current ? `Widen to ${label}` : `Restrict to ${label}`;
+  };
 
   return (
     <div className="space-y-4">
@@ -85,21 +95,31 @@ export function ScopeStepper({
         </p>
       </div>
 
-      {/* The journey rail */}
+      {/* The journey rail. Every node is selectable, not just the next one. */}
       <div className="flex items-center">
         {SCOPE_ORDER.map((scope, index) => {
           const reached = index <= current;
           const isCurrent = index === current;
-          const Icon = meta[scope].icon;
+          const widening = index > current;
+          // Blocked targets stay clickable to the accessibility tree and to a
+          // forced click — `handleSelect` is the real refusal. A native
+          // `disabled` would make the button unclickable and hide the reason.
+          const blocked = widening && !gate.ok;
+          const Icon = scopeIcon(scope);
           return (
             <Fragment key={scope}>
               <button
                 onClick={() => handleSelect(scope)}
                 aria-current={isCurrent ? 'step' : undefined}
+                aria-disabled={blocked || isCurrent}
+                aria-label={nodeLabel(scope)}
+                title={blocked ? gate.reason : SCOPES[scope].who}
                 className={cn(
-                  'group flex flex-col items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors',
+                  'group flex flex-col items-center gap-1.5 rounded-lg px-2 py-1.5 transition-all',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ED1C24] focus-visible:ring-offset-2',
-                  !isCurrent && 'hover:bg-gray-50',
+                  isCurrent && 'cursor-default',
+                  !isCurrent && !blocked && 'cursor-pointer hover:bg-gray-50',
+                  blocked && 'cursor-not-allowed opacity-40',
                 )}
               >
                 <motion.span
@@ -109,8 +129,11 @@ export function ScopeStepper({
                     'w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors',
                     reached
                       ? 'border-transparent text-white'
-                      : 'border-gray-200 bg-white text-gray-300 group-hover:border-gray-300',
-                    reached && meta[scope].dot,
+                      : 'border-gray-200 bg-white text-gray-300',
+                    reached && SCOPES[scope].fill,
+                    // Only offer the hover cue where clicking would do something.
+                    !isCurrent && !blocked && !reached && 'group-hover:border-[#ED1C24] group-hover:text-[#ED1C24]',
+                    !isCurrent && !blocked && reached && 'group-hover:ring-2 group-hover:ring-offset-1 group-hover:ring-gray-300',
                   )}
                 >
                   {index < current ? <Check className="w-4 h-4" strokeWidth={3} /> : <Icon className="w-4 h-4" />}
@@ -121,7 +144,7 @@ export function ScopeStepper({
                     isCurrent ? 'text-gray-900' : reached ? 'text-gray-600' : 'text-gray-400',
                   )}
                 >
-                  {meta[scope].label}
+                  {SCOPES[scope].label}
                 </span>
               </button>
               {index < SCOPE_ORDER.length - 1 && (
@@ -139,11 +162,19 @@ export function ScopeStepper({
         })}
       </div>
 
+      {/* The instruction IS the feature — the rail was already clickable and
+          nobody found it. */}
+      {wider.length > 0 && (
+        <p className="text-xs text-gray-500 text-center">
+          Pick any level to go straight there. You do not have to step through them one at a time.
+        </p>
+      )}
+
       <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 flex items-start gap-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 shrink-0 mt-0.5">
           Now
         </span>
-        <p className="text-sm text-gray-700">{meta[item.publishScope].who}</p>
+        <p className="text-sm text-gray-700">{SCOPES[item.publishScope].who}</p>
       </div>
 
       {/* Blocked from publishing — say why, and offer the way out. A bare
@@ -160,22 +191,83 @@ export function ScopeStepper({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {nextScope && (
-          <Button
-            variant="gradient"
-            size="sm"
-            aria-disabled={!gate.ok}
-            title={gate.ok ? undefined : gate.reason}
-            className={cn(!gate.ok && 'opacity-40 cursor-not-allowed')}
-            onClick={() => handleSelect(nextScope)}
-          >
-            Publish to {meta[nextScope].label.toLowerCase()}
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+          // Split button: the one-step publish stays the default action, with
+          // every other level one click away in the menu beside it.
+          <div className="inline-flex">
+            <Button
+              variant="gradient"
+              size="sm"
+              aria-disabled={!gate.ok}
+              title={gate.ok ? undefined : gate.reason}
+              className={cn('rounded-r-none', !gate.ok && 'opacity-40 cursor-not-allowed')}
+              onClick={() => handleSelect(nextScope)}
+            >
+              Publish to {SCOPES[nextScope].label.toLowerCase()}
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="gradient"
+                  size="sm"
+                  aria-label="Choose a different level"
+                  title="Choose a different level"
+                  className={cn(
+                    'rounded-l-none border-l border-white/25 px-2',
+                    !gate.ok && 'opacity-40',
+                  )}
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-80">
+                <DropdownMenuLabel>Publish straight to</DropdownMenuLabel>
+                {wider.map((scope) => {
+                  const skipped = scopesSkipped(item.publishScope, scope);
+                  return (
+                    <DropdownMenuItem
+                      key={scope}
+                      disabled={!gate.ok}
+                      onSelect={() => handleSelect(scope)}
+                      className="items-start"
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-gray-900">
+                          {SCOPES[scope].label}
+                          {skipped.length > 0 && (
+                            <span className="font-normal text-gray-400">
+                              {' '}
+                              · skips {skipped.length} step{skipped.length === 1 ? '' : 's'}
+                            </span>
+                          )}
+                        </span>
+                        <span className="block text-xs text-gray-500 whitespace-normal">
+                          {SCOPES[scope].who}
+                        </span>
+                      </span>
+                    </DropdownMenuItem>
+                  );
+                })}
+                {narrower.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Pull back to</DropdownMenuLabel>
+                    {narrower.map((scope) => (
+                      <DropdownMenuItem key={scope} onSelect={() => handleSelect(scope)}>
+                        <Lock className="w-4 h-4 text-gray-400" />
+                        {SCOPES[scope].label}
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
         {item.publishScope !== 'private' && (
-          <Button variant="outline" size="sm" onClick={() => onChange('private')}>
+          <Button variant="outline" size="sm" onClick={() => handleSelect('private')}>
             <Lock className="w-4 h-4" />
             Pull back to private
           </Button>
@@ -192,8 +284,16 @@ export function ScopeStepper({
           onChange(scope);
         }}
       />
+
+      <PullBackDialog
+        item={item}
+        targetScope={pendingPullBack}
+        onCancel={() => setPendingPullBack(null)}
+        onConfirm={(scope) => {
+          setPendingPullBack(null);
+          onChange(scope);
+        }}
+      />
     </div>
   );
 }
-
-export const scopeWho = (scope: PublishScope) => meta[scope].who;

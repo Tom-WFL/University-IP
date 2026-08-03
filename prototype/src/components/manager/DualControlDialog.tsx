@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { AlertTriangle, Check, ShieldCheck } from 'lucide-react';
 import {
   Dialog,
@@ -11,16 +11,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScopeChip } from '@/components/shared/chips';
+import { SCOPES, listScopeLabels, scopesSkipped } from '@/data/scopes';
 import type { IpItem, PublishScope, RedactionCriterion } from '@/data/types';
 import { ownershipHelp } from '@/components/shared/chips';
-
-const audience: Record<PublishScope, string> = {
-  private: 'nobody outside the IP office',
-  campus: 'every student and faculty member at this university',
-  statewide: 'everyone at all schools in the system',
-  national: 'Wildfire’s entire national founder network',
-  public: 'anyone on the internet — no account needed, and search engines will index it',
-};
 
 /**
  * Approved recommendation: dual control on any widening of scope.
@@ -60,6 +53,10 @@ export function DualControlDialog({
   // will have it before you change your mind — so it asks for one more.
   const goingPublic = targetScope === 'public';
   const ready = authorised && (!goingPublic || irreversible);
+  // Tiers being passed over. Distance alone adds no checkbox — the clearance
+  // for campus is the clearance for the national network — but it does change
+  // what the dialog has to say.
+  const skipped = targetScope ? scopesSkipped(item.publishScope, targetScope) : [];
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
@@ -78,13 +75,41 @@ export function DualControlDialog({
 
         {targetScope && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2">
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm flex-wrap">
               <ScopeChip scope={item.publishScope} />
+              {/* Show the tiers being passed over, struck through, so a leap
+                  looks like a leap rather than like an ordinary next step. */}
+              {skipped.map((scope) => (
+                <Fragment key={scope}>
+                  <span className="text-gray-300">→</span>
+                  <span className="opacity-40 line-through">
+                    <ScopeChip scope={scope} showIcon={false} />
+                  </span>
+                </Fragment>
+              ))}
               <span className="text-gray-400">→</span>
               <ScopeChip scope={targetScope} />
             </div>
             <p className="text-sm text-gray-600">
-              This will be visible to {audience[targetScope]}.
+              This will be visible to {SCOPES[targetScope].audience}.
+            </p>
+          </div>
+        )}
+
+        {/* A jump does not skip AUDIENCES — the wider tiers already contain the
+            narrower ones, so everyone below is included either way. What it
+            skips is the chance to watch how a disclosure lands at one level
+            before widening again. Saying "skipping campus and statewide" without
+            that distinction would be actively misleading. */}
+        {targetScope && skipped.length > 0 && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 space-y-1.5">
+            <p className="text-sm font-medium text-blue-900">
+              Going straight past {listScopeLabels(skipped)}
+            </p>
+            <p className="text-sm text-blue-800">
+              Those readers are included in {SCOPES[targetScope].label.toLowerCase()} anyway — a
+              wider level always contains the narrower ones. What you are giving up is the chance
+              to see how this lands at each level before opening it further.
             </p>
           </div>
         )}

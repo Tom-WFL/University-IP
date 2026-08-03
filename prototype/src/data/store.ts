@@ -23,6 +23,7 @@ import type {
   User,
 } from './types';
 import { draftSummary, redraftSummary } from '@/lib/aiSummary';
+import { SCOPES, SCOPE_ORDER, listScopeLabels, scopeRank, scopesSkipped } from './scopes';
 import { DEFAULT_REDACTION_POLICY } from './redaction';
 import { assessLead, shouldHold } from '@/lib/leadRisk';
 import {
@@ -45,19 +46,9 @@ import {
  * trail in the UI is a real consequence of the actions, not a static list.
  */
 
-export const SCOPE_ORDER: PublishScope[] = [
-  'private',
-  'campus',
-  'statewide',
-  'national',
-  // The marketing tier. Everything below it needs an account; this one is the
-  // open internet, which is why widening to it carries an extra confirmation.
-  'public',
-];
-
-export function scopeRank(scope: PublishScope): number {
-  return SCOPE_ORDER.indexOf(scope);
-}
+// The ladder and every word said about it now live in `./scopes`. Re-exported
+// here because the whole app already imports them from the store.
+export { SCOPE_ORDER, scopeRank } from './scopes';
 
 /**
  * May this item be published (moved to any scope wider than private)?
@@ -623,18 +614,23 @@ export const useStore = create<StoreState>()(
             ),
           });
 
-          const label: Record<PublishScope, string> = {
-            private: 'private (unpublished)',
-            campus: 'campus',
-            statewide: 'statewide',
-            national: 'the national founder network',
-            public: 'the public marketing site',
-          };
+          // Record where it came FROM as well as where it went. Without the
+          // origin the trail cannot answer "was this ever reviewed at campus
+          // scope first?", which is exactly the question a jump raises — and a
+          // private→national leap would otherwise read identically to a
+          // statewide→national step.
+          const from = SCOPES[item.publishScope].auditLabel;
+          const to = SCOPES[scope].auditLabel;
+          const skipped = scopesSkipped(item.publishScope, scope);
+          const skipNote = skipped.length
+            ? `, straight past ${listScopeLabels(skipped).toLowerCase()}`
+            : '';
+
           log(
             widening ? 'publish' : 'unpublish',
             widening
-              ? `Published "${item.title}" to ${label[scope]} — non-confidential summary only.`
-              : `Pulled "${item.title}" back to ${label[scope]}.`,
+              ? `Published "${item.title}" from ${from} to ${to}${skipNote} — non-confidential summary only.`
+              : `Pulled "${item.title}" back from ${from} to ${to}.`,
             ipItemId,
           );
         },
