@@ -32,20 +32,31 @@ real university IP has been put into this.
 ## What to look at
 
 There's a **persona switcher** in the top right — it replaces logging in, and lets you
-be all four kinds of user in one browser window. Click **How to demo** in the top bar
+be every kind of user in one browser window. Click **How to demo** in the top bar
 for a guided path. The short version:
 
 1. **Wildfire Super Admin** — set up a university and assign its IP Manager.
 2. **IP Manager** — import a disclosure spreadsheet. Every row lands **private**.
 3. **IP Manager** — read the AI-drafted summary and fix it. You can't publish anything
-   until a human has read the draft; one of the seeded drafts has a confidential phrase
-   in it that shouldn't be there. That's on purpose.
+   until a human has read the draft and ticked it off against the university's release
+   criteria; one of the seeded drafts has a confidential phrase in it that shouldn't be
+   there. That's on purpose.
 4. **IP Manager** — publish outward through the scope steps, past the two-checkbox gate.
 5. **IP Manager** — set the route: Founder, Hackathon, or Founder Match.
 6. **Founder / student** — find it on their home page and raise a hand.
 7. **IP Manager** — approve, and a team forms.
 8. **IP Manager** — send that team to the next I-Corps cohort.
 9. **Audit trail** — every step above, with who did it and when.
+
+Then see it the way an outsider does. Pick **View as a visitor** in the persona menu:
+
+10. **The public catalogue** — only the handful of items pushed all the way to `public`
+    are out here. Everything else is invisible without an account, which is the point.
+11. **Sign up on one of them** — the disclosure you clicked follows you through signup
+    and you land on it, connected to the right IP manager.
+12. **IP Manager → Lead review** — signups that look automated or empty are held before
+    they can approach the university, with the reasons shown. Try signing up with a
+    throwaway address and a one-word answer to see one get held.
 
 "Reset demo data" in the persona menu puts everything back.
 
@@ -55,16 +66,21 @@ for a guided path. The short version:
 
 **Who can see it** and **what happens next** are deliberately separate.
 
-- **Publish scope** — `private → campus → statewide → national founder network`.
+- **Publish scope** — `private → campus → statewide → national founder network → public`.
   Only the non-confidential summary is ever published. The confidential disclosure text
   never leaves the IP office at any scope. Widening the scope needs two explicit
-  confirmations.
+  confirmations, and the last step — out onto the open internet, where search engines
+  will index it — asks a third time, because that one cannot be taken back.
 - **Route** — `Founder`, `Hackathon`, or `Founder Match`. Raising a hand is how Founder
   Match works once something is published.
 
+Everything up to `national` needs an account to see. `public` is the exception, and it is
+a per-item decision an IP manager makes deliberately, not a setting anybody flips once.
+
 Every item also carries an **ownership flag** (Board of Regents / student-owned /
-entangled, because the rules genuinely differ), a **faculty-involvement flag** (hands-on
-co-founder vs. contact only), and a full audit trail.
+entangled, because the rules genuinely differ), a **role for each inventor** (hands-on
+co-founder vs. contact only — set per person, and a university can require contact-only
+across the board), and a full audit trail.
 
 Founders and students get **one home page**: their hand-raises, their team, their
 I-Corps status, their hackathons, and places to find IP, hackathons and cohorts.
@@ -80,7 +96,13 @@ I-Corps.
 
 Also not built yet: the business plan competition, hackathon management (you can see
 hackathons listed, but not run one), industry-partner access, and a program-wide
-dashboard.
+dashboard. The **University Leadership** persona in the switcher lands on a page that
+says "being built" — the read-only view of portfolio volume and where things stall is
+the next piece of work, and it's stubbed rather than faked.
+
+The captcha and the emailed verification code on signup are simulated, and the AI that
+drafts the public summaries is a stand-in that produces fixed text. What's real is the
+decisions they feed: the review gate, the risk scoring, and the queue.
 
 ---
 
@@ -92,6 +114,9 @@ That's what this is for. Useful things to react to:
 - Is the private → campus → statewide progression the right shape, and is the
   two-confirmation gate enough for BOR-owned IP?
 - Is the disclosure form missing fields your process needs?
+- Are the release criteria on the policy page the right list, and is ticking them one by
+  one at review time reasonable or tedious?
+- Is anything at Mines ever going all the way to `public`, or does `national` end it?
 - Would a student or faculty member actually raise a hand on one of these?
 - What would your IT or security office need to see before this could be used?
 

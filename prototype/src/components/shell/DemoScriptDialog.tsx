@@ -13,8 +13,13 @@ const steps = [
   },
   {
     persona: 'IP Manager',
-    action: 'Open an item and walk the publish scope: private → campus → statewide → national.',
-    why: 'Widening the scope requires dual control — two explicit confirmations — and only the non-confidential summary ever goes out.',
+    action: 'Read the AI-drafted summary, fix it, and tick it off against the release criteria.',
+    why: 'Nothing publishes until a person has checked the draft line by line. One seeded draft leaks a confidential phrase on purpose — find it.',
+  },
+  {
+    persona: 'IP Manager',
+    action: 'Walk the publish scope: private → campus → statewide → national → public.',
+    why: 'Widening requires dual control, and only the non-confidential summary ever goes out. The last step reaches the open internet and asks once more, because it cannot be undone.',
   },
   {
     persona: 'IP Manager',
@@ -40,6 +45,21 @@ const steps = [
     persona: 'Anyone',
     action: 'Open the audit trail.',
     why: 'Every import, publish, route change, and match decision is recorded with who and when.',
+  },
+  {
+    persona: 'Visitor',
+    action: 'Choose “View as a visitor” and browse the public catalogue.',
+    why: 'Only items pushed all the way to public are out here. Everything else is invisible without an account — that is the rule, not a setting.',
+  },
+  {
+    persona: 'Visitor',
+    action: 'Sign up from one of them.',
+    why: 'The disclosure you clicked follows you through signup, so you land on it already connected to the right IP Manager.',
+  },
+  {
+    persona: 'IP Manager',
+    action: 'Open Lead review.',
+    why: 'Signups that look automated or empty are held before they can approach the university, with the reasons shown. Sign up with a throwaway address and a one-word answer to see one land here.',
   },
 ];
 
