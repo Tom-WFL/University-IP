@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { FadeIn, Stagger } from '@/components/shared/motion';
 import { IpCard } from '@/components/founder/IpCard';
-import { useCurrentUser, useStore, visibleToFounder } from '@/data/store';
+import { itemInvolvement, useCurrentUser, useStore, visibleToFounder } from '@/data/store';
 
 /**
  * The IP marketplace. Only shows what the viewer's scope allows — the
@@ -40,7 +40,7 @@ export function Discover() {
         return false;
       }
       if (school !== 'all' && item.universityId !== school) return false;
-      if (faculty !== 'all' && item.facultyAttachment !== faculty) return false;
+      if (faculty !== 'all' && itemInvolvement(item) !== faculty) return false;
       return true;
     });
   }, [visible, query, school, faculty]);

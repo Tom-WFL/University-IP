@@ -11,6 +11,7 @@ import type {
   University,
   User,
 } from './types';
+import { DEFAULT_REDACTION_POLICY, STRICT_REDACTION_POLICY } from './redaction';
 
 /**
  * Synthetic data only. Names, disclosures and numbers are invented for the
@@ -24,6 +25,12 @@ export const NOW = '2026-07-29T09:00:00.000Z';
 
 const iso = (s: string) => new Date(s).toISOString();
 
+/** Items that were already reviewed were reviewed against their school's
+ *  policy, so seed the attestations rather than leaving them blank — an
+ *  already-published item with nothing attested reads as a gap that isn't one. */
+const defaultCriteria = DEFAULT_REDACTION_POLICY.map((c) => c.id);
+const strictCriteria = STRICT_REDACTION_POLICY.map((c) => c.id);
+
 export const seedUniversities: University[] = [
   {
     id: 'org-sd',
@@ -32,6 +39,8 @@ export const seedUniversities: University[] = [
     parentOrgId: null,
     kind: 'state_system',
     autoApproveMatches: false,
+    inventorRolePolicy: 'inventor_chooses',
+    redactionPolicy: DEFAULT_REDACTION_POLICY,
     createdAt: iso('2026-01-05'),
   },
   {
@@ -41,6 +50,8 @@ export const seedUniversities: University[] = [
     parentOrgId: 'org-sd',
     kind: 'university',
     autoApproveMatches: false,
+    inventorRolePolicy: 'inventor_chooses',
+    redactionPolicy: DEFAULT_REDACTION_POLICY,
     createdAt: iso('2026-07-10'),
   },
   {
@@ -50,6 +61,8 @@ export const seedUniversities: University[] = [
     parentOrgId: 'org-sd',
     kind: 'university',
     autoApproveMatches: false,
+    inventorRolePolicy: 'inventor_chooses',
+    redactionPolicy: DEFAULT_REDACTION_POLICY,
     createdAt: iso('2026-03-02'),
   },
   {
@@ -59,6 +72,8 @@ export const seedUniversities: University[] = [
     parentOrgId: 'org-sd',
     kind: 'university',
     autoApproveMatches: true,
+    inventorRolePolicy: 'contact_only',
+    redactionPolicy: STRICT_REDACTION_POLICY,
     createdAt: iso('2026-02-14'),
   },
 ];
@@ -72,6 +87,11 @@ export const seedUsers: User[] = [
     universityId: null,
     title: 'Wildfire Labs — Super Admin',
     background: 'Provisions university organizations and assigns IP Managers.',
+    status: 'active',
+    signupSource: 'seed',
+    signupIpContext: null,
+    riskFlags: [],
+    createdAt: iso('2026-07-10'),
   },
   {
     id: 'u-ipm-mines',
@@ -81,6 +101,11 @@ export const seedUsers: User[] = [
     universityId: 'org-mines',
     title: 'IP Manager — SD Mines',
     background: 'Manages the disclosure portfolio and routes IP toward commercialization.',
+    status: 'active',
+    signupSource: 'seed',
+    signupIpContext: null,
+    riskFlags: [],
+    createdAt: iso('2026-07-10'),
   },
   {
     id: 'u-ipm-dsu',
@@ -90,6 +115,11 @@ export const seedUsers: User[] = [
     universityId: 'org-dsu',
     title: 'IP Manager — DSU',
     background: 'Runs DSU disclosures; publishing statewide immediately.',
+    status: 'active',
+    signupSource: 'seed',
+    signupIpContext: null,
+    riskFlags: [],
+    createdAt: iso('2026-07-10'),
   },
   {
     id: 'u-founder',
@@ -100,6 +130,11 @@ export const seedUsers: User[] = [
     title: 'Graduate student — Materials Engineering',
     background:
       'Second-year MS in materials engineering. Two summers in a composites lab, ran a campus 3D-printing shop, wants to commercialize something real.',
+    status: 'active',
+    signupSource: 'seed',
+    signupIpContext: null,
+    riskFlags: [],
+    createdAt: iso('2026-07-10'),
   },
   {
     id: 'u-founder-2',
@@ -109,6 +144,11 @@ export const seedUsers: User[] = [
     universityId: null,
     title: 'Wildfire Network founder',
     background: 'Two-time operator, sold a logistics SaaS. Looking for deep-tech IP to run with.',
+    status: 'active',
+    signupSource: 'seed',
+    signupIpContext: null,
+    riskFlags: [],
+    createdAt: iso('2026-07-10'),
   },
   {
     id: 'u-prof',
@@ -118,6 +158,11 @@ export const seedUsers: User[] = [
     universityId: 'org-mines',
     title: 'Professor — Materials & Metallurgical Engineering',
     background: 'Inventor on the sintered-lattice heat exchanger disclosure.',
+    status: 'active',
+    signupSource: 'seed',
+    signupIpContext: null,
+    riskFlags: [],
+    createdAt: iso('2026-07-10'),
   },
   {
     id: 'u-prof-2',
@@ -127,6 +172,56 @@ export const seedUsers: User[] = [
     universityId: 'org-mines',
     title: 'Associate Professor — Chemical & Biological Engineering',
     background: 'Inventor on the low-temperature lithium recovery process.',
+    status: 'active',
+    signupSource: 'seed',
+    signupIpContext: null,
+    riskFlags: [],
+    createdAt: iso('2026-07-10'),
+  },
+  {
+    id: 'u-vpr-mines',
+    name: 'Dr. Helena Marsh',
+    email: 'helena.marsh@sdmines.example.edu',
+    persona: 'leadership',
+    universityId: 'org-mines',
+    title: 'Vice President for Research — SD Mines',
+    background: 'Oversees the research portfolio. Reports impact upward; edits nothing.',
+    status: 'active',
+    signupSource: 'seed',
+    signupIpContext: null,
+    riskFlags: [],
+    createdAt: iso('2026-07-10'),
+  },
+
+  // Two accounts that came in through the funnel and got held. These are what
+  // the lead queue is for: one plausible-but-thin, one obviously automated.
+  {
+    id: 'u-lead-1',
+    name: 'J. Okafor',
+    email: 'jokafor@mailinator.example.com',
+    persona: 'founder',
+    universityId: null,
+    title: 'Prospective founder',
+    background: 'want to build',
+    status: 'pending_review',
+    signupSource: 'marketing',
+    signupIpContext: 'ip-009',
+    riskFlags: ['disposable_email', 'thin_intent'],
+    createdAt: iso('2026-07-27'),
+  },
+  {
+    id: 'u-lead-2',
+    name: 'asdf asdf',
+    email: 'qz84719@temp-mail.example.org',
+    persona: 'founder',
+    universityId: null,
+    title: 'Prospective founder',
+    background: 'x',
+    status: 'pending_review',
+    signupSource: 'direct',
+    signupIpContext: null,
+    riskFlags: ['disposable_email', 'thin_intent', 'velocity', 'unverified_email'],
+    createdAt: iso('2026-07-28'),
   },
 ];
 
@@ -143,11 +238,13 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: defaultCriteria,
+    summaryDraftCount: 1,
     confidentialDetail:
       'CONFIDENTIAL — Gyroid unit cell at 1.8mm pitch in AlSi10Mg, post-sinter HIP cycle at 520C. The claimed advantage comes from the boundary-layer disruption geometry in claim 3 of the provisional. Two industrial partners have asked about exclusive terms.',
     inventors: [
-      { id: 'ip-001-inv-0', name: 'A. Voss', email: 'a.voss@sdmines.example.edu', primary: true, departed: false },
-      { id: 'ip-001-inv-1', name: 'J. Turnbull', email: 'j.turnbull@sdmines.example.edu', primary: false, departed: false },
+      { id: 'ip-001-inv-0', name: 'A. Voss', email: 'a.voss@sdmines.example.edu', primary: true, departed: false, role: 'involved', userId: 'u-prof' },
+      { id: 'ip-001-inv-1', name: 'J. Turnbull', email: 'j.turnbull@sdmines.example.edu', primary: false, departed: false, role: 'undecided', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2024-014',
@@ -157,7 +254,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'NSF MRI + institutional match',
     },
     ownership: 'bor',
-    facultyAttachment: 'attached',
     professorId: 'u-prof',
     publishScope: 'campus',
     route: 'founder_match',
@@ -175,10 +271,12 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: defaultCriteria,
+    summaryDraftCount: 1,
     confidentialDetail:
       'CONFIDENTIAL — Manganese-oxide sorbent with a proprietary surface treatment; regeneration chemistry is the crown jewel and is deliberately absent from the public summary.',
     inventors: [
-      { id: 'ip-002-inv-0', name: 'N. Kerr', email: 'n.kerr@sdmines.example.edu', primary: true, departed: false },
+      { id: 'ip-002-inv-0', name: 'N. Kerr', email: 'n.kerr@sdmines.example.edu', primary: true, departed: false, role: 'undecided', userId: 'u-prof-2' },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2025-003',
@@ -188,7 +286,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'DOE grant',
     },
     ownership: 'bor',
-    facultyAttachment: 'idea-only',
     professorId: 'u-prof-2',
     publishScope: 'statewide',
     route: 'founder_match',
@@ -206,10 +303,12 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: defaultCriteria,
+    summaryDraftCount: 1,
     confidentialDetail:
       'CONFIDENTIAL — Capsule wall chemistry and the catalyst loading ratio are the differentiators. Field data from two turbines in the Black Hills is under NDA.',
     inventors: [
-      { id: 'ip-003-inv-0', name: 'R. Halvorsen', email: 'r.halvorsen@sdmines.example.edu', primary: true, departed: true },
+      { id: 'ip-003-inv-0', name: 'R. Halvorsen', email: 'r.halvorsen@sdmines.example.edu', primary: true, departed: true, role: 'contact_only', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2023-041',
@@ -219,7 +318,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'Industry sponsored research',
     },
     ownership: 'bor',
-    facultyAttachment: 'idea-only',
     professorId: null,
     publishScope: 'private',
     route: 'undecided',
@@ -237,10 +335,12 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: false,
     summaryReviewedBy: null,
     summaryReviewedAt: null,
+    summaryCriteriaChecked: [],
+    summaryDraftCount: 1,
     confidentialDetail:
       'CONFIDENTIAL — Ligand grafting density and the anti-fouling backwash sequence. Yield numbers from the bench rig are unpublished.',
     inventors: [
-      { id: 'ip-004-inv-0', name: 'P. Okonkwo', email: 'p.okonkwo@sdmines.example.edu', primary: true, departed: true },
+      { id: 'ip-004-inv-0', name: 'P. Okonkwo', email: 'p.okonkwo@sdmines.example.edu', primary: true, departed: true, role: 'contact_only', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2022-027',
@@ -250,7 +350,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'DOD subcontract',
     },
     ownership: 'bor',
-    facultyAttachment: 'idea-only',
     professorId: null,
     publishScope: 'private',
     route: 'undecided',
@@ -268,11 +367,13 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: defaultCriteria,
+    summaryDraftCount: 1,
     confidentialDetail:
       'CONFIDENTIAL — Beamforming firmware and the transducer array spacing. Prototype exists; two field trials completed.',
     inventors: [
-      { id: 'ip-005-inv-0', name: 'D. Reyes', email: 'd.reyes@sdmines.example.edu', primary: true, departed: false },
-      { id: 'ip-005-inv-1', name: 'S. Kohl', email: 's.kohl@sdmines.example.edu', primary: false, departed: false },
+      { id: 'ip-005-inv-0', name: 'D. Reyes', email: 'd.reyes@sdmines.example.edu', primary: true, departed: false, role: 'involved', userId: null },
+      { id: 'ip-005-inv-1', name: 'S. Kohl', email: 's.kohl@sdmines.example.edu', primary: false, departed: false, role: 'undecided', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2024-008',
@@ -282,7 +383,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'State mining research fund',
     },
     ownership: 'bor',
-    facultyAttachment: 'attached',
     professorId: null,
     publishScope: 'campus',
     route: 'hackathon',
@@ -300,10 +400,12 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: defaultCriteria,
+    summaryDraftCount: 1,
     confidentialDetail:
       'CONFIDENTIAL — Student-owned IP from a senior design project. The student, not the Board of Regents, decides on any disclosure or licensing conversation.',
     inventors: [
-      { id: 'ip-006-inv-0', name: 'T. Iverson', email: 't.iverson@sdmines.example.edu', primary: true, departed: false },
+      { id: 'ip-006-inv-0', name: 'T. Iverson', email: 't.iverson@sdmines.example.edu', primary: true, departed: false, role: 'undecided', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2026-002',
@@ -313,7 +415,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'Course project — unfunded',
     },
     ownership: 'student',
-    facultyAttachment: 'idea-only',
     professorId: null,
     publishScope: 'private',
     route: 'undecided',
@@ -331,11 +432,13 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: defaultCriteria,
+    summaryDraftCount: 1,
     confidentialDetail:
       'CONFIDENTIAL — Accelerator blend ratios; jointly developed with a graduate student, so ownership is entangled between the Board of Regents and the student inventor.',
     inventors: [
-      { id: 'ip-007-inv-0', name: 'M. Braun', email: 'm.braun@sdmines.example.edu', primary: true, departed: false },
-      { id: 'ip-007-inv-1', name: 'L. Fisk', email: 'l.fisk@sdmines.example.edu', primary: false, departed: false },
+      { id: 'ip-007-inv-0', name: 'M. Braun', email: 'm.braun@sdmines.example.edu', primary: true, departed: false, role: 'undecided', userId: null },
+      { id: 'ip-007-inv-1', name: 'L. Fisk', email: 'l.fisk@sdmines.example.edu', primary: false, departed: false, role: 'undecided', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2025-019',
@@ -345,7 +448,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'DOT research program',
     },
     ownership: 'entangled',
-    facultyAttachment: 'attached',
     professorId: null,
     publishScope: 'campus',
     route: 'undecided',
@@ -363,10 +465,12 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: false,
     summaryReviewedBy: null,
     summaryReviewedAt: null,
+    summaryCriteriaChecked: [],
+    summaryDraftCount: 1,
     confidentialDetail:
       'CONFIDENTIAL — Leach-and-bind sequence, plus the specific tailings chemistry ranges where the economics work.',
     inventors: [
-      { id: 'ip-008-inv-0', name: 'W. Castellano', email: 'w.castellano@sdmines.example.edu', primary: true, departed: true },
+      { id: 'ip-008-inv-0', name: 'W. Castellano', email: 'w.castellano@sdmines.example.edu', primary: true, departed: true, role: 'contact_only', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2021-033',
@@ -376,7 +480,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'EPA cooperative agreement',
     },
     ownership: 'bor',
-    facultyAttachment: 'idea-only',
     professorId: null,
     publishScope: 'private',
     route: 'undecided',
@@ -394,10 +497,12 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: defaultCriteria,
+    summaryDraftCount: 1,
     confidentialDetail:
       'CONFIDENTIAL — Signal-processing model and the calibration dataset across six steel grades.',
     inventors: [
-      { id: 'ip-009-inv-0', name: 'A. Voss', email: 'a.voss@sdmines.example.edu', primary: true, departed: false },
+      { id: 'ip-009-inv-0', name: 'A. Voss', email: 'a.voss@sdmines.example.edu', primary: true, departed: false, role: 'involved', userId: 'u-prof' },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2025-028',
@@ -407,7 +512,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'Industry consortium',
     },
     ownership: 'bor',
-    facultyAttachment: 'attached',
     professorId: 'u-prof',
     publishScope: 'national',
     route: 'founder_match',
@@ -425,10 +529,12 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: false,
     summaryReviewedBy: null,
     summaryReviewedAt: null,
+    summaryCriteriaChecked: [],
+    summaryDraftCount: 1,
     confidentialDetail:
       'CONFIDENTIAL — Thermal management approach and the fire-suppression interlock design.',
     inventors: [
-      { id: 'ip-010-inv-0', name: 'S. Kohl', email: 's.kohl@sdmines.example.edu', primary: true, departed: false },
+      { id: 'ip-010-inv-0', name: 'S. Kohl', email: 's.kohl@sdmines.example.edu', primary: true, departed: false, role: 'undecided', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2026-006',
@@ -438,7 +544,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'Rural electric co-op partnership',
     },
     ownership: 'bor',
-    facultyAttachment: 'attached',
     professorId: null,
     publishScope: 'private',
     route: 'undecided',
@@ -456,9 +561,11 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: false,
     summaryReviewedBy: null,
     summaryReviewedAt: null,
+    summaryCriteriaChecked: [],
+    summaryDraftCount: 1,
     confidentialDetail: 'CONFIDENTIAL — Deposition parameters and the interlayer stack.',
     inventors: [
-      { id: 'ip-011-inv-0', name: 'G. Lindstrom', email: 'g.lindstrom@sdmines.example.edu', primary: true, departed: true },
+      { id: 'ip-011-inv-0', name: 'G. Lindstrom', email: 'g.lindstrom@sdmines.example.edu', primary: true, departed: true, role: 'contact_only', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2020-011',
@@ -468,7 +575,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'Industry sponsored research',
     },
     ownership: 'bor',
-    facultyAttachment: 'idea-only',
     professorId: null,
     publishScope: 'private',
     route: 'undecided',
@@ -486,9 +592,11 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: defaultCriteria,
+    summaryDraftCount: 1,
     confidentialDetail: 'CONFIDENTIAL — Failure-precursor model weights and the sensor placement heuristic.',
     inventors: [
-      { id: 'ip-012-inv-0', name: 'D. Reyes', email: 'd.reyes@sdmines.example.edu', primary: true, departed: false },
+      { id: 'ip-012-inv-0', name: 'D. Reyes', email: 'd.reyes@sdmines.example.edu', primary: true, departed: false, role: 'undecided', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'SDM-2024-022',
@@ -498,7 +606,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'MSHA research grant',
     },
     ownership: 'bor',
-    facultyAttachment: 'attached',
     professorId: null,
     publishScope: 'campus',
     route: 'hackathon',
@@ -517,9 +624,11 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: defaultCriteria,
+    summaryDraftCount: 1,
     confidentialDetail: 'CONFIDENTIAL — Detection heuristics and the labelled corpus.',
     inventors: [
-      { id: 'ip-101-inv-0', name: 'K. Adeyemi', email: 'k.adeyemi@dsu.example.edu', primary: true, departed: false },
+      { id: 'ip-101-inv-0', name: 'K. Adeyemi', email: 'k.adeyemi@dsu.example.edu', primary: true, departed: false, role: 'undecided', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'DSU-2025-007',
@@ -529,7 +638,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'NSA CAE research',
     },
     ownership: 'bor',
-    facultyAttachment: 'attached',
     professorId: null,
     publishScope: 'statewide',
     route: 'founder_match',
@@ -547,9 +655,11 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: defaultCriteria,
+    summaryDraftCount: 1,
     confidentialDetail: 'CONFIDENTIAL — Hashing scheme and the collision-resolution approach.',
     inventors: [
-      { id: 'ip-102-inv-0', name: 'B. Sorenson', email: 'b.sorenson@dsu.example.edu', primary: true, departed: false },
+      { id: 'ip-102-inv-0', name: 'B. Sorenson', email: 'b.sorenson@dsu.example.edu', primary: true, departed: false, role: 'undecided', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'DSU-2024-019',
@@ -559,7 +669,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'HRSA rural health grant',
     },
     ownership: 'bor',
-    facultyAttachment: 'idea-only',
     professorId: null,
     publishScope: 'national',
     route: 'founder_match',
@@ -578,9 +687,11 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: strictCriteria,
+    summaryDraftCount: 1,
     confidentialDetail: 'CONFIDENTIAL — Formulation and stability data.',
     inventors: [
-      { id: 'ip-201-inv-0', name: 'H. Delacroix', email: 'h.delacroix@usd.example.edu', primary: true, departed: false },
+      { id: 'ip-201-inv-0', name: 'H. Delacroix', email: 'h.delacroix@usd.example.edu', primary: true, departed: false, role: 'contact_only', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'USD-2025-011',
@@ -590,7 +701,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'NIH R01',
     },
     ownership: 'bor',
-    facultyAttachment: 'attached',
     professorId: null,
     publishScope: 'statewide',
     route: 'founder',
@@ -608,9 +718,11 @@ export const seedIpItems: IpItem[] = [
     summaryReviewed: true,
     summaryReviewedBy: 'u-ipm-mines',
     summaryReviewedAt: iso('2026-07-20'),
+    summaryCriteriaChecked: strictCriteria,
+    summaryDraftCount: 1,
     confidentialDetail: 'CONFIDENTIAL — Sensor fusion model and the clinical validation set.',
     inventors: [
-      { id: 'ip-202-inv-0', name: 'C. Reinhardt', email: 'c.reinhardt@usd.example.edu', primary: true, departed: false },
+      { id: 'ip-202-inv-0', name: 'C. Reinhardt', email: 'c.reinhardt@usd.example.edu', primary: true, departed: false, role: 'contact_only', userId: null },
     ],
     disclosure: {
       disclosureNumber: 'USD-2024-004',
@@ -620,7 +732,6 @@ export const seedIpItems: IpItem[] = [
       fundingSource: 'Foundation gift',
     },
     ownership: 'bor',
-    facultyAttachment: 'idea-only',
     professorId: null,
     publishScope: 'national',
     route: 'founder_match',

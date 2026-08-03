@@ -15,7 +15,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { FacultyChip, OwnershipChip, RouteChip, ScopeChip } from '@/components/shared/chips';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { needsSummaryReview, useStore } from '@/data/store';
+import { itemInvolvement, needsSummaryReview, useStore } from '@/data/store';
 import { formatDate } from '@/lib/utils';
 
 type FilterKey =
@@ -229,7 +229,7 @@ export function IpConsole() {
                           <td className="px-4 py-3">
                             <div className="flex flex-col items-start gap-1">
                               <OwnershipChip ownership={item.ownership} />
-                              <FacultyChip attachment={item.facultyAttachment} />
+                              <FacultyChip attachment={itemInvolvement(item)} />
                             </div>
                           </td>
                           <td className="px-4 py-3">

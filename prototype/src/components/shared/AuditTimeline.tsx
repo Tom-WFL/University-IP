@@ -7,9 +7,11 @@ import {
   Lock,
   Mail,
   PencilLine,
+  Scale,
   Send,
   ShieldCheck,
   Signpost,
+  UserPlus,
   Users,
   XCircle,
 } from 'lucide-react';
@@ -31,6 +33,9 @@ const actionMeta: Record<AuditAction, { icon: typeof Lock; className: string }> 
   team_formed: { icon: Users, className: 'bg-emerald-50 text-emerald-600' },
   cohort_handoff: { icon: Send, className: 'bg-purple-50 text-purple-600' },
   org_provisioned: { icon: Building2, className: 'bg-slate-100 text-slate-600' },
+  signup: { icon: UserPlus, className: 'bg-sky-50 text-sky-600' },
+  lead_reviewed: { icon: ShieldCheck, className: 'bg-teal-50 text-teal-600' },
+  policy_changed: { icon: Scale, className: 'bg-violet-50 text-violet-600' },
 };
 
 /**

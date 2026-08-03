@@ -1,7 +1,7 @@
 import { Mail, UserCheck, UserMinus, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusChip } from '@/components/shared/chips';
-import { inventorLine } from '@/data/store';
+import { inventorLine, itemInvolvement } from '@/data/store';
 import type { FacultyAttachment, Invite, IpItem, User } from '@/data/types';
 import { formatDate, initials } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -94,7 +94,7 @@ export function ProfessorPanel({
           ]
         ).map((option) => {
           const Icon = option.icon;
-          const active = item.facultyAttachment === option.value;
+          const active = itemInvolvement(item) === option.value;
           return (
             <button
               key={option.value}

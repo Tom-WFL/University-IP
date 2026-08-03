@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ChevronRight, Globe, Landmark, Lock, School, TriangleAlert } from 'lucide-react';
+import { Check, ChevronRight, Globe, Landmark, Lock, Radio, School, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DualControlDialog } from './DualControlDialog';
 import { SCOPE_ORDER, canPublish, scopeRank } from '@/data/store';
@@ -31,6 +31,12 @@ const meta: Record<PublishScope, { label: string; who: string; icon: typeof Lock
     who: 'Wildfire’s national founder network.',
     icon: Globe,
     dot: 'bg-gradient-to-r from-[#ED1C24] to-[#F26522]',
+  },
+  public: {
+    label: 'Public',
+    who: 'Anyone on the internet. No account, no login, and search engines will find it.',
+    icon: Radio,
+    dot: 'bg-[#ED1C24]',
   },
 };
 

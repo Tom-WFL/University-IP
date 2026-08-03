@@ -24,7 +24,7 @@ import { InterestQueue } from '@/components/manager/InterestQueue';
 import { SendToCohortDialog } from '@/components/manager/SendToCohortDialog';
 import { SummaryCard } from '@/components/manager/SummaryCard';
 import { LiveEditDialog } from '@/components/manager/LiveEditDialog';
-import { inventorLine, needsSummaryReview, useStore } from '@/data/store';
+import { inventorLine, itemInvolvement, needsSummaryReview, useStore } from '@/data/store';
 import { formatDate } from '@/lib/utils';
 
 const patentLabels: Record<string, string> = {
@@ -150,7 +150,7 @@ export function IpDetail() {
                 <ScopeChip scope={item.publishScope} />
                 <RouteChip route={item.route} />
                 <OwnershipChip ownership={item.ownership} />
-                <FacultyChip attachment={item.facultyAttachment} />
+                <FacultyChip attachment={itemInvolvement(item)} />
               </div>
             </div>
             <div className="bg-white px-6 py-4">
@@ -251,8 +251,21 @@ export function IpDetail() {
                     professor={professor}
                     invite={invite}
                     onSendInvite={() => sendProfessorInvite(item.id)}
-                    onChangeAttachment={(facultyAttachment) =>
-                      updateIpItem(item.id, { facultyAttachment })
+                    onChangeAttachment={(attachment) =>
+                      // Involvement lives per inventor now. This item-level
+                      // control is a bridge: it sets the designated contact's
+                      // role and is replaced by the per-inventor list in the
+                      // edit form.
+                      updateIpItem(item.id, {
+                        inventors: item.inventors.map((inv) =>
+                          inv.primary
+                            ? {
+                                ...inv,
+                                role: attachment === 'attached' ? 'involved' : 'contact_only',
+                              }
+                            : inv,
+                        ),
+                      })
                     }
                   />
                 </CardContent>

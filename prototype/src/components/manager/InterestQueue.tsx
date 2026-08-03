@@ -4,6 +4,7 @@ import { StatusChip } from '@/components/shared/chips';
 import { EmptyState } from '@/components/shared/EmptyState';
 import type { HandRaise, IpItem, User } from '@/data/types';
 import { formatDate, initials } from '@/lib/utils';
+import { involvedInventors } from '@/data/store';
 
 /**
  * The hand-raise review queue. Approving is the moment a team exists — so the
@@ -34,7 +35,8 @@ export function InterestQueue({
         const applicant = users.find((u) => u.id === hr.userId);
         const item = ipItems.find((i) => i.id === hr.ipItemId);
         const pending = hr.status === 'pending';
-        const willIncludeProfessor = item?.facultyAttachment === 'attached' && item?.professorId;
+        // Everyone who said they want in and holds an account joins the team.
+        const joiningCount = item ? involvedInventors(item).length : 0;
 
         return (
           <li key={hr.id} className="rounded-xl border border-gray-200 bg-white p-4">
@@ -75,7 +77,7 @@ export function InterestQueue({
                       <X className="w-4 h-4" />
                       Decline
                     </Button>
-                    {willIncludeProfessor && (
+                    {joiningCount && (
                       <span className="text-xs text-gray-500 self-center">
                         The professor joins the team too.
                       </span>

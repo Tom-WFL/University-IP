@@ -1,4 +1,4 @@
-import { Globe, Landmark, Lock, School, UserCheck, UserMinus } from 'lucide-react';
+import { Globe, Landmark, Lock, Radio, School, UserCheck, UserMinus } from 'lucide-react';
 import type { FacultyAttachment, Ownership, PublishScope, Route } from '@/data/types';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +28,11 @@ const scopeStyles: Record<PublishScope, { label: string; className: string; icon
     label: 'Statewide',
     className: 'bg-orange-100 text-orange-700 border-orange-200',
     icon: Landmark,
+  },
+  public: {
+    label: 'Public',
+    className: 'bg-red-100 text-red-800 border-red-200',
+    icon: Radio,
   },
   national: {
     // The widest scope gets the brand gradient — it should feel like a big deal.

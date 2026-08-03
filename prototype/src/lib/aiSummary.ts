@@ -20,7 +20,7 @@
  * result, naming an unannounced partner — for the IP Manager to actually catch.
  */
 
-import type { IpItem } from '@/data/types';
+import type { IpItem, RedactionCriterion } from '@/data/types';
 
 /** Strip the marker the seed data uses on confidential bodies. */
 const unprefix = (text: string) => text.replace(/^CONFIDENTIAL\s*—\s*/i, '').trim();
@@ -34,12 +34,23 @@ const firstSentences = (text: string, count: number) => {
  *  given disclosure always drafts the same way and the demo is repeatable. */
 type Flaw = 'leaks_confidential' | 'overclaims' | 'names_partner' | 'none';
 
-function flawFor(id: string): Flaw {
-  // Deterministic, stable across reloads: sum the char codes.
+function flawFor(id: string, attempt: number): Flaw {
+  // Deterministic per (item, attempt): the same item always drafts the same
+  // way first time so demos repeat, but asking for another draft genuinely
+  // produces another draft. Keying on the id alone made "Redraft with AI"
+  // return byte-identical text, which read as a broken button.
   const n = [...id].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
   const flaws: Flaw[] = ['none', 'overclaims', 'none', 'leaks_confidential', 'none', 'names_partner'];
-  return flaws[n % flaws.length];
+  return flaws[(n + attempt) % flaws.length];
 }
+
+/** Openers cycled per attempt so a redraft reads differently, not just
+ *  differently-flawed. */
+const OPENERS = [
+  (area: string) => `A ${area} technology from this university's research portfolio.`,
+  (area: string) => `University-owned ${area} work available for commercialization.`,
+  (area: string) => `An unlicensed ${area} disclosure from the university's portfolio.`,
+];
 
 /**
  * Draft a non-confidential summary from a disclosure.
@@ -52,16 +63,19 @@ export function draftSummary(input: {
   title: string;
   field: string;
   confidentialDetail: string;
+  /** Which attempt this is. 0 is the first draft; each redraft increments. */
+  attempt?: number;
 }): string {
-  const { id, title, field, confidentialDetail } = input;
+  const { id, title, field, confidentialDetail, attempt = 0 } = input;
   const body = firstSentences(confidentialDetail, 2);
   const area = field ? field.toLowerCase() : 'this field';
+  const opener = OPENERS[attempt % OPENERS.length](area);
 
   const base = body
-    ? `A ${area} technology from this university's research portfolio. ${body}`
-    : `A ${area} technology disclosed by this university. ${title} is available for commercialization.`;
+    ? `${opener} ${body}`
+    : `${opener} ${title} is available for commercialization.`;
 
-  switch (flawFor(id)) {
+  switch (flawFor(id, attempt)) {
     case 'leaks_confidential':
       // Drags a phrase across from the confidential body that has no business
       // being public. This is the one a reviewer MUST catch.
@@ -75,14 +89,26 @@ export function draftSummary(input: {
   }
 }
 
-/** Redraft an existing item. Same generator, wrapped for the regenerate action. */
-export function redraftSummary(item: IpItem): string {
+/** Redraft an existing item. `attempt` must increment so each redraft differs. */
+export function redraftSummary(item: IpItem, attempt: number): string {
   return draftSummary({
     id: item.id,
     title: item.title,
     field: item.disclosure.field,
     confidentialDetail: item.confidentialDetail,
+    attempt,
   });
+}
+
+/**
+ * Which redaction criteria this draft was written to follow.
+ *
+ * The mock does not actually reason about them — it reports the policy it was
+ * handed, which is exactly what a real constrained prompt would be doing. The
+ * value is that the manager can see the constraints rather than trust them.
+ */
+export function criteriaApplied(policy: RedactionCriterion[]): string[] {
+  return policy.map((c) => c.id);
 }
 
 /** How long the fake "drafting…" state should run, in ms. Long enough to read

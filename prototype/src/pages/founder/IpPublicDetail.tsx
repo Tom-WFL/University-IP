@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { FacultyChip, StatusChip } from '@/components/shared/chips';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { useCurrentUser, useStore, visibleToFounder } from '@/data/store';
+import { itemInvolvement, useCurrentUser, useStore, visibleToFounder } from '@/data/store';
 import { formatDate, initials } from '@/lib/utils';
 
 /**
@@ -89,7 +89,7 @@ export function IpPublicDetail() {
             <div className="bg-white px-6 py-5 space-y-4">
               <p className="text-gray-700 leading-relaxed">{item.publicSummary}</p>
               <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-100 pt-4">
-                <FacultyChip attachment={item.facultyAttachment} />
+                <FacultyChip attachment={itemInvolvement(item)} />
                 <span className="text-sm text-gray-500">{item.disclosure.field}</span>
                 {totalInterest > 0 && (
                   <span className="text-sm text-gray-400 ml-auto">
@@ -117,12 +117,12 @@ export function IpPublicDetail() {
                     <p className="text-sm font-medium text-gray-900">{professor.name}</p>
                     <p className="text-xs text-gray-500">{professor.title}</p>
                     <p className="text-sm text-gray-600 mt-1.5">
-                      {item.facultyAttachment === 'attached'
+                      {itemInvolvement(item) === 'attached'
                         ? 'Wants to stay involved day to day as a co-founder — you would be building this together.'
                         : 'Handing this off. Available as a contact if you have questions, but not joining the team.'}
                     </p>
                     {/* Contact details only surface for the contact-only case. */}
-                    {item.facultyAttachment === 'idea-only' && (
+                    {itemInvolvement(item) === 'idea-only' && (
                       <p className="text-xs text-gray-500 mt-2 inline-flex items-center gap-1.5">
                         <Mail className="w-3.5 h-3.5" />
                         Reach out after the university approves the match.

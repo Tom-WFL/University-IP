@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Building2,
   CalendarDays,
   FileDown,
@@ -46,6 +47,9 @@ export const navByPersona: Record<PersonaKind, NavItem[]> = {
   ],
   professor: [{ to: '/professor', label: 'My idea', icon: GraduationCap, exact: true }],
   super_admin: [{ to: '/admin', label: 'Universities', icon: Building2, exact: true }],
+  // Read-only oversight. One destination, and deliberately no route that can
+  // change anything — the distinction from an IP Manager IS the lack of edit.
+  leadership: [{ to: '/insights', label: 'Insights', icon: BarChart3, exact: true }],
 };
 
 export const personaHome: Record<PersonaKind, string> = {
@@ -53,6 +57,7 @@ export const personaHome: Record<PersonaKind, string> = {
   founder: '/home',
   professor: '/professor',
   super_admin: '/admin',
+  leadership: '/insights',
 };
 
 export const personaLabel: Record<PersonaKind, string> = {
@@ -60,4 +65,5 @@ export const personaLabel: Record<PersonaKind, string> = {
   founder: 'Founder / Student',
   professor: 'Professor',
   super_admin: 'Wildfire Super Admin',
+  leadership: 'University Leadership',
 };

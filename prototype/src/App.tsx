@@ -16,6 +16,7 @@ import { Cohorts } from '@/pages/founder/Cohorts';
 import { MyTeam } from '@/pages/founder/MyTeam';
 import { ProfessorView } from '@/pages/ProfessorView';
 import { SuperAdmin } from '@/pages/SuperAdmin';
+import { Insights } from '@/pages/leadership/Insights';
 import { personaHome } from '@/components/shell/nav';
 import { useCurrentUser } from '@/data/store';
 
@@ -55,6 +56,7 @@ export default function App() {
           {/* Professor + Wildfire admin */}
           <Route path="/professor" element={<ProfessorView />} />
           <Route path="/admin" element={<SuperAdmin />} />
+          <Route path="/insights" element={<Insights />} />
 
           <Route path="*" element={<PersonaLanding />} />
         </Route>

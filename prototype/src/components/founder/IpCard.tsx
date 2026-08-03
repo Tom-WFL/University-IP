@@ -3,6 +3,7 @@ import { Building2, Hand } from 'lucide-react';
 import { FacultyChip, ScopeChip } from '@/components/shared/chips';
 import type { IpItem, University } from '@/data/types';
 import { cn } from '@/lib/utils';
+import { itemInvolvement } from '@/data/store';
 
 /**
  * A published IP item as a founder sees it. Renders `publicSummary` only —
@@ -57,7 +58,7 @@ export function IpCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-1">
-        <FacultyChip attachment={item.facultyAttachment} />
+        <FacultyChip attachment={itemInvolvement(item)} />
         {!compact && <ScopeChip scope={item.publishScope} showIcon={false} />}
         {myStatus && (
           <span

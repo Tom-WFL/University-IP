@@ -81,7 +81,6 @@ type RecordDraft = {
   patentStatus: IpItem['disclosure']['patentStatus'];
   fundingSource: string;
   ownership: IpItem['ownership'];
-  facultyAttachment: IpItem['facultyAttachment'];
   shelved: boolean;
 };
 
@@ -96,7 +95,6 @@ const toDraft = (item: IpItem): RecordDraft => ({
   patentStatus: item.disclosure.patentStatus,
   fundingSource: item.disclosure.fundingSource,
   ownership: item.ownership,
-  facultyAttachment: item.facultyAttachment,
   shelved: item.shelved,
 });
 
@@ -142,7 +140,6 @@ function EditIpForm({
       confidentialDetail: draft.confidentialDetail,
       inventors: normaliseInventors(draft.inventors),
       ownership: draft.ownership,
-      facultyAttachment: draft.facultyAttachment,
       shelved: draft.shelved,
       disclosure: {
         disclosureNumber: draft.disclosureNumber,
@@ -170,6 +167,8 @@ function EditIpForm({
         // First one added to an empty list is the contact by default.
         primary: draft.inventors.length === 0,
         departed: false,
+        role: 'undecided',
+        userId: null,
       },
     ]);
 
@@ -406,7 +405,11 @@ function EditIpForm({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Who owns it" help="Drives what may be published and who consents.">
+                <Field
+                  label="Who owns it"
+                  help="Drives what may be published and who consents. Involvement is set per inventor above."
+                  className="sm:col-span-2"
+                >
                   <Select
                     value={draft.ownership}
                     onValueChange={(v) => set('ownership', v as RecordDraft['ownership'])}
@@ -418,22 +421,6 @@ function EditIpForm({
                       <SelectItem value="bor">Board of Regents</SelectItem>
                       <SelectItem value="student">Student-owned</SelectItem>
                       <SelectItem value="entangled">Entangled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Faculty involvement">
-                  <Select
-                    value={draft.facultyAttachment}
-                    onValueChange={(v) =>
-                      set('facultyAttachment', v as RecordDraft['facultyAttachment'])
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="attached">Stays attached</SelectItem>
-                      <SelectItem value="idea-only">Idea only</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>

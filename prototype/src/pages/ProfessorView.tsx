@@ -6,8 +6,9 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { FacultyChip, ScopeChip, StatusChip } from '@/components/shared/chips';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { useCurrentUser, useStore } from '@/data/store';
+import { itemInvolvement, useCurrentUser, useStore } from '@/data/store';
 import { cn, formatDate } from '@/lib/utils';
+import type { InventorRole } from '@/data/types';
 
 /**
  * The professor's slice: the invite that gives them an account (REC-1), the
@@ -27,7 +28,7 @@ export function ProfessorView() {
   const pendingInvite = invites.find((inv) => inv.email === user.email && inv.status === 'sent');
   const pendingItem = pendingInvite ? ipItems.find((i) => i.id === pendingInvite.ipItemId) : undefined;
 
-  const [choice, setChoice] = useState<'attached' | 'idea-only'>('attached');
+  const [choice, setChoice] = useState<InventorRole>('involved');
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -69,13 +70,13 @@ export function ProfessorView() {
                   {(
                     [
                       {
-                        value: 'attached' as const,
+                        value: 'involved' as const,
                         label: "I'm in",
                         body: 'Join the team as a day-to-day co-founder when someone is matched.',
                         icon: UserCheck,
                       },
                       {
-                        value: 'idea-only' as const,
+                        value: 'contact_only' as const,
                         label: 'Just a contact',
                         body: 'Hand it off. Happy to answer questions, but not building it.',
                         icon: UserMinus,
@@ -144,7 +145,7 @@ export function ProfessorView() {
 
                     <div className="flex flex-wrap gap-2">
                       <ScopeChip scope={item.publishScope} />
-                      <FacultyChip attachment={item.facultyAttachment} />
+                      <FacultyChip attachment={itemInvolvement(item)} />
                     </div>
 
                     <div className="rounded-xl bg-gray-50 p-4">

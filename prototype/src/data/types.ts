@@ -16,7 +16,34 @@ export interface University {
   kind: 'university' | 'state_system';
   /** Per-school setting: does a hand-raise match need manual approval? */
   autoApproveMatches: boolean;
+  /** Some schools do not let inventors choose. USD was explicit about this:
+   *  "we don't even want to give some people an option — you're just going to
+   *  be the contact only." Under `contact_only` the involvement control is
+   *  disabled everywhere, including on the inventor's own invite screen. */
+  inventorRolePolicy: InventorRolePolicy;
+  /** What an AI-drafted summary must never contain. Per-school because what
+   *  counts as disclosive differs by discipline and by how burnt a tech
+   *  transfer office has been. */
+  redactionPolicy: RedactionCriterion[];
   createdAt: string;
+}
+
+export type InventorRolePolicy = 'inventor_chooses' | 'contact_only';
+
+/** One named thing an AI summary must not reveal.
+ *
+ *  The stakeholder ask was "make the prompt very strict… which pieces of
+ *  information should not be shared is going to be very critical." A prompt is
+ *  invisible, so the criteria are modelled as data instead: the drafter states
+ *  which it wrote to, and the IP manager ticks each one off at review. That
+ *  turns an implementation detail into something a tech transfer office can
+ *  actually inspect and amend. */
+export interface RedactionCriterion {
+  id: string;
+  /** Short imperative shown as a checkbox label. */
+  label: string;
+  /** Why it matters, shown underneath. */
+  help: string;
 }
 
 /** Who owns the IP. Drives what may be published and who consents.
@@ -24,13 +51,31 @@ export interface University {
  *  owns pure class-project IP; joint work is entangled. */
 export type Ownership = 'bor' | 'student' | 'entangled';
 
-/** Does the inventor stay involved, or is this an idea-only handoff? */
+/** Whether a disclosure has anyone staying involved, or is an idea-only
+ *  handoff. This is now DERIVED from the inventor list rather than stored —
+ *  see `itemInvolvement()` in store.ts. Kept as a type because the chips and
+ *  filters still speak in these terms. */
 export type FacultyAttachment = 'attached' | 'idea-only';
 
+/** What one inventor wants to do with their own disclosure. */
+export type InventorRole =
+  /** Nobody has asked them yet. */
+  | 'undecided'
+  /** Point of contact for questions; not joining a venture. */
+  | 'contact_only'
+  /** Wants to be part of whatever gets built. Joins the team on a match. */
+  | 'involved';
+
 /** AXIS 1 — who can see the non-confidential summary.
- *  Real app: a new `visibility_scope` column on `ideas` plus a SELECT policy
+ *
+ *  `public` is the marketing tier: no account, no login, indexable. Everything
+ *  below it requires an account, which is what keeps the stakeholder rule
+ *  "you always have to create an account before you can see the ideas" true of
+ *  the in-app catalogue while still allowing a public lead-gen surface.
+ *
+ *  Real app: a `visibility_scope` column on `ideas` plus a SELECT policy
  *  walking `organizations.parent_org_id`. Private is already the RLS default. */
-export type PublishScope = 'private' | 'campus' | 'statewide' | 'national';
+export type PublishScope = 'private' | 'campus' | 'statewide' | 'national' | 'public';
 
 /** AXIS 2 — what happens to this IP next (from the Jul 2 intake). */
 export type Route = 'undecided' | 'founder' | 'hackathon' | 'founder_match';
@@ -57,6 +102,12 @@ export interface Inventor {
   primary: boolean;
   /** No longer at the university — the back-catalog "IP mining" case. */
   departed: boolean;
+  /** What this particular inventor wants. Per-inventor, not per-disclosure:
+   *  on a four-inventor filing one may want to found and three may not. */
+  role: InventorRole;
+  /** Their platform account, once they have one. Null for the many inventors
+   *  who will never log in. */
+  userId: string | null;
 }
 
 /** Real app: `ideas` (+ new columns). `confidentialDetail` maps to the private
@@ -76,6 +127,14 @@ export interface IpItem {
   summaryReviewed: boolean;
   summaryReviewedBy: string | null;
   summaryReviewedAt: string | null;
+  /** Which of the university's redaction criteria the reviewer attested to,
+   *  by id. Recording the specific attestations is the point — "I confirmed
+   *  there are no partner names in this" is defensible in a way that a single
+   *  blanket "no confidential detail" tick is not. */
+  summaryCriteriaChecked: string[];
+  /** How many times the model has drafted this. Redrafts must differ from each
+   *  other, so the generator needs to know which attempt it is on. */
+  summaryDraftCount: number;
   /** Private disclosure detail — IP manager eyes only. */
   confidentialDetail: string;
   /** Everyone credited on the disclosure. See `Inventor`. */
@@ -89,8 +148,9 @@ export interface IpItem {
     fundingSource: string;
   };
   ownership: Ownership;
-  facultyAttachment: FacultyAttachment;
-  /** Account link for the primary inventor. Null until someone is invited. */
+  /** Account link for the primary inventor. Null until someone is invited.
+   *  Kept alongside `inventors[].userId` because the invite flow needs one
+   *  designated addressee; the roster records everyone. */
   professorId: string | null;
   publishScope: PublishScope;
   route: Route;
@@ -178,7 +238,10 @@ export type AuditAction =
   | 'match_declined'
   | 'team_formed'
   | 'cohort_handoff'
-  | 'org_provisioned';
+  | 'org_provisioned'
+  | 'signup'
+  | 'lead_reviewed'
+  | 'policy_changed';
 
 export interface AuditEvent {
   id: string;
@@ -204,7 +267,28 @@ export interface Invite {
   acceptedAt: string | null;
 }
 
-export type PersonaKind = 'super_admin' | 'ip_manager' | 'founder' | 'professor';
+export type PersonaKind =
+  | 'super_admin'
+  | 'ip_manager'
+  | 'founder'
+  | 'professor'
+  /** University leadership — read-only oversight. Answers the Jul 2 intake's
+   *  parked question about whether the VP of Research is a distinct in-app
+   *  role: yes, and the distinction is that they cannot change anything. */
+  | 'leadership';
+
+/** Why an account was held back from the funnel. */
+export type RiskFlag =
+  | 'disposable_email'
+  | 'thin_intent'
+  | 'velocity'
+  | 'honeypot'
+  | 'unverified_email';
+
+/** Whether this account can act yet. `pending_review` accounts can sign in and
+ *  look around but cannot raise a hand until a human clears them — the point
+ *  being to keep the funnel wide while keeping IP managers unburdened. */
+export type AccountStatus = 'active' | 'pending_review' | 'blocked';
 
 /** Real app: `users` + `memberships`/`membership_roles`. */
 export interface User {
@@ -217,4 +301,13 @@ export interface User {
   title: string;
   /** Short bio used to pre-fill the raise-hand mini-profile. */
   background: string;
+  status: AccountStatus;
+  /** How this account came to exist. `marketing` means they arrived from the
+   *  public catalogue, which is worth knowing when judging intent. */
+  signupSource: 'seed' | 'invite' | 'direct' | 'marketing';
+  /** The IP they signed up to build, if they came in through one. This is what
+   *  routes them to the right IP manager after account creation. */
+  signupIpContext: string | null;
+  riskFlags: RiskFlag[];
+  createdAt: string;
 }

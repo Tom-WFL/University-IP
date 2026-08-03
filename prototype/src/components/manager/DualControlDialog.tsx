@@ -19,6 +19,7 @@ const audience: Record<PublishScope, string> = {
   campus: 'every student and faculty member at this university',
   statewide: 'everyone at all schools in the system',
   national: 'Wildfire’s entire national founder network',
+  public: 'anyone on the internet — no account needed, and search engines will index it',
 };
 
 /**
