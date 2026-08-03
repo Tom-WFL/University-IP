@@ -9,6 +9,7 @@ import {
   Home,
   LayoutDashboard,
   ScrollText,
+  ShieldAlert,
   ShieldCheck,
   Search,
   Trophy,
@@ -23,7 +24,7 @@ export interface NavItem {
   icon: LucideIcon;
   exact?: boolean;
   /** Renders a count pill when there's something waiting. */
-  badgeKey?: 'pendingHandRaises' | 'myHandRaises';
+  badgeKey?: 'pendingHandRaises' | 'myHandRaises' | 'pendingLeads';
 }
 
 /**
@@ -36,6 +37,7 @@ export const navByPersona: Record<PersonaKind, NavItem[]> = {
     { to: '/manage/ip', label: 'IP Console', icon: FlaskConical },
     { to: '/manage/import', label: 'Import IP', icon: FileDown },
     { to: '/manage/interest', label: 'Hand-raises', icon: Hand, badgeKey: 'pendingHandRaises' },
+    { to: '/manage/leads', label: 'Lead review', icon: ShieldAlert, badgeKey: 'pendingLeads' },
     { to: '/manage/teams', label: 'Teams & I-Corps', icon: Users },
     { to: '/manage/audit', label: 'Audit trail', icon: ScrollText },
     { to: '/manage/policy', label: 'Release policy', icon: ShieldCheck },

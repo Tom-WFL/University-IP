@@ -9,6 +9,7 @@ function NavItems({ onNavigate }: { onNavigate?: () => void }) {
   const handRaises = useStore((s) => s.handRaises);
   const ipItems = useStore((s) => s.ipItems);
   const activeUniversityId = useStore((s) => s.activeUniversityId);
+  const users = useStore((s) => s.users);
 
   const pendingHandRaises = handRaises.filter((hr) => {
     if (hr.status !== 'pending') return false;
@@ -18,7 +19,9 @@ function NavItems({ onNavigate }: { onNavigate?: () => void }) {
 
   const myHandRaises = handRaises.filter((hr) => hr.userId === user.id && hr.status === 'pending').length;
 
-  const counts = { pendingHandRaises, myHandRaises };
+  const pendingLeads = users.filter((u) => u.status === 'pending_review').length;
+
+  const counts = { pendingHandRaises, myHandRaises, pendingLeads };
 
   return (
     <nav className="px-4 space-y-1">

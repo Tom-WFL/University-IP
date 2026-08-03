@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Building2, ChevronDown, FlaskConical, Menu, PlayCircle, RotateCcw, UserCog } from 'lucide-react';
+import { Building2, ChevronDown, FlaskConical, LogOut, Menu, PlayCircle, RotateCcw, UserCog } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuCheck,
@@ -30,6 +30,7 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
   const setCurrentUser = useStore((s) => s.setCurrentUser);
   const setActiveUniversity = useStore((s) => s.setActiveUniversity);
   const resetDemo = useStore((s) => s.resetDemo);
+  const signOut = useStore((s) => s.signOut);
   const [scriptOpen, setScriptOpen] = useState(false);
 
   const activeUniversity = universities.find((u) => u.id === activeUniversityId);
@@ -116,6 +117,9 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
                 Demo — switch persona
               </DropdownMenuLabel>
               {users
+                // Held signups are not personas to demo from — they belong in
+                // the lead queue, not the switcher.
+                .filter((u) => u.status === 'active')
                 .filter((u) => u.persona !== 'professor' || u.id === 'u-prof')
                 .map((u) => (
                   <DropdownMenuItem key={u.id} onSelect={() => switchTo(u.id)}>
@@ -130,6 +134,15 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
                   </DropdownMenuItem>
                 ))}
               <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() => {
+                  signOut();
+                  navigate('/m');
+                }}
+              >
+                <LogOut className="w-4 h-4 text-gray-400" />
+                View as a visitor
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
                   resetDemo();

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { FacultyChip, StatusChip } from '@/components/shared/chips';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { itemInvolvement, useCurrentUser, useStore, visibleToFounder } from '@/data/store';
+import { canAct, itemInvolvement, useCurrentUser, useStore, visibleToFounder } from '@/data/store';
 import { formatDate, initials } from '@/lib/utils';
 
 /**
@@ -36,6 +36,8 @@ export function IpPublicDetail() {
   const raiseHand = useStore((s) => s.raiseHand);
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  // A signup held for review can read everything but cannot approach a school.
+  const act = canAct(user);
   const [pitch, setPitch] = useState('');
   const [background, setBackground] = useState(user.background);
 
@@ -195,11 +197,18 @@ export function IpPublicDetail() {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-gray-900">Want to build this?</p>
                   <p className="text-sm text-gray-600 mt-0.5">
-                    Raise your hand and tell {university?.shortName} why you're the one. They review every
-                    match personally.
+                    {act.ok
+                      ? `Raise your hand and tell ${university?.shortName ?? 'them'} why you're the one. They review every match personally.`
+                      : act.reason}
                   </p>
                 </div>
-                <Button variant="gradient" onClick={() => setDialogOpen(true)} className="shrink-0">
+                <Button
+                  variant="gradient"
+                  onClick={() => setDialogOpen(true)}
+                  disabled={!act.ok}
+                  title={act.ok ? undefined : act.reason}
+                  className="shrink-0"
+                >
                   <Hand className="w-4 h-4" />
                   Raise my hand
                 </Button>

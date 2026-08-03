@@ -5,6 +5,7 @@ import { IpConsole } from '@/pages/manager/IpConsole';
 import { IpDetail } from '@/pages/manager/IpDetail';
 import { ImportIp } from '@/pages/manager/ImportIp';
 import { PolicyPage } from '@/pages/manager/PolicyPage';
+import { Leads } from '@/pages/manager/Leads';
 import { EditIp } from '@/pages/manager/EditIp';
 import { HandRaises } from '@/pages/manager/HandRaises';
 import { Teams } from '@/pages/manager/Teams';
@@ -18,6 +19,10 @@ import { MyTeam } from '@/pages/founder/MyTeam';
 import { ProfessorView } from '@/pages/ProfessorView';
 import { SuperAdmin } from '@/pages/SuperAdmin';
 import { Insights } from '@/pages/leadership/Insights';
+import { MarketingLayout } from '@/pages/marketing/MarketingLayout';
+import { MarketingCatalog } from '@/pages/marketing/MarketingCatalog';
+import { MarketingIpDetail } from '@/pages/marketing/MarketingIpDetail';
+import { Signup } from '@/pages/auth/Signup';
 import { personaHome } from '@/components/shell/nav';
 import { useCurrentUser } from '@/data/store';
 
@@ -33,6 +38,14 @@ export default function App() {
     // without server-side rewrite rules.
     <HashRouter>
       <Routes>
+        {/* Public — no account, no app chrome. */}
+        <Route element={<MarketingLayout />}>
+          <Route path="/m" element={<MarketingCatalog />} />
+          <Route path="/m/ip/:ipId" element={<MarketingIpDetail />} />
+        </Route>
+        <Route path="/signup" element={<Signup />} />
+
+        {/* Everything below here requires an account. */}
         <Route element={<AppShell />}>
           <Route path="/" element={<PersonaLanding />} />
 
@@ -46,6 +59,7 @@ export default function App() {
           <Route path="/manage/teams" element={<Teams />} />
           <Route path="/manage/audit" element={<AuditPage />} />
           <Route path="/manage/policy" element={<PolicyPage />} />
+          <Route path="/manage/leads" element={<Leads />} />
 
           {/* Founder / student */}
           <Route path="/home" element={<FounderHome />} />

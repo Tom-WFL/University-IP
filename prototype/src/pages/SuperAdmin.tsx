@@ -9,6 +9,7 @@ import { StatusChip } from '@/components/shared/chips';
 import { FadeIn, Stagger } from '@/components/shared/motion';
 import { useStore } from '@/data/store';
 import { formatDate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 /**
  * Wildfire-side provisioning (approved recommendations REC-2 / REC-4): each
@@ -20,6 +21,9 @@ export function SuperAdmin() {
   const users = useStore((s) => s.users);
   const ipItems = useStore((s) => s.ipItems);
   const invites = useStore((s) => s.invites);
+  const threshold = useStore((s) => s.leadReviewThreshold);
+  const setLeadReviewThreshold = useStore((s) => s.setLeadReviewThreshold);
+  const pendingLeads = users.filter((u) => u.status === 'pending_review').length;
   const provisionUniversity = useStore((s) => s.provisionUniversity);
 
   const [name, setName] = useState('');
@@ -40,6 +44,50 @@ export function SuperAdmin() {
             title="Universities"
             subtitle="Each university is its own organization. Its IP Manager only ever sees that school's IP."
           />
+        </FadeIn>
+
+        {/* The one knob that decides how wide the funnel runs. */}
+        <FadeIn>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Lead review threshold</CardTitle>
+              <p className="text-sm text-gray-500 mt-0.5">
+                How many risk signals hold a signup for a human. Lower catches more spam and more
+                real people; higher lets more through untouched. A tripped honeypot always holds,
+                whatever this is set to.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {[1, 2, 3, 4].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setLeadReviewThreshold(n)}
+                    aria-pressed={threshold === n}
+                    className={cn(
+                      'rounded-xl border px-4 py-2.5 text-sm transition-all duration-200',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ED1C24] focus-visible:ring-offset-2',
+                      threshold === n
+                        ? 'border-[#ED1C24] bg-orange-50/60 font-medium text-gray-900'
+                        : 'border-gray-200 text-gray-600 hover:shadow-md',
+                    )}
+                  >
+                    {n} {n === 1 ? 'signal' : 'signals'}
+                  </button>
+                ))}
+                <span className="text-sm text-gray-500 ml-auto tabular-nums">
+                  {pendingLeads} waiting now
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                {threshold === 1
+                  ? 'Strictest — a single signal is enough. Expect false positives.'
+                  : threshold >= 4
+                    ? 'Loosest — almost everything goes straight through.'
+                    : 'A pattern of two or more signals is usually a real one.'}
+              </p>
+            </CardContent>
+          </Card>
         </FadeIn>
 
         <FadeIn>

@@ -24,6 +24,7 @@ import type {
 } from './types';
 import { draftSummary, redraftSummary } from '@/lib/aiSummary';
 import { DEFAULT_REDACTION_POLICY } from './redaction';
+import { assessLead, shouldHold } from '@/lib/leadRisk';
 import {
   seedAudit,
   seedCohortApplications,
@@ -213,9 +214,33 @@ interface StoreState {
   /** Demo session: who am I acting as, and which school am I looking at. */
   currentUserId: string;
   activeUniversityId: string;
+  /** False = a visitor with no account. Kept separate from currentUserId so
+   *  signing out does not lose which persona to return to. */
+  signedIn: boolean;
+  /** How many risk flags hold a signup for review. A setting rather than a
+   *  constant because "wide enough for genuine prospects" is a judgement. */
+  leadReviewThreshold: number;
 
   setCurrentUser: (userId: string) => void;
   setActiveUniversity: (universityId: string) => void;
+  /** Leave the app and look at it as a stranger would. */
+  signOut: () => void;
+  signIn: () => void;
+  setLeadReviewThreshold: (n: number) => void;
+
+  /** Create an account from the signup form. Returns the new user id, and
+   *  whether they were let straight in or held for review. */
+  signUp: (input: {
+    name: string;
+    email: string;
+    intent: string;
+    honeypot: string;
+    emailVerified: boolean;
+    ipContext: string | null;
+  }) => { userId: string; held: boolean };
+
+  /** Clear or block a held account. */
+  reviewLead: (userId: string, decision: 'approved' | 'blocked') => void;
 
   addIpItems: (drafts: IpDraft[], source: 'import' | 'manual') => string[];
   updateScope: (ipItemId: string, scope: PublishScope) => void;
@@ -353,6 +378,9 @@ const seedState = () => ({
   audit: seedAudit,
   currentUserId: 'u-ipm-mines',
   activeUniversityId: 'org-mines',
+  signedIn: true,
+  // Two flags holds a signup. One is usually noise; two is a pattern.
+  leadReviewThreshold: 2,
 });
 
 export const useStore = create<StoreState>()(
@@ -389,6 +417,80 @@ export const useStore = create<StoreState>()(
         },
 
         setActiveUniversity: (universityId) => set({ activeUniversityId: universityId }),
+
+        signOut: () => set({ signedIn: false }),
+        signIn: () => set({ signedIn: true }),
+        setLeadReviewThreshold: (n) => set({ leadReviewThreshold: Math.max(1, Math.min(5, n)) }),
+
+        signUp: ({ name, email, intent, honeypot, emailVerified, ipContext }) => {
+          const state = get();
+          const flags = assessLead({ email, intent, honeypot, emailVerified, existing: state.users });
+          const held = shouldHold(flags, state.leadReviewThreshold);
+
+          // A lead who arrived through a specific piece of IP belongs to that
+          // school — this is what routes them to the right IP manager.
+          const contextItem = ipContext ? state.ipItems.find((i) => i.id === ipContext) : undefined;
+
+          const user: User = {
+            id: nextId('u'),
+            name: name.trim() || email,
+            email: email.trim(),
+            persona: 'founder',
+            // No school affiliation is claimed at signup — they are a network
+            // founder until somebody verifies otherwise.
+            universityId: null,
+            title: 'Founder',
+            background: intent.trim(),
+            status: held ? 'pending_review' : 'active',
+            signupSource: ipContext ? 'marketing' : 'direct',
+            signupIpContext: ipContext,
+            riskFlags: flags,
+            createdAt: now(),
+          };
+
+          set({
+            users: [...state.users, user],
+            currentUserId: user.id,
+            signedIn: true,
+            audit: [
+              {
+                id: nextId('ev'),
+                universityId: contextItem?.universityId ?? state.activeUniversityId,
+                actorId: user.id,
+                action: 'signup',
+                detail: held
+                  ? `${user.name} signed up${contextItem ? ` for "${contextItem.title}"` : ''} — held for review (${flags.join(', ')}).`
+                  : `${user.name} signed up${contextItem ? ` for "${contextItem.title}"` : ''}.`,
+                ipItemId: ipContext,
+                at: now(),
+              },
+              ...state.audit,
+            ],
+          });
+
+          return { userId: user.id, held };
+        },
+
+        reviewLead: (userId, decision) => {
+          const state = get();
+          const user = state.users.find((u) => u.id === userId);
+          if (!user) return;
+
+          set({
+            users: state.users.map((u) =>
+              u.id === userId
+                ? { ...u, status: decision === 'approved' ? 'active' : 'blocked', riskFlags: decision === 'approved' ? [] : u.riskFlags }
+                : u,
+            ),
+          });
+          log(
+            'lead_reviewed',
+            decision === 'approved'
+              ? `Cleared ${user.name} — they can raise a hand now.`
+              : `Blocked ${user.name}.`,
+            user.signupIpContext,
+          );
+        },
 
         addIpItems: (drafts, source) => {
           const state = get();
