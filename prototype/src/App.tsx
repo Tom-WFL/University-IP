@@ -1,4 +1,4 @@
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/shell/AppShell';
 import { ManagerDashboard } from '@/pages/manager/Dashboard';
 import { IpConsole } from '@/pages/manager/IpConsole';
@@ -25,12 +25,36 @@ import { MarketingIpDetail } from '@/pages/marketing/MarketingIpDetail';
 import { Signup } from '@/pages/auth/Signup';
 import { personaHome } from '@/components/shell/nav';
 import { useCurrentUser } from '@/data/store';
+import type { PersonaKind } from '@/data/types';
 
 /** Sends "/" to whichever home matches the current persona. */
 function PersonaLanding() {
   const user = useCurrentUser();
   return <Navigate to={personaHome[user.persona]} replace />;
 }
+
+/**
+ * Route-level persona guard.
+ *
+ * The nav already hides what a persona shouldn't reach, but hiding a link is
+ * not a permission. Leadership is the case that makes this matter: the whole
+ * point of the role is that it cannot change anything, and a VP who pastes a
+ * `/manage/ip/...` URL should land back on their own view rather than on an
+ * edit form. Sends anyone out of place to their own home.
+ */
+function RequirePersona({
+  allow,
+  children,
+}: {
+  allow: PersonaKind[];
+  children: React.ReactNode;
+}) {
+  const user = useCurrentUser();
+  if (!allow.includes(user.persona)) return <Navigate to={personaHome[user.persona]} replace />;
+  return <>{children}</>;
+}
+
+const MANAGER_ONLY: PersonaKind[] = ['ip_manager', 'super_admin'];
 
 export default function App() {
   return (
@@ -49,30 +73,53 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route path="/" element={<PersonaLanding />} />
 
-          {/* IP Manager */}
-          <Route path="/manage" element={<ManagerDashboard />} />
-          <Route path="/manage/ip" element={<IpConsole />} />
-          <Route path="/manage/ip/:ipId" element={<IpDetail />} />
-          <Route path="/manage/ip/:ipId/edit" element={<EditIp />} />
-          <Route path="/manage/import" element={<ImportIp />} />
-          <Route path="/manage/interest" element={<HandRaises />} />
-          <Route path="/manage/teams" element={<Teams />} />
-          <Route path="/manage/audit" element={<AuditPage />} />
-          <Route path="/manage/policy" element={<PolicyPage />} />
-          <Route path="/manage/leads" element={<Leads />} />
+          {/* IP Manager — everything that can change the portfolio. */}
+          <Route
+            element={
+              <RequirePersona allow={MANAGER_ONLY}>
+                <Outlet />
+              </RequirePersona>
+            }
+          >
+            <Route path="/manage" element={<ManagerDashboard />} />
+            <Route path="/manage/ip" element={<IpConsole />} />
+            <Route path="/manage/ip/:ipId" element={<IpDetail />} />
+            <Route path="/manage/ip/:ipId/edit" element={<EditIp />} />
+            <Route path="/manage/import" element={<ImportIp />} />
+            <Route path="/manage/interest" element={<HandRaises />} />
+            <Route path="/manage/teams" element={<Teams />} />
+            <Route path="/manage/audit" element={<AuditPage />} />
+            <Route path="/manage/policy" element={<PolicyPage />} />
+            <Route path="/manage/leads" element={<Leads />} />
+          </Route>
 
           {/* Founder / student */}
-          <Route path="/home" element={<FounderHome />} />
-          <Route path="/discover" element={<Discover />} />
-          <Route path="/discover/:ipId" element={<IpPublicDetail />} />
-          <Route path="/hackathons" element={<Hackathons />} />
-          <Route path="/cohorts" element={<Cohorts />} />
-          <Route path="/my-team" element={<MyTeam />} />
+          <Route
+            element={
+              <RequirePersona allow={['founder', 'super_admin']}>
+                <Outlet />
+              </RequirePersona>
+            }
+          >
+            <Route path="/home" element={<FounderHome />} />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/discover/:ipId" element={<IpPublicDetail />} />
+            <Route path="/hackathons" element={<Hackathons />} />
+            <Route path="/cohorts" element={<Cohorts />} />
+            <Route path="/my-team" element={<MyTeam />} />
+          </Route>
 
           {/* Professor + Wildfire admin */}
           <Route path="/professor" element={<ProfessorView />} />
           <Route path="/admin" element={<SuperAdmin />} />
-          <Route path="/insights" element={<Insights />} />
+          <Route
+            path="/insights"
+            element={
+              <RequirePersona allow={['leadership', 'super_admin']}>
+                <Insights />
+              </RequirePersona>
+            }
+          />
 
           <Route path="*" element={<PersonaLanding />} />
         </Route>

@@ -57,6 +57,10 @@ Then see it the way an outsider does. Pick **View as a visitor** in the persona 
 12. **IP Manager → Lead review** — signups that look automated or empty are held before
     they can approach the university, with the reasons shown. Try signing up with a
     throwaway address and a one-word answer to see one get held.
+13. **University Leadership** — switch to the VP for Research. Read-only: the portfolio
+    by scope and by department, the pipeline from disclosure through to an I-Corps
+    cohort, and a panel naming what has stopped moving and for how long. There is not a
+    single button on the page, and every manager URL bounces back here.
 
 "Reset demo data" in the persona menu puts everything back.
 
@@ -96,9 +100,7 @@ I-Corps.
 
 Also not built yet: the business plan competition, hackathon management (you can see
 hackathons listed, but not run one), industry-partner access, and a program-wide
-dashboard. The **University Leadership** persona in the switcher lands on a page that
-says "being built" — the read-only view of portfolio volume and where things stall is
-the next piece of work, and it's stubbed rather than faked.
+dashboard.
 
 The captcha and the emailed verification code on signup are simulated, and the AI that
 drafts the public summaries is a stand-in that produces fixed text. What's real is the
@@ -118,6 +120,8 @@ That's what this is for. Useful things to react to:
   one at review time reasonable or tedious?
 - Is anything at Mines ever going all the way to `public`, or does `national` end it?
 - Would a student or faculty member actually raise a hand on one of these?
+- Does the leadership view answer the questions a VP for Research actually gets asked,
+  and is read-only the right call, or does that role need to act on something?
 - What would your IT or security office need to see before this could be used?
 
 Send notes to **Tom Olson** — tom@wildfirelabs.io.

@@ -61,6 +61,11 @@ const steps = [
     action: 'Open Lead review.',
     why: 'Signups that look automated or empty are held before they can approach the university, with the reasons shown. Sign up with a throwaway address and a one-word answer to see one land here.',
   },
+  {
+    persona: 'University Leadership',
+    action: 'Switch to the VP for Research and read Insights.',
+    why: 'The portfolio by scope and department, the pipeline through to an I-Corps cohort, and what has stopped moving. Read-only: no buttons, and every manager URL bounces back.',
+  },
 ];
 
 export function DemoScriptDialog({

@@ -388,7 +388,7 @@ export const seedIpItems: IpItem[] = [
     route: 'hackathon',
     shelved: false,
     createdAt: iso('2026-07-11'),
-    updatedAt: iso('2026-07-22'),
+    updatedAt: iso('2026-07-25'),
   },
   {
     id: 'ip-006',
@@ -779,10 +779,46 @@ export const seedHandRaises: HandRaise[] = [
     reviewedBy: null,
     reviewedAt: null,
   },
+  // One journey that already completed. Without it every stage of the
+  // leadership funnel past "someone raised a hand" reads zero, which tells a
+  // VP of Research nothing about whether the pipeline works — only that this
+  // demo has not been clicked through yet.
+  {
+    id: 'hr-004',
+    ipItemId: 'ip-005',
+    userId: 'u-founder',
+    pitch:
+      'I used a contracted survey crew every summer at the quarry and the bill was always the reason we surveyed less than we should have. I want to build the version a two-person operation can afford.',
+    background:
+      'Second-year MS in materials engineering. Two summers in a composites lab, ran a campus 3D-printing shop.',
+    status: 'approved',
+    raisedAt: iso('2026-07-23'),
+    reviewedBy: 'u-ipm-mines',
+    reviewedAt: iso('2026-07-25'),
+  },
 ];
 
-export const seedTeams: Team[] = [];
-export const seedCohortApplications: CohortApplication[] = [];
+export const seedTeams: Team[] = [
+  {
+    id: 'team-001',
+    ipItemId: 'ip-005',
+    name: 'Borehole Labs',
+    // The founder plus the inventor who said they wanted to stay involved.
+    memberIds: ['u-founder'],
+    formedAt: iso('2026-07-25'),
+  },
+];
+
+export const seedCohortApplications: CohortApplication[] = [
+  {
+    id: 'app-001',
+    teamId: 'team-001',
+    cohortId: 'coh-fall',
+    status: 'accepted',
+    submittedAt: iso('2026-07-28'),
+    submittedBy: 'u-ipm-mines',
+  },
+];
 
 export const seedCohorts: Cohort[] = [
   {
@@ -830,7 +866,10 @@ export const seedHackathons: Hackathon[] = [
   },
 ];
 
-export const seedRegistrations: HackathonRegistration[] = [];
+export const seedRegistrations: HackathonRegistration[] = [
+  { id: 'reg-001', hackathonId: 'hack-fall', userId: 'u-founder', registeredAt: iso('2026-07-24') },
+  { id: 'reg-002', hackathonId: 'hack-cyber', userId: 'u-founder', registeredAt: iso('2026-07-26') },
+];
 
 export const seedInvites: Invite[] = [
   {
@@ -947,6 +986,65 @@ export const seedAudit: AuditEvent[] = [
     action: 'hand_raise',
     detail: 'Marcus Ellery raised a hand on "Hydrogen embrittlement sensor for pipeline steel".',
     ipItemId: 'ip-009',
+    at: iso('2026-07-28'),
+  },
+  {
+    id: 'ev-010',
+    universityId: mines,
+    actorId: 'u-ipm-mines',
+    action: 'publish',
+    detail:
+      'Published "Hydrogen embrittlement sensor for pipeline steel" to the open web — no account needed, indexable.',
+    ipItemId: 'ip-009',
+    at: iso('2026-07-30'),
+  },
+
+  // The one journey that ran end to end. These are what the leadership view's
+  // pipeline is measured from, so they have to be dated coherently: published
+  // after the summary was reviewed, matched after the hand went up.
+  {
+    id: 'ev-011',
+    universityId: mines,
+    actorId: 'u-ipm-mines',
+    action: 'publish',
+    detail: 'Published "Acoustic bore-hole mapping probe" to campus as a hackathon challenge.',
+    ipItemId: 'ip-005',
+    at: iso('2026-07-21'),
+  },
+  {
+    id: 'ev-012',
+    universityId: mines,
+    actorId: 'u-founder',
+    action: 'hand_raise',
+    detail: 'Priya Raman raised a hand on "Acoustic bore-hole mapping probe".',
+    ipItemId: 'ip-005',
+    at: iso('2026-07-23'),
+  },
+  {
+    id: 'ev-013',
+    universityId: mines,
+    actorId: 'u-ipm-mines',
+    action: 'match_approved',
+    detail: 'Approved Priya Raman for "Acoustic bore-hole mapping probe".',
+    ipItemId: 'ip-005',
+    at: iso('2026-07-25'),
+  },
+  {
+    id: 'ev-014',
+    universityId: mines,
+    actorId: 'u-ipm-mines',
+    action: 'team_formed',
+    detail: 'Borehole Labs formed around "Acoustic bore-hole mapping probe".',
+    ipItemId: 'ip-005',
+    at: iso('2026-07-25'),
+  },
+  {
+    id: 'ev-015',
+    universityId: mines,
+    actorId: 'u-ipm-mines',
+    action: 'cohort_handoff',
+    detail: 'Submitted Borehole Labs to the I-Corps Fall Cohort.',
+    ipItemId: 'ip-005',
     at: iso('2026-07-28'),
   },
 ];
