@@ -35,13 +35,17 @@ There's a **persona switcher** in the top right — it replaces logging in, and 
 be every kind of user in one browser window. Click **How to demo** in the top bar
 for a guided path. The short version:
 
-1. **Wildfire Super Admin** — set up a university and assign its IP Manager.
+1. **Wildfire Super Admin** — set up a university and assign its IP Manager. This account
+   can also do everything an IP Manager can, for any school, and see all of them at once.
 2. **IP Manager** — import a disclosure spreadsheet. Every row lands **private**.
 3. **IP Manager** — read the AI-drafted summary and fix it. You can't publish anything
    until a human has read the draft and ticked it off against the university's release
    criteria; one of the seeded drafts has a confidential phrase in it that shouldn't be
    there. That's on purpose.
-4. **IP Manager** — publish outward through the scope steps, past the two-checkbox gate.
+4. **IP Manager** — publish outward. You can step one level at a time, or click any
+   level on the rail to go straight there; either way it passes the confirmation gate.
+   In the IP Console you can also tick several disclosures and publish them at once —
+   anything not ready is held back and named.
 5. **IP Manager** — set the route: Founder, Hackathon, or Founder Match.
 6. **Founder / student** — find it on their home page and raise a hand.
 7. **IP Manager** — approve, and a team forms.
@@ -57,7 +61,10 @@ Then see it the way an outsider does. Pick **View as a visitor** in the persona 
 12. **IP Manager → Lead review** — signups that look automated or empty are held before
     they can approach the university, with the reasons shown. Try signing up with a
     throwaway address and a one-word answer to see one get held.
-13. **University Leadership** — switch to the VP for Research. Read-only: the portfolio
+13. **Wildfire Super Admin** — switch back and use the school switcher to act for USD,
+    which deliberately has no IP Manager. Anything the admin changes shows up in that
+    school's audit trail badged as Wildfire acting on their behalf.
+14. **University Leadership** — switch to the VP for Research. Read-only: the portfolio
     by scope and by department, the pipeline from disclosure through to an I-Corps
     cohort, and a panel naming what has stopped moving and for how long. There is not a
     single button on the page, and every manager URL bounces back here.
@@ -71,6 +78,7 @@ Then see it the way an outsider does. Pick **View as a visitor** in the persona 
 **Who can see it** and **what happens next** are deliberately separate.
 
 - **Publish scope** — `private → campus → statewide → national founder network → public`.
+  You do not have to walk it one step at a time; any level is directly selectable.
   Only the non-confidential summary is ever published. The confidential disclosure text
   never leaves the IP office at any scope. Widening the scope needs two explicit
   confirmations, and the last step — out onto the open internet, where search engines

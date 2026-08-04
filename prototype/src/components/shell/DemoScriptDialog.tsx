@@ -18,8 +18,13 @@ const steps = [
   },
   {
     persona: 'IP Manager',
-    action: 'Walk the publish scope: private → campus → statewide → national → public.',
-    why: 'Widening requires dual control, and only the non-confidential summary ever goes out. The last step reaches the open internet and asks once more, because it cannot be undone.',
+    action: 'Publish straight to the national network — click that circle, do not step through.',
+    why: 'Any level is one click away. The confirmation names the levels you went past and explains what you gave up: not the audiences (a wider level contains the narrower ones) but the chance to see how it lands before opening it further.',
+  },
+  {
+    persona: 'IP Manager',
+    action: 'In the IP Console, tick several disclosures and publish them together.',
+    why: 'Anything not ready is held back and named rather than dragged along — the review gate is per disclosure and is never averaged across a selection.',
   },
   {
     persona: 'IP Manager',
@@ -60,6 +65,11 @@ const steps = [
     persona: 'IP Manager',
     action: 'Open Lead review.',
     why: 'Signups that look automated or empty are held before they can approach the university, with the reasons shown. Sign up with a throwaway address and a one-word answer to see one land here.',
+  },
+  {
+    persona: 'Wildfire Super Admin',
+    action: 'Switch to the admin, then use the school switcher to act for USD — which has no IP Manager.',
+    why: 'The admin has the whole IP-office toolkit for any school, plus an "All universities" view. Whatever they change is badged in that school\'s audit trail as Wildfire acting on their behalf.',
   },
   {
     persona: 'University Leadership',
