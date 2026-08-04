@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, FileDown, Lock, Upload } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, Building2, Check, FileDown, Lock, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/misc';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Field } from '@/components/shared/Field';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { useStore, type IpDraft } from '@/data/store';
+import { useActiveUniversity, useStore, useUniversityScope, type IpDraft } from '@/data/store';
 import { SAMPLE_CSV, parseCsv, autoMap, toDrafts, TARGET_FIELDS, type ParsedCsv } from '@/lib/csv';
 import { cn } from '@/lib/utils';
 
@@ -35,6 +36,39 @@ const emptyDraft: IpDraft = {
  * spreadsheet" or "add IP individually with a button". Both land private.
  */
 export function ImportIp() {
+  const university = useActiveUniversity();
+  const scope = useUniversityScope();
+
+  /**
+   * An import has to land somewhere. `addIpItems` stamps the active school
+   * onto every row, so in the all-schools view there is no answer and the
+   * rows would be minted owned by nothing. Refuse up front rather than
+   * silently filing a whole spreadsheet into whichever school was last
+   * selected.
+   */
+  if (scope.all) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Stagger className="space-y-5">
+          <FadeIn>
+            <PageHeader
+              icon={FileDown}
+              title="Import IP"
+              subtitle="Bring the portfolio in from a spreadsheet, or add a single disclosure by hand."
+            />
+          </FadeIn>
+          <FadeIn>
+            <EmptyState
+              icon={Building2}
+              title="Pick a university first"
+              body="You are looking at every school at once. An import belongs to one university, so choose which one from the switcher at the top before bringing disclosures in."
+            />
+          </FadeIn>
+        </Stagger>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Stagger className="space-y-5">
@@ -52,8 +86,10 @@ export function ImportIp() {
             <div>
               <p className="text-sm font-medium text-blue-900">Everything lands private</p>
               <p className="text-sm text-blue-700 mt-0.5">
-                Imported IP is visible only to you and this university's IP staff until you deliberately
-                publish it. Private is also the valid "hold and decide later" state.
+                Imported IP is visible only to you and{' '}
+                <span className="font-medium">{university?.shortName ?? 'this university'}</span>&rsquo;s
+                IP staff until you deliberately publish it. Private is also the valid &ldquo;hold and
+                decide later&rdquo; state.
               </p>
             </div>
           </div>

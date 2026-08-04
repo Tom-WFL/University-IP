@@ -5,11 +5,11 @@ import { InterestQueue } from '@/components/manager/InterestQueue';
 import { SendToCohortDialog } from '@/components/manager/SendToCohortDialog';
 import { Confetti, FadeIn, Stagger } from '@/components/shared/motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useStore } from '@/data/store';
+import { useStore, useUniversityScope } from '@/data/store';
 
 /** Every hand-raise across the school's portfolio, in one queue. */
 export function HandRaises() {
-  const universityId = useStore((s) => s.activeUniversityId);
+  const scope = useUniversityScope();
   const ipItems = useStore((s) => s.ipItems);
   const handRaises = useStore((s) => s.handRaises);
   const users = useStore((s) => s.users);
@@ -18,7 +18,7 @@ export function HandRaises() {
   const [celebrate, setCelebrate] = useState(false);
   const [newTeamId, setNewTeamId] = useState<string | null>(null);
 
-  const mineIds = new Set(ipItems.filter((i) => i.universityId === universityId).map((i) => i.id));
+  const mineIds = new Set(ipItems.filter((i) => scope.matches(i.universityId)).map((i) => i.id));
   const relevant = handRaises.filter((hr) => mineIds.has(hr.ipItemId));
   const pending = relevant.filter((hr) => hr.status === 'pending');
   const decided = relevant.filter((hr) => hr.status !== 'pending');

@@ -25,6 +25,7 @@ import { MarketingIpDetail } from '@/pages/marketing/MarketingIpDetail';
 import { Signup } from '@/pages/auth/Signup';
 import { personaHome } from '@/components/shell/nav';
 import { useCurrentUser } from '@/data/store';
+import { MANAGER_PERSONAS } from '@/lib/permissions';
 import type { PersonaKind } from '@/data/types';
 
 /** Sends "/" to whichever home matches the current persona. */
@@ -54,7 +55,9 @@ function RequirePersona({
   return <>{children}</>;
 }
 
-const MANAGER_ONLY: PersonaKind[] = ['ip_manager', 'super_admin'];
+// One definition, shared with the university switcher, so what the routes
+// allow and what the chrome offers cannot drift apart.
+const MANAGER_ONLY = MANAGER_PERSONAS;
 
 export default function App() {
   return (
@@ -109,9 +112,25 @@ export default function App() {
             <Route path="/my-team" element={<MyTeam />} />
           </Route>
 
-          {/* Professor + Wildfire admin */}
-          <Route path="/professor" element={<ProfessorView />} />
-          <Route path="/admin" element={<SuperAdmin />} />
+          {/* An inventor's own screen. Deliberately NOT open to the Wildfire
+              admin: parity means everything an IP MANAGER can do, and this is
+              not one of those things. */}
+          <Route
+            path="/professor"
+            element={
+              <RequirePersona allow={['professor']}>
+                <ProfessorView />
+              </RequirePersona>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <RequirePersona allow={['super_admin']}>
+                <SuperAdmin />
+              </RequirePersona>
+            }
+          />
           <Route
             path="/insights"
             element={

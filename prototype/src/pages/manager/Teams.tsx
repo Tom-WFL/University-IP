@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { StatusChip } from '@/components/shared/chips';
 import { FadeIn, Stagger } from '@/components/shared/motion';
 import { SendToCohortDialog } from '@/components/manager/SendToCohortDialog';
-import { useStore } from '@/data/store';
+import { useStore, useUniversityScope } from '@/data/store';
 import { formatDate, initials } from '@/lib/utils';
 
 /**
@@ -17,7 +17,8 @@ import { formatDate, initials } from '@/lib/utils';
  */
 export function Teams() {
   const navigate = useNavigate();
-  const universityId = useStore((s) => s.activeUniversityId);
+  const scope = useUniversityScope();
+  const universities = useStore((s) => s.universities);
   const ipItems = useStore((s) => s.ipItems);
   const teams = useStore((s) => s.teams);
   const users = useStore((s) => s.users);
@@ -25,7 +26,7 @@ export function Teams() {
   const cohorts = useStore((s) => s.cohorts);
   const [dialogTeamId, setDialogTeamId] = useState<string | null>(null);
 
-  const mineIds = new Set(ipItems.filter((i) => i.universityId === universityId).map((i) => i.id));
+  const mineIds = new Set(ipItems.filter((i) => scope.matches(i.universityId)).map((i) => i.id));
   const myTeams = teams.filter((t) => mineIds.has(t.ipItemId));
 
   return (
@@ -74,7 +75,12 @@ export function Teams() {
                               {team.name}
                             </p>
                           </button>
-                          <p className="text-xs text-gray-500">Formed {formatDate(team.formedAt)}</p>
+                          <p className="text-xs text-gray-500">
+                            Formed {formatDate(team.formedAt)}
+                            {scope.all && item && (
+                              <> · {universities.find((u) => u.id === item.universityId)?.shortName}</>
+                            )}
+                          </p>
 
                           <div className="flex flex-wrap items-center gap-2 mt-3">
                             {team.memberIds.map((id) => {

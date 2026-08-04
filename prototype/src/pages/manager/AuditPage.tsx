@@ -3,12 +3,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { AuditTimeline } from '@/components/shared/AuditTimeline';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { useStore } from '@/data/store';
+import { useStore, useUniversityScope } from '@/data/store';
 
 export function AuditPage() {
-  const universityId = useStore((s) => s.activeUniversityId);
-  const audit = useStore((s) => s.audit).filter((e) => e.universityId === universityId);
+  const scope = useUniversityScope();
+  const audit = useStore((s) => s.audit).filter((e) => scope.matches(e.universityId));
   const users = useStore((s) => s.users);
+  const universities = useStore((s) => s.universities);
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -33,7 +34,7 @@ export function AuditPage() {
         <FadeIn>
           <Card>
             <CardContent className="p-6">
-              <AuditTimeline events={audit} users={users} />
+              <AuditTimeline events={audit} users={users} universities={universities} />
             </CardContent>
           </Card>
         </FadeIn>

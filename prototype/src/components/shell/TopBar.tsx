@@ -1,6 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Building2, ChevronDown, FlaskConical, LogOut, Menu, PlayCircle, RotateCcw, UserCog } from 'lucide-react';
+import {
+  Building2,
+  ChevronDown,
+  FlaskConical,
+  Layers,
+  LogOut,
+  Menu,
+  PlayCircle,
+  RotateCcw,
+  UserCog,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuCheck,
@@ -11,10 +21,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { useCurrentUser, useStore } from '@/data/store';
+import { ALL_UNIVERSITIES, useCurrentUser, useStore } from '@/data/store';
+import { isManager, isPlatformAdmin } from '@/lib/permissions';
 import { personaHome, personaLabel } from './nav';
 import { DemoScriptDialog } from './DemoScriptDialog';
-import { initials } from '@/lib/utils';
+import { cn, initials } from '@/lib/utils';
 
 /**
  * Slim top bar. Auth is replaced by a persona switcher so the whole flow can
@@ -35,6 +46,8 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
 
   const activeUniversity = universities.find((u) => u.id === activeUniversityId);
   const schools = universities.filter((u) => u.kind === 'university');
+  const platformAdmin = isPlatformAdmin(user.persona);
+  const allSchools = activeUniversityId === ALL_UNIVERSITIES;
 
   const switchTo = (userId: string) => {
     setCurrentUser(userId);
@@ -53,21 +66,36 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* University switcher — IP managers only; mirrors HubSwitcher. */}
-        {user.persona === 'ip_manager' && activeUniversity && (
+        {/* University switcher — anyone with IP-manager authority. For Wildfire
+            staff it is also the tenant indicator, styled to stand out, because
+            an admin who forgets which school they are in will edit the wrong
+            portfolio. */}
+        {isManager(user.persona) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               {/* min-w-0 lets this shrink below its content so the school name
                   truncates instead of shoving the right-hand group — including
                   the synthetic-data label — off the edge on a narrow screen. */}
-              <button className="inline-flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 px-2 sm:px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ED1C24] focus-visible:ring-offset-2">
+              <button
+                className={cn(
+                  'inline-flex min-w-0 items-center gap-2 rounded-lg border px-2 sm:px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ED1C24] focus-visible:ring-offset-2',
+                  platformAdmin
+                    ? 'border-orange-300 bg-orange-50 text-gray-900 hover:bg-orange-100'
+                    : 'border-gray-200 text-gray-700 hover:bg-gray-50',
+                )}
+              >
                 <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
-                <span className="truncate">{activeUniversity.name}</span>
+                <span className="truncate">
+                  {platformAdmin && <span className="text-gray-500">Acting as </span>}
+                  {allSchools ? 'All universities' : (activeUniversity?.name ?? 'Pick a school')}
+                </span>
                 <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Your universities</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {platformAdmin ? 'Work on behalf of' : 'Your universities'}
+              </DropdownMenuLabel>
               {schools.map((school) => (
                 <DropdownMenuItem key={school.id} onSelect={() => setActiveUniversity(school.id)}>
                   <Building2 className="w-4 h-4 text-gray-400" />
@@ -75,6 +103,16 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
                   <DropdownMenuCheck active={school.id === activeUniversityId} />
                 </DropdownMenuItem>
               ))}
+              {platformAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => setActiveUniversity(ALL_UNIVERSITIES)}>
+                    <Layers className="w-4 h-4 text-gray-400" />
+                    All universities
+                    <DropdownMenuCheck active={allSchools} />
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}

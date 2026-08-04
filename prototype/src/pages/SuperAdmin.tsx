@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Building2, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusChip } from '@/components/shared/chips';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { useStore } from '@/data/store';
+import { leadsForUniversity, needsSummaryReview, useStore } from '@/data/store';
 import { formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
@@ -23,8 +24,19 @@ export function SuperAdmin() {
   const invites = useStore((s) => s.invites);
   const threshold = useStore((s) => s.leadReviewThreshold);
   const setLeadReviewThreshold = useStore((s) => s.setLeadReviewThreshold);
-  const pendingLeads = users.filter((u) => u.status === 'pending_review').length;
+  // Same selector the Leads page and the sidebar badge use. This used to be a
+  // bare global count, which never matched any school's queue. Unrouted leads
+  // are broken out because they legitimately show up for every manager, so a
+  // single number could not be honest about them.
+  const platformLeads = leadsForUniversity(
+    { users, ipItems },
+    { all: true, universityId: null, matches: () => true },
+  );
+  const pendingLeads = platformLeads.waiting.length;
+  const unroutedLeads = platformLeads.unrouted.length;
   const provisionUniversity = useStore((s) => s.provisionUniversity);
+  const setActiveUniversity = useStore((s) => s.setActiveUniversity);
+  const navigate = useNavigate();
 
   const [name, setName] = useState('');
   const [shortName, setShortName] = useState('');
@@ -77,6 +89,7 @@ export function SuperAdmin() {
                 ))}
                 <span className="text-sm text-gray-500 ml-auto tabular-nums">
                   {pendingLeads} waiting now
+                  {unroutedLeads > 0 && ` · ${unroutedLeads} not tied to a school`}
                 </span>
               </div>
               <p className="text-xs text-gray-500">
@@ -107,6 +120,10 @@ export function SuperAdmin() {
                   const invite = invites.find(
                     (inv) => inv.universityId === school.id && inv.role === 'ip_manager',
                   );
+                  const schoolItems = ipItems.filter((i) => i.universityId === school.id);
+                  const published = schoolItems.filter((i) => i.publishScope !== 'private').length;
+                  const drafts = schoolItems.filter(needsSummaryReview).length;
+
                   return (
                     <li key={school.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
@@ -114,19 +131,39 @@ export function SuperAdmin() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-900">{school.name}</p>
-                        <p className="text-sm text-gray-500">
-                          {manager ? `${manager.name} · ${manager.email}` : 'No IP Manager assigned'}
+                        {manager ? (
+                          <p className="text-sm text-gray-500">
+                            {manager.name} · {manager.email}
+                          </p>
+                        ) : (
+                          // Worth saying out loud rather than leaving as a
+                          // blank: a school with nobody in the IP office cannot
+                          // publish anything at all, and that is precisely when
+                          // Wildfire needs to be able to step in.
+                          <p className="text-sm text-amber-700">
+                            No IP Manager assigned — nobody here can publish anything.
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {count} disclosure{count === 1 ? '' : 's'} · {published} published
+                          {drafts > 0 && ` · ${drafts} draft${drafts === 1 ? '' : 's'} awaiting review`}
                         </p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         {invite && <StatusChip status={invite.status} />}
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-gray-900">{count}</p>
-                          <p className="text-xs text-gray-400">disclosures</p>
-                        </div>
                         <div className="text-right hidden sm:block">
                           <p className="text-xs text-gray-400">Added {formatDate(school.createdAt)}</p>
                         </div>
+                        <Button
+                          variant={manager ? 'outline' : 'gradient'}
+                          size="sm"
+                          onClick={() => {
+                            setActiveUniversity(school.id);
+                            navigate('/manage');
+                          }}
+                        >
+                          Manage
+                        </Button>
                       </div>
                     </li>
                   );

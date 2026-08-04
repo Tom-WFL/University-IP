@@ -15,7 +15,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import type { AuditAction, AuditEvent, User } from '@/data/types';
+import type { AuditAction, AuditEvent, University, User } from '@/data/types';
 import { formatDate } from '@/lib/utils';
 
 const actionMeta: Record<AuditAction, { icon: typeof Lock; className: string }> = {
@@ -46,10 +46,13 @@ const actionMeta: Record<AuditAction, { icon: typeof Lock; className: string }> 
 export function AuditTimeline({
   events,
   users,
+  universities,
   limit,
 }: {
   events: AuditEvent[];
   users: User[];
+  /** Supply to attribute Wildfire staff actions to the school they acted on. */
+  universities?: University[];
   limit?: number;
 }) {
   const shown = limit ? events.slice(0, limit) : events;
@@ -71,8 +74,27 @@ export function AuditTimeline({
             </div>
             <div className="min-w-0 flex-1 pt-0.5">
               <p className="text-sm text-gray-900 leading-snug">{event.detail}</p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {actor?.name ?? 'Unknown'} · {formatDate(event.at)}
+              <p className="text-xs text-gray-400 mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                <span>
+                  {actor?.name ?? 'Unknown'} · {formatDate(event.at)}
+                </span>
+                {/* A university needs to see at a glance when somebody outside
+                    their own office changed their portfolio. Derived from the
+                    actor's persona, so it appears on every action they have
+                    ever taken rather than only on new ones. */}
+                {actor?.persona === 'super_admin' && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 text-[11px] font-medium">
+                    <Building2 className="w-2.5 h-2.5" />
+                    Wildfire Labs
+                    {universities && (
+                      <>
+                        {' · acting for '}
+                        {universities.find((u) => u.id === event.universityId)?.shortName ??
+                          'the platform'}
+                      </>
+                    )}
+                  </span>
+                )}
               </p>
             </div>
           </li>

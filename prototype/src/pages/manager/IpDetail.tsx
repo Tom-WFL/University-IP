@@ -397,7 +397,7 @@ export function IpDetail() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <AuditTimeline events={itemAudit} users={users} />
+                  <AuditTimeline events={itemAudit} users={users} universities={universities} />
                 </CardContent>
               </Card>
             </TabsContent>

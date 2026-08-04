@@ -1,35 +1,61 @@
+import { Fragment } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Flame, X } from 'lucide-react';
 import { navByPersona, personaHome } from './nav';
-import { useCurrentUser, useStore } from '@/data/store';
+import type { NavItem } from './nav';
+import { leadsForUniversity, useActiveUniversity, useCurrentUser, useStore, useUniversityScope } from '@/data/store';
 import { cn } from '@/lib/utils';
 
 function NavItems({ onNavigate }: { onNavigate?: () => void }) {
   const user = useCurrentUser();
   const handRaises = useStore((s) => s.handRaises);
   const ipItems = useStore((s) => s.ipItems);
-  const activeUniversityId = useStore((s) => s.activeUniversityId);
   const users = useStore((s) => s.users);
+  const scope = useUniversityScope();
+  const activeUniversity = useActiveUniversity();
 
   const pendingHandRaises = handRaises.filter((hr) => {
     if (hr.status !== 'pending') return false;
     const item = ipItems.find((i) => i.id === hr.ipItemId);
-    return item?.universityId === activeUniversityId;
+    return scope.matches(item?.universityId);
   }).length;
 
   const myHandRaises = handRaises.filter((hr) => hr.userId === user.id && hr.status === 'pending').length;
 
-  const pendingLeads = users.filter((u) => u.status === 'pending_review').length;
+  // Scoped the same way the Leads page scopes itself. These two used to
+  // disagree — the badge counted every held signup on the platform while the
+  // queue showed only this school's, so the number never matched the list.
+  const pendingLeads = leadsForUniversity({ users, ipItems }, scope).waiting.length;
 
   const counts = { pendingHandRaises, myHandRaises, pendingLeads };
 
+  const items = navByPersona[user.persona];
+  // Headings only earn their place when there is more than one group. A
+  // single-purpose nav (leadership, professor) stays a plain list of links.
+  const sectioned = new Set(items.map((i) => i.section).filter(Boolean)).size > 1;
+  const heading = (section: NavItem['section']) =>
+    section === 'platform'
+      ? 'Wildfire'
+      : `Acting as ${activeUniversity?.shortName ?? 'a university'}`;
+
   return (
     <nav className="px-4 space-y-1">
-      {navByPersona[user.persona].map((item) => {
+      {items.map((item, index) => {
         const badge = item.badgeKey ? counts[item.badgeKey] : 0;
+        const startsSection = sectioned && item.section !== items[index - 1]?.section;
         return (
+          <Fragment key={item.to}>
+            {startsSection && (
+              <p
+                className={cn(
+                  'px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400',
+                  index > 0 && 'pt-4',
+                )}
+              >
+                {heading(item.section)}
+              </p>
+            )}
           <NavLink
-            key={item.to}
             to={item.to}
             end={item.exact}
             onClick={onNavigate}
@@ -49,6 +75,7 @@ function NavItems({ onNavigate }: { onNavigate?: () => void }) {
               </span>
             )}
           </NavLink>
+          </Fragment>
         );
       })}
     </nav>

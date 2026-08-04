@@ -25,23 +25,33 @@ export interface NavItem {
   exact?: boolean;
   /** Renders a count pill when there's something waiting. */
   badgeKey?: 'pendingHandRaises' | 'myHandRaises' | 'pendingLeads';
+  /** Groups items under a heading. Only rendered when a persona has more than
+   *  one group, so single-purpose navs stay a plain list. */
+  section?: 'platform' | 'acting';
 }
+
+/**
+ * The IP office's toolkit. Extracted so the Wildfire admin gets exactly the
+ * same set rather than a re-typed approximation of it — "everything an IP
+ * manager can do" should be true by construction, not by diligence.
+ */
+const managerNav: NavItem[] = [
+  { to: '/manage', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { to: '/manage/ip', label: 'IP Console', icon: FlaskConical },
+  { to: '/manage/import', label: 'Import IP', icon: FileDown },
+  { to: '/manage/interest', label: 'Hand-raises', icon: Hand, badgeKey: 'pendingHandRaises' },
+  { to: '/manage/leads', label: 'Lead review', icon: ShieldAlert, badgeKey: 'pendingLeads' },
+  { to: '/manage/teams', label: 'Teams & I-Corps', icon: Users },
+  { to: '/manage/audit', label: 'Audit trail', icon: ScrollText },
+  { to: '/manage/policy', label: 'Release policy', icon: ShieldCheck },
+];
 
 /**
  * Left-hand navigation, per persona. Mirrors the app's SuperAdminSidebar
  * shape (w-64, bg-white, border-r, active = bg-red-50 text-red-700).
  */
 export const navByPersona: Record<PersonaKind, NavItem[]> = {
-  ip_manager: [
-    { to: '/manage', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-    { to: '/manage/ip', label: 'IP Console', icon: FlaskConical },
-    { to: '/manage/import', label: 'Import IP', icon: FileDown },
-    { to: '/manage/interest', label: 'Hand-raises', icon: Hand, badgeKey: 'pendingHandRaises' },
-    { to: '/manage/leads', label: 'Lead review', icon: ShieldAlert, badgeKey: 'pendingLeads' },
-    { to: '/manage/teams', label: 'Teams & I-Corps', icon: Users },
-    { to: '/manage/audit', label: 'Audit trail', icon: ScrollText },
-    { to: '/manage/policy', label: 'Release policy', icon: ShieldCheck },
-  ],
+  ip_manager: managerNav,
   founder: [
     { to: '/home', label: 'Home', icon: Home, exact: true },
     { to: '/discover', label: 'Discover IP', icon: Search },
@@ -50,7 +60,14 @@ export const navByPersona: Record<PersonaKind, NavItem[]> = {
     { to: '/my-team', label: 'My team', icon: Users },
   ],
   professor: [{ to: '/professor', label: 'My idea', icon: GraduationCap, exact: true }],
-  super_admin: [{ to: '/admin', label: 'Universities', icon: Building2, exact: true }],
+  // Wildfire staff get the platform view AND the full IP-office toolkit. The
+  // second group is labelled with whichever school is currently selected, so
+  // the admin is never a click away from editing the wrong tenant without
+  // noticing.
+  super_admin: [
+    { to: '/admin', label: 'Universities', icon: Building2, exact: true, section: 'platform' },
+    ...managerNav.map((item) => ({ ...item, section: 'acting' as const })),
+  ],
   // Read-only oversight. One destination, and deliberately no route that can
   // change anything — the distinction from an IP Manager IS the lack of edit.
   leadership: [{ to: '/insights', label: 'Insights', icon: BarChart3, exact: true }],

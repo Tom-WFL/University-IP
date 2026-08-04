@@ -24,11 +24,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { FacultyChip, OwnershipChip, RouteChip, ScopeChip } from '@/components/shared/chips';
+import { FacultyChip, OwnershipChip, RouteChip, SchoolChip, ScopeChip } from '@/components/shared/chips';
 import { FadeIn, Stagger } from '@/components/shared/motion';
 import { BulkPublishDialog } from '@/components/manager/BulkPublishDialog';
 import { SCOPES, SCOPE_ORDER } from '@/data/scopes';
-import { itemInvolvement, needsSummaryReview, useStore } from '@/data/store';
+import { itemInvolvement, needsSummaryReview, useStore, useUniversityScope } from '@/data/store';
 import type { PublishScope } from '@/data/types';
 import { formatDate } from '@/lib/utils';
 
@@ -78,7 +78,7 @@ export function IpConsole() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
 
-  const universityId = useStore((s) => s.activeUniversityId);
+  const scope = useUniversityScope();
   const ipItems = useStore((s) => s.ipItems);
   const handRaises = useStore((s) => s.handRaises);
   const universities = useStore((s) => s.universities);
@@ -95,8 +95,8 @@ export function IpConsole() {
   };
 
   const mine = useMemo(
-    () => ipItems.filter((i) => i.universityId === universityId),
-    [ipItems, universityId],
+    () => ipItems.filter((i) => scope.matches(i.universityId)),
+    [ipItems, scope],
   );
 
   const interestCount = (ipItemId: string) =>
@@ -122,8 +122,9 @@ export function IpConsole() {
         case 'interest':
           return interestCount(item.id) > 0;
         default: {
-          const scope = filterScope[filter];
-          return scope ? item.publishScope === scope : true;
+          // Named `atScope` so it cannot shadow the university scope above.
+          const atScope = filterScope[filter];
+          return atScope ? item.publishScope === atScope : true;
         }
       }
     });
@@ -136,7 +137,7 @@ export function IpConsole() {
   useEffect(() => {
     setSelected(new Set());
     setLastResult(null);
-  }, [filter, query, universityId]);
+  }, [filter, query, scope.universityId, scope.all]);
 
   const visibleIds = filtered.map((i) => i.id);
   const selectedVisible = visibleIds.filter((id) => selected.has(id));
@@ -178,7 +179,9 @@ export function IpConsole() {
         <PageHeader
           icon={FlaskConical}
           title="IP Console"
-          subtitle="Every disclosure this university holds, and where each one stands."
+          subtitle={scope.all
+              ? "Every disclosure across every university on the platform."
+              : "Every disclosure this university holds, and where each one stands."}
         />
         <EmptyState
           icon={FlaskConical}
@@ -198,7 +201,9 @@ export function IpConsole() {
           <PageHeader
             icon={FlaskConical}
             title="IP Console"
-            subtitle="Every disclosure this university holds, and where each one stands."
+            subtitle={scope.all
+              ? "Every disclosure across every university on the platform."
+              : "Every disclosure this university holds, and where each one stands."}
             action={
               <Button variant="gradient" onClick={() => navigate('/manage/import')}>
                 Import IP
@@ -322,6 +327,7 @@ export function IpConsole() {
                         />
                       </th>
                       <th className="px-4 py-3">Disclosure</th>
+                      {scope.all && <th className="px-4 py-3">School</th>}
                       <th className="px-4 py-3">Ownership</th>
                       <th className="px-4 py-3">Who can see it</th>
                       <th className="px-4 py-3">Route</th>
@@ -483,6 +489,9 @@ export function IpConsole() {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-3">
+                        {scope.all && (
+                          <SchoolChip university={universities.find((u) => u.id === item.universityId)} />
+                        )}
                         <ScopeChip scope={item.publishScope} />
                         <RouteChip route={item.route} />
                         <OwnershipChip ownership={item.ownership} />

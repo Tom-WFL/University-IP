@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AlertTriangle, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
+import { AlertTriangle, Building2, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
@@ -23,6 +23,9 @@ import { cn } from '@/lib/utils';
  */
 export function PolicyPage() {
   const university = useActiveUniversity();
+  const universities = useStore((s) => s.universities);
+  const setActiveUniversity = useStore((s) => s.setActiveUniversity);
+  const schools = universities.filter((u) => u.kind === 'university');
   const ipItems = useStore((s) => s.ipItems);
   const updateRedactionPolicy = useStore((s) => s.updateRedactionPolicy);
   const setInventorRolePolicy = useStore((s) => s.setInventorRolePolicy);
@@ -45,10 +48,48 @@ export function PolicyPage() {
     ).length;
   }, [draft, saved, ipItems, university]);
 
+  // Release criteria belong to one school. In the all-schools view there is no
+  // single answer, so ask rather than silently editing whichever school
+  // happened to be selected last.
   if (!university) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center text-gray-500">
-        No university selected.
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Stagger className="space-y-5">
+          <FadeIn>
+            <PageHeader
+              icon={ShieldCheck}
+              title="Release policy"
+              subtitle="Criteria are set per university — pick which one you are editing."
+            />
+          </FadeIn>
+          <FadeIn>
+            <Card>
+              <CardContent className="p-2">
+                <ul className="divide-y divide-gray-100">
+                  {schools.map((school) => (
+                    <li key={school.id}>
+                      <button
+                        onClick={() => setActiveUniversity(school.id)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ED1C24]"
+                      >
+                        <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-medium text-gray-900">{school.name}</span>
+                          <span className="block text-xs text-gray-500">
+                            {school.redactionPolicy.length} release criteria ·{' '}
+                            {school.inventorRolePolicy === 'contact_only'
+                              ? 'inventors are contacts only'
+                              : 'inventors may choose'}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </FadeIn>
+        </Stagger>
       </div>
     );
   }

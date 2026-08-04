@@ -1,4 +1,4 @@
-import { Globe, Landmark, Lock, Radio, School, UserCheck, UserMinus } from 'lucide-react';
+import { Building2, Globe, Landmark, Lock, Radio, School, UserCheck, UserMinus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SCOPES } from '@/data/scopes';
 import type { FacultyAttachment, Ownership, PublishScope, Route } from '@/data/types';
@@ -51,6 +51,24 @@ export function ScopeChip({ scope, showIcon = true }: { scope: PublishScope; sho
 // Re-exported so existing `from '@/components/shared/chips'` imports keep
 // working; the string itself now lives with the rest of the scope copy.
 export { scopeLabel } from '@/data/scopes';
+
+// --- Which school owns it --------------------------------------------------
+
+/**
+ * Only ever rendered in the Wildfire admin's all-schools view. A manager
+ * looking at their own portfolio does not need every row to repeat the name of
+ * their own university, so the single-school view stays exactly as it was.
+ *
+ * `shortName` throughout, matching IpCard and the founder surfaces.
+ */
+export function SchoolChip({ university }: { university?: { shortName: string } }) {
+  return (
+    <Chip className="bg-slate-100 text-slate-700 border-slate-200">
+      <Building2 className="w-3 h-3" />
+      {university?.shortName ?? 'Unknown school'}
+    </Chip>
+  );
+}
 
 // --- Axis 2: route ---------------------------------------------------------
 

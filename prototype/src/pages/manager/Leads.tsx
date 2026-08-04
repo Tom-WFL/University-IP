@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { useStore } from '@/data/store';
+import { leadsForUniversity, useStore, useUniversityScope } from '@/data/store';
 import { RISK_LABELS } from '@/lib/leadRisk';
 import { formatDate, initials } from '@/lib/utils';
 import type { User } from '@/data/types';
@@ -26,28 +26,18 @@ export function Leads() {
   const users = useStore((s) => s.users);
   const ipItems = useStore((s) => s.ipItems);
   const universities = useStore((s) => s.universities);
-  const activeUniversityId = useStore((s) => s.activeUniversityId);
+  const scope = useUniversityScope();
   const reviewLead = useStore((s) => s.reviewLead);
   const threshold = useStore((s) => s.leadReviewThreshold);
 
   const [tab, setTab] = useState('waiting');
 
-  /**
-   * A lead who came in through a specific disclosure belongs to that school.
-   * One with no context belongs to nobody in particular, so it surfaces here
-   * too rather than falling down a gap.
-   */
-  const mine = useMemo(() => {
-    const belongsHere = (u: User) => {
-      if (!u.signupIpContext) return true;
-      const item = ipItems.find((i) => i.id === u.signupIpContext);
-      return !item || item.universityId === activeUniversityId;
-    };
-    return users.filter((u) => u.signupSource !== 'seed' || u.status !== 'active').filter(belongsHere);
-  }, [users, ipItems, activeUniversityId]);
-
-  const waiting = mine.filter((u) => u.status === 'pending_review');
-  const decided = mine.filter((u) => u.status === 'blocked' || (u.riskFlags.length === 0 && u.signupSource !== 'seed'));
+  // Shared with the sidebar badge and the super-admin roster, so all three
+  // agree on what "waiting" means for this school.
+  const { waiting, decided } = useMemo(
+    () => leadsForUniversity({ users, ipItems }, scope),
+    [users, ipItems, scope],
+  );
 
   const renderLead = (u: User, actionable: boolean) => {
     const item = u.signupIpContext ? ipItems.find((i) => i.id === u.signupIpContext) : undefined;

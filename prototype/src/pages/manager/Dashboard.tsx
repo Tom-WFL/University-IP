@@ -16,7 +16,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { StatsRow } from '@/components/shared/StatsRow';
 import { AuditTimeline } from '@/components/shared/AuditTimeline';
 import { FadeIn, Stagger } from '@/components/shared/motion';
-import { needsSummaryReview, useActiveUniversity, useStore } from '@/data/store';
+import { needsSummaryReview, useActiveUniversity, useStore, useUniversityScope } from '@/data/store';
 import { daysSince } from '@/lib/utils';
 
 /**
@@ -26,13 +26,14 @@ import { daysSince } from '@/lib/utils';
 export function ManagerDashboard() {
   const navigate = useNavigate();
   const university = useActiveUniversity();
-  const universityId = useStore((s) => s.activeUniversityId);
-  const ipItems = useStore((s) => s.ipItems).filter((i) => i.universityId === universityId);
+  const scope = useUniversityScope();
+  const ipItems = useStore((s) => s.ipItems).filter((i) => scope.matches(i.universityId));
   const handRaises = useStore((s) => s.handRaises);
   const teams = useStore((s) => s.teams);
   const cohortApplications = useStore((s) => s.cohortApplications);
-  const audit = useStore((s) => s.audit).filter((e) => e.universityId === universityId);
+  const audit = useStore((s) => s.audit).filter((e) => scope.matches(e.universityId));
   const users = useStore((s) => s.users);
+  const universities = useStore((s) => s.universities);
 
   const ipIds = new Set(ipItems.map((i) => i.id));
   const myHandRaises = handRaises.filter((hr) => ipIds.has(hr.ipItemId));
@@ -180,7 +181,7 @@ export function ManagerDashboard() {
               </Button>
             </CardHeader>
             <CardContent>
-              <AuditTimeline events={audit} users={users} limit={6} />
+              <AuditTimeline events={audit} users={users} universities={universities} limit={6} />
             </CardContent>
           </Card>
         </FadeIn>

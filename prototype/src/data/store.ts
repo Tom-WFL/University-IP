@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
@@ -49,6 +50,17 @@ import {
 // The ladder and every word said about it now live in `./scopes`. Re-exported
 // here because the whole app already imports them from the store.
 export { SCOPE_ORDER, scopeRank } from './scopes';
+
+/**
+ * Sentinel `activeUniversityId` meaning "every school at once".
+ *
+ * A sentinel rather than widening the field to `string | null`, because ten
+ * screens read this id and a nullable type would touch all of them for no
+ * gain. Only a Wildfire super admin may hold it — `setActiveUniversity`
+ * refuses it for anyone else, and `setCurrentUser` drops it when the persona
+ * changes.
+ */
+export const ALL_UNIVERSITIES = 'all';
 
 /**
  * May this item be published (moved to any scope wider than private)?
@@ -426,13 +438,28 @@ export const useStore = create<StoreState>()(
 
         setCurrentUser: (userId) => {
           const user = get().users.find((u) => u.id === userId);
-          set({
-            currentUserId: userId,
-            activeUniversityId: user?.universityId ?? get().activeUniversityId,
-          });
+          const inherited = user?.universityId ?? get().activeUniversityId;
+          // Only Wildfire staff may hold the cross-tenant view. Anyone else
+          // inheriting it — by switching persona while the admin was looking at
+          // every school — would be handed every university's confidential
+          // detail, so drop them back to a real school.
+          const safe =
+            inherited === ALL_UNIVERSITIES && user?.persona !== 'super_admin'
+              ? (get().universities.find((u) => u.kind === 'university')?.id ?? inherited)
+              : inherited;
+          set({ currentUserId: userId, activeUniversityId: safe });
         },
 
-        setActiveUniversity: (universityId) => set({ activeUniversityId: universityId }),
+        setActiveUniversity: (universityId) => {
+          if (universityId === ALL_UNIVERSITIES) {
+            const me = get().users.find((u) => u.id === get().currentUserId);
+            // Refused rather than silently coerced: a caller asking for the
+            // all-schools view without the standing to see it is a bug worth
+            // leaving visible in the data.
+            if (me?.persona !== 'super_admin') return;
+          }
+          set({ activeUniversityId: universityId });
+        },
 
         signOut: () => set({ signedIn: false }),
         signIn: () => set({ signedIn: true }),
@@ -1349,6 +1376,77 @@ export function useCurrentUser(): User {
   const users = useStore((s) => s.users);
   const id = useStore((s) => s.currentUserId);
   return users.find((u) => u.id === id) ?? users[0];
+}
+
+/**
+ * Which held signups belong to a given school's queue.
+ *
+ * Extracted because three places were counting this differently and therefore
+ * disagreeing on screen: the sidebar badge counted every `pending_review`
+ * account on the platform, the super-admin page did the same, and the Leads
+ * page scoped by the school of the disclosure the lead came in through. The
+ * badge and the list it points at showed different numbers.
+ *
+ * `unrouted` is split out rather than hidden. A lead who arrived without
+ * clicking a specific disclosure belongs to nobody in particular, so every
+ * manager sees it — that is deliberate, since dropping it would be worse — but
+ * it means per-school counts legitimately overlap, and only a caller that
+ * knows this can label the numbers honestly.
+ */
+export function leadsForUniversity(
+  input: { users: User[]; ipItems: IpItem[] },
+  scope: UniversityScope,
+): { waiting: User[]; decided: User[]; unrouted: User[] } {
+  const { users, ipItems } = input;
+  const belongs = (u: User) => {
+    if (!u.signupIpContext) return true;
+    const item = ipItems.find((i) => i.id === u.signupIpContext);
+    return !item || scope.matches(item.universityId);
+  };
+  const relevant = users
+    .filter((u) => u.signupSource !== 'seed' || u.status !== 'active')
+    .filter(belongs);
+
+  return {
+    waiting: relevant.filter((u) => u.status === 'pending_review'),
+    decided: relevant.filter(
+      (u) => u.status === 'blocked' || (u.riskFlags.length === 0 && u.signupSource !== 'seed'),
+    ),
+    unrouted: relevant.filter((u) => u.status === 'pending_review' && !u.signupIpContext),
+  };
+}
+
+export interface UniversityScope {
+  /** Looking at every school at once (Wildfire staff only). */
+  all: boolean;
+  /** The single school in view, or null in all-schools mode. */
+  universityId: string | null;
+  /** Does a record belong in the current view? */
+  matches: (universityId: string | null | undefined) => boolean;
+}
+
+/**
+ * What the manager screens are currently scoped to.
+ *
+ * Every one of them used to compare `i.universityId === activeUniversityId`
+ * directly, which had no way to express "all of them". Routing that comparison
+ * through here means a page opts into the cross-tenant view by using
+ * `scope.matches(...)`, and a page that has not been thought about yet keeps
+ * behaving exactly as it did.
+ */
+export function useUniversityScope(): UniversityScope {
+  const id = useStore((s) => s.activeUniversityId);
+  // Memoised so the object identity is stable — several pages put this in
+  // useMemo/useEffect dependency lists, and a fresh object each render would
+  // quietly defeat them.
+  return useMemo(() => {
+    const all = id === ALL_UNIVERSITIES;
+    return {
+      all,
+      universityId: all ? null : id,
+      matches: (universityId: string | null | undefined) => (all ? true : universityId === id),
+    };
+  }, [id]);
 }
 
 export function useActiveUniversity(): University | undefined {
