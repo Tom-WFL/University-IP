@@ -1,21 +1,35 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Archive, FlaskConical, Hand, MoreHorizontal, PencilLine, Search, Sparkles } from 'lucide-react';
+import {
+  Archive,
+  ChevronDown,
+  FlaskConical,
+  Hand,
+  MoreHorizontal,
+  PencilLine,
+  Search,
+  Sparkles,
+} from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { FacultyChip, OwnershipChip, RouteChip, ScopeChip } from '@/components/shared/chips';
 import { FadeIn, Stagger } from '@/components/shared/motion';
+import { BulkPublishDialog } from '@/components/manager/BulkPublishDialog';
+import { SCOPES, SCOPE_ORDER } from '@/data/scopes';
 import { itemInvolvement, needsSummaryReview, useStore } from '@/data/store';
+import type { PublishScope } from '@/data/types';
 import { formatDate } from '@/lib/utils';
 
 type FilterKey =
@@ -25,7 +39,13 @@ type FilterKey =
   | 'published'
   | 'undecided'
   | 'shelved'
-  | 'interest';
+  | 'interest'
+  // Per-level filters, so "take everything currently at campus up to national"
+  // is a selection you can make in two clicks instead of by eye.
+  | 'at_campus'
+  | 'at_statewide'
+  | 'at_national'
+  | 'at_public';
 
 const filterLabels: Record<FilterKey, string> = {
   all: 'All IP',
@@ -35,6 +55,17 @@ const filterLabels: Record<FilterKey, string> = {
   undecided: 'No route yet',
   shelved: 'Shelved / back catalog',
   interest: 'Has interest',
+  at_campus: 'At campus',
+  at_statewide: 'At statewide',
+  at_national: 'At national network',
+  at_public: 'At public',
+};
+
+const filterScope: Partial<Record<FilterKey, PublishScope>> = {
+  at_campus: 'campus',
+  at_statewide: 'statewide',
+  at_national: 'national',
+  at_public: 'public',
 };
 
 /**
@@ -50,6 +81,12 @@ export function IpConsole() {
   const universityId = useStore((s) => s.activeUniversityId);
   const ipItems = useStore((s) => s.ipItems);
   const handRaises = useStore((s) => s.handRaises);
+  const universities = useStore((s) => s.universities);
+  const updateScopeMany = useStore((s) => s.updateScopeMany);
+
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkScope, setBulkScope] = useState<PublishScope | null>(null);
+  const [lastResult, setLastResult] = useState<string | null>(null);
 
   const filter = (searchParams.get('filter') as FilterKey) || 'all';
   const setFilter = (next: FilterKey) => {
@@ -84,12 +121,56 @@ export function IpConsole() {
           return item.shelved;
         case 'interest':
           return interestCount(item.id) > 0;
-        default:
-          return true;
+        default: {
+          const scope = filterScope[filter];
+          return scope ? item.publishScope === scope : true;
+        }
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mine, query, filter, handRaises]);
+
+  // A selection is only meaningful against what is on screen. Changing the
+  // filter or the search silently redefines "all of them", so drop it rather
+  // than let someone publish rows they can no longer see.
+  useEffect(() => {
+    setSelected(new Set());
+    setLastResult(null);
+  }, [filter, query, universityId]);
+
+  const visibleIds = filtered.map((i) => i.id);
+  const selectedVisible = visibleIds.filter((id) => selected.has(id));
+  const allVisibleSelected = visibleIds.length > 0 && selectedVisible.length === visibleIds.length;
+  const selectedItems = mine.filter((i) => selected.has(i.id));
+
+  const toggleOne = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const toggleAllVisible = () =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) visibleIds.forEach((id) => next.delete(id));
+      else visibleIds.forEach((id) => next.add(id));
+      return next;
+    });
+
+  const runBulk = (scope: PublishScope) => {
+    const { published, refused } = updateScopeMany([...selected], scope);
+    setBulkScope(null);
+    setSelected(new Set());
+    setLastResult(
+      refused.length
+        ? `Published ${published.length} to ${SCOPES[scope].label.toLowerCase()}. ${refused.length} held back: ${refused
+            .map((r) => r.title)
+            .join(', ')}.`
+        : `Published ${published.length} to ${SCOPES[scope].label.toLowerCase()}.`,
+    );
+  };
 
   if (!mine.length) {
     return (
@@ -152,6 +233,54 @@ export function IpConsole() {
           </div>
         </FadeIn>
 
+        {lastResult && (
+          <FadeIn>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+              {lastResult}
+            </div>
+          </FadeIn>
+        )}
+
+        {selected.size > 0 && (
+          <FadeIn>
+            <div className="sticky top-16 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-[#ED1C24]/30 bg-orange-50 px-4 py-3 shadow-sm">
+              <p className="text-sm font-medium text-gray-900">
+                {selected.size} selected
+              </p>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="gradient" size="sm">
+                    Publish selected to…
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-72">
+                  <DropdownMenuLabel>Move all of them to</DropdownMenuLabel>
+                  {SCOPE_ORDER.filter((s) => s !== 'private').map((scope) => (
+                    <DropdownMenuItem
+                      key={scope}
+                      onSelect={() => setBulkScope(scope)}
+                      className="items-start"
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-gray-900">
+                          {SCOPES[scope].label}
+                        </span>
+                        <span className="block text-xs text-gray-500 whitespace-normal">
+                          {SCOPES[scope].who}
+                        </span>
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
+                Clear
+              </Button>
+            </div>
+          </FadeIn>
+        )}
+
         <FadeIn>
           <p className="text-sm text-gray-500">
             {filtered.length} of {mine.length} disclosures
@@ -179,6 +308,19 @@ export function IpConsole() {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr className="text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+                      <th className="px-2 py-3 w-10">
+                        {/* Selects what is on screen, not the whole portfolio —
+                            the filter is part of the selection. */}
+                        <Checkbox
+                          checked={allVisibleSelected}
+                          onCheckedChange={toggleAllVisible}
+                          aria-label={
+                            allVisibleSelected
+                              ? 'Clear selection'
+                              : `Select all ${filtered.length} shown`
+                          }
+                        />
+                      </th>
                       <th className="px-4 py-3">Disclosure</th>
                       <th className="px-4 py-3">Ownership</th>
                       <th className="px-4 py-3">Who can see it</th>
@@ -207,6 +349,19 @@ export function IpConsole() {
                           }}
                           className="cursor-pointer hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ED1C24]"
                         >
+                          {/* The row navigates, so the checkbox has to keep its
+                              click to itself. */}
+                          <td
+                            className="px-2 py-3 w-10"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
+                            <Checkbox
+                              checked={selected.has(item.id)}
+                              onCheckedChange={() => toggleOne(item.id)}
+                              aria-label={`Select ${item.title}`}
+                            />
+                          </td>
                           <td className="px-4 py-3">
                             <div className="flex items-start gap-2">
                               {item.shelved && (
@@ -308,10 +463,25 @@ export function IpConsole() {
                       }}
                       className="p-4 cursor-pointer hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ED1C24]"
                     >
-                      <p className="font-medium text-gray-900">{item.title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {item.disclosure.disclosureNumber} · {item.disclosure.field}
-                      </p>
+                      <div className="flex items-start gap-3">
+                        <span
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          className="pt-0.5"
+                        >
+                          <Checkbox
+                            checked={selected.has(item.id)}
+                            onCheckedChange={() => toggleOne(item.id)}
+                            aria-label={`Select ${item.title}`}
+                          />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-gray-900">{item.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {item.disclosure.disclosureNumber} · {item.disclosure.field}
+                          </p>
+                        </div>
+                      </div>
                       <div className="flex flex-wrap gap-1.5 mt-3">
                         <ScopeChip scope={item.publishScope} />
                         <RouteChip route={item.route} />
@@ -337,6 +507,14 @@ export function IpConsole() {
           </>
         )}
       </Stagger>
+
+      <BulkPublishDialog
+        items={selectedItems}
+        universities={universities}
+        targetScope={bulkScope}
+        onCancel={() => setBulkScope(null)}
+        onConfirm={runBulk}
+      />
     </div>
   );
 }

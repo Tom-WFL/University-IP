@@ -235,6 +235,15 @@ interface StoreState {
 
   addIpItems: (drafts: IpDraft[], source: 'import' | 'manual') => string[];
   updateScope: (ipItemId: string, scope: PublishScope) => void;
+  /** Publish many at once. Returns what went out and what was held back, with
+   *  a reason per held item — the gate is per disclosure, never averaged. */
+  updateScopeMany: (
+    ipItemIds: string[],
+    scope: PublishScope,
+  ) => {
+    published: string[];
+    refused: Array<{ id: string; title: string; reason: string }>;
+  };
   updateRoute: (ipItemId: string, route: Route) => void;
   /** Patch an item. `disclosure` may be partial — it is deep-merged. */
   updateIpItem: (ipItemId: string, patch: IpItemPatch) => void;
@@ -378,13 +387,29 @@ export const useStore = create<StoreState>()(
   persist(
     (set, get) => {
       /** Append an audit event for the acting user. */
-      function log(action: AuditAction, detail: string, ipItemId: string | null = null) {
+      /**
+       * Write an audit event.
+       *
+       * The university is resolved as: explicit argument → the owner of the
+       * record being changed → the session's active school. That order matters
+       * once a Wildfire admin can work across tenants: filing against the
+       * session would put an edit to school A's disclosure into school B's
+       * trail, where A would never see it. The record's owner is the truth;
+       * the session is only a fallback for events that touch no single item.
+       */
+      function log(
+        action: AuditAction,
+        detail: string,
+        ipItemId: string | null = null,
+        universityId?: string,
+      ) {
         const state = get();
+        const item = ipItemId ? state.ipItems.find((i) => i.id === ipItemId) : undefined;
         set({
           audit: [
             {
               id: nextId('ev'),
-              universityId: state.activeUniversityId,
+              universityId: universityId ?? item?.universityId ?? state.activeUniversityId,
               actorId: state.currentUserId,
               action,
               detail,
@@ -635,6 +660,66 @@ export const useStore = create<StoreState>()(
           );
         },
 
+        /**
+         * Publish several disclosures to the same level in one action.
+         *
+         * The gate stays per item and is never averaged: a selection of six
+         * where two still carry unread AI drafts publishes four and hands back
+         * the two with their reasons, so the caller can name them rather than
+         * quietly dropping them. One audit entry for the batch — six near
+         * identical lines would bury the trail, and `addIpItems` already set
+         * that precedent for imports.
+         */
+        updateScopeMany: (ipItemIds, scope) => {
+          const state = get();
+          const published: string[] = [];
+          const refused: Array<{ id: string; title: string; reason: string }> = [];
+
+          for (const id of ipItemIds) {
+            const item = state.ipItems.find((i) => i.id === id);
+            if (!item) continue;
+            if (item.publishScope === scope) continue;
+            const widening = scopeRank(scope) > scopeRank(item.publishScope);
+            if (!widening) {
+              // Bulk is a publishing tool. Narrowing many at once is not a
+              // workflow anyone asked for, and doing it silently would be a
+              // nasty way to un-publish a portfolio by mis-click.
+              refused.push({ id, title: item.title, reason: 'Already wider than that level.' });
+              continue;
+            }
+            const owner = state.universities.find((u) => u.id === item.universityId);
+            const gate = canPublish(item, owner?.redactionPolicy ?? []);
+            if (!gate.ok) {
+              refused.push({ id, title: item.title, reason: gate.reason ?? 'Not ready to publish.' });
+              continue;
+            }
+            published.push(id);
+          }
+
+          if (published.length) {
+            const stamp = now();
+            const ids = new Set(published);
+            set({
+              ipItems: get().ipItems.map((i) =>
+                ids.has(i.id) ? { ...i, publishScope: scope, updatedAt: stamp } : i,
+              ),
+            });
+
+            const to = SCOPES[scope].auditLabel;
+            const skipNote = refused.length
+              ? ` ${refused.length} other${refused.length === 1 ? ' was' : 's were'} held back.`
+              : '';
+            log(
+              'publish',
+              `Published ${published.length} disclosure${published.length === 1 ? '' : 's'} to ${to} in one action — non-confidential summaries only.${skipNote}`,
+              published.length === 1 ? published[0] : null,
+              state.ipItems.find((i) => i.id === published[0])?.universityId,
+            );
+          }
+
+          return { published, refused };
+        },
+
         updateRoute: (ipItemId, route) => {
           const state = get();
           const item = state.ipItems.find((i) => i.id === ipItemId);
@@ -812,9 +897,14 @@ export const useStore = create<StoreState>()(
               u.id === universityId ? { ...u, redactionPolicy: policy } : u,
             ),
           });
+          // No item to resolve the school from — name it explicitly, or an
+          // admin editing USD's policy from a Mines session would file it to
+          // Mines.
           log(
             'policy_changed',
             `Release criteria for ${uni.shortName} changed from ${before} to ${policy.length}.`,
+            null,
+            universityId,
           );
         },
 
@@ -850,6 +940,8 @@ export const useStore = create<StoreState>()(
             policy === 'contact_only'
               ? `${uni.shortName} inventors are now listed as contacts only.`
               : `${uni.shortName} inventors may now choose to be involved.`,
+            null,
+            universityId,
           );
         },
 
